@@ -43,17 +43,40 @@ const App = {
     window.addEventListener('beforeunload', () => DB.endSession());
   },
 
+  _handlers: null,
+
   _initNav() {
-    document.querySelectorAll('.nav-item').forEach(item => {
-      item.addEventListener('click', e => {
+    if (!this._handlers) this._handlers = {};
+    if (!this._handlers.navClick) {
+      this._handlers.navClick = (e) => {
         e.preventDefault();
-        this.navigate(item.dataset.page);
+        this.navigate(e.currentTarget.dataset.page);
         if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
-      });
+      };
+      this._handlers.hamburgerClick = () => {
+        document.getElementById('sidebar').classList.toggle('open');
+      };
+      this._handlers.upgradeBtnClick = () => {
+        document.getElementById('upgrade-modal').classList.remove('hidden');
+      };
+    }
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.removeEventListener('click', this._handlers.navClick);
+      item.addEventListener('click', this._handlers.navClick);
     });
-    document.getElementById('hamburger').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('open');
-    });
+
+    const hamburger = document.getElementById('hamburger');
+    if (hamburger) {
+      hamburger.removeEventListener('click', this._handlers.hamburgerClick);
+      hamburger.addEventListener('click', this._handlers.hamburgerClick);
+    }
+
+    const upgradeBtn = document.getElementById('sidebar-upgrade-btn');
+    if (upgradeBtn) {
+      upgradeBtn.removeEventListener('click', this._handlers.upgradeBtnClick);
+      upgradeBtn.addEventListener('click', this._handlers.upgradeBtnClick);
+    }
   },
 
   navigate(page) {
@@ -77,14 +100,22 @@ const App = {
   _initTheme() {
     const saved = localStorage.getItem('cat_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', saved);
-    document.getElementById('theme-toggle').textContent = saved === 'dark' ? '☀️' : '🌙';
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('cat_theme', next);
-      document.getElementById('theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
-    });
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+      themeToggle.textContent = saved === 'dark' ? '☀️' : '🌙';
+      if (!this._handlers) this._handlers = {};
+      if (!this._handlers.themeClick) {
+        this._handlers.themeClick = () => {
+          const current = document.documentElement.getAttribute('data-theme');
+          const next = current === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('cat_theme', next);
+          document.getElementById('theme-toggle').textContent = next === 'dark' ? '☀️' : '🌙';
+        };
+      }
+      themeToggle.removeEventListener('click', this._handlers.themeClick);
+      themeToggle.addEventListener('click', this._handlers.themeClick);
+    }
   },
 
   // ── FEEDBACK ───────────────────────────────────────────────
@@ -94,26 +125,44 @@ const App = {
     const modal = document.getElementById('feedback-modal');
     if (!fab || !modal) return;
 
-    fab.addEventListener('click', () => modal.classList.remove('hidden'));
-    document.getElementById('cancel-fb-btn').addEventListener('click', () => modal.classList.add('hidden'));
+    if (!this._handlers) this._handlers = {};
+    if (!this._handlers.fabClick) {
+      this._handlers.fabClick = () => modal.classList.remove('hidden');
+      this._handlers.cancelFbClick = () => modal.classList.add('hidden');
+      this._handlers.saveFbClick = async () => {
+        const type = document.getElementById('fb-type').value;
+        const message = document.getElementById('fb-message').value.trim();
+        if (!message) { showToast('Please write your feedback', 'error'); return; }
 
-    document.getElementById('save-fb-btn').addEventListener('click', async () => {
-      const type = document.getElementById('fb-type').value;
-      const message = document.getElementById('fb-message').value.trim();
-      if (!message) { showToast('Please write your feedback', 'error'); return; }
+        await DB.saveFeedback({
+          user_id: Auth.currentUser && Auth.currentUser.id,
+          type,
+          message
+        });
+        modal.classList.add('hidden');
+        document.getElementById('fb-message').value = '';
+        showToast('Thank you for your feedback! 💬', 'success');
+      };
+      this._handlers.fbModalClick = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
+    }
 
-      await DB.saveFeedback({
-        user_id: Auth.currentUser && Auth.currentUser.id,
-        type,
-        message
-      });
-      modal.classList.add('hidden');
-      document.getElementById('fb-message').value = '';
-      showToast('Thank you for your feedback! 💬', 'success');
-    });
+    fab.removeEventListener('click', this._handlers.fabClick);
+    fab.addEventListener('click', this._handlers.fabClick);
 
-    // Close on backdrop click
-    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+    const cancelFbBtn = document.getElementById('cancel-fb-btn');
+    if (cancelFbBtn) {
+      cancelFbBtn.removeEventListener('click', this._handlers.cancelFbClick);
+      cancelFbBtn.addEventListener('click', this._handlers.cancelFbClick);
+    }
+
+    const saveFbBtn = document.getElementById('save-fb-btn');
+    if (saveFbBtn) {
+      saveFbBtn.removeEventListener('click', this._handlers.saveFbClick);
+      saveFbBtn.addEventListener('click', this._handlers.saveFbClick);
+    }
+
+    modal.removeEventListener('click', this._handlers.fbModalClick);
+    modal.addEventListener('click', this._handlers.fbModalClick);
   },
 
   // ── UPGRADE / PAYMENT ──────────────────────────────────────
@@ -124,9 +173,23 @@ const App = {
     const closeBtn = document.getElementById('close-upgrade-btn');
     if (!btn || !modal) return;
 
-    btn.addEventListener('click', () => modal.classList.remove('hidden'));
-    if (closeBtn) closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
-    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+    if (!this._handlers) this._handlers = {};
+    if (!this._handlers.upgradeClick) {
+      this._handlers.upgradeClick = () => modal.classList.remove('hidden');
+      this._handlers.closeUpgradeClick = () => modal.classList.add('hidden');
+      this._handlers.upgradeModalClick = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
+    }
+
+    btn.removeEventListener('click', this._handlers.upgradeClick);
+    btn.addEventListener('click', this._handlers.upgradeClick);
+
+    if (closeBtn) {
+      closeBtn.removeEventListener('click', this._handlers.closeUpgradeClick);
+      closeBtn.addEventListener('click', this._handlers.closeUpgradeClick);
+    }
+
+    modal.removeEventListener('click', this._handlers.upgradeModalClick);
+    modal.addEventListener('click', this._handlers.upgradeModalClick);
 
     // Show trial banner if applicable
     this._renderTrialBanner();

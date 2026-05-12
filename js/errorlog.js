@@ -53,13 +53,20 @@ const ErrorLog = {
     return logs;
   },
 
-  async render() {
-    const allLogs = DB.getErrorLogs({});
-    const filteredLogs = this._getFilteredLogs(allLogs);
-    this._renderCTABanner(filteredLogs);
-    this._renderInsightSection(filteredLogs);
-    this._renderSummaryCards(filteredLogs);
-    this._renderLogList(allLogs); // Pass allLogs since _renderLogList handles its own filtering based on the DOM
+  async render(silent = false) {
+    if (!silent) showLoading('Loading error logs...');
+    try {
+      const allLogs = await DB.getErrorLogs({});
+      const filteredLogs = this._getFilteredLogs(allLogs);
+      this._renderCTABanner(filteredLogs);
+      await this._renderInsightSection(filteredLogs);
+      this._renderSummaryCards(filteredLogs);
+      this._renderLogList(allLogs);
+    } catch (e) {
+      if (!silent) showToast('Error loading error logs', 'error');
+    } finally {
+      if (!silent) hideLoading();
+    }
   },
 
   _renderCTABanner(logs) {
@@ -72,13 +79,13 @@ const ErrorLog = {
     }
   },
 
-  _renderInsightSection(logs) {
+  async _renderInsightSection(logs) {
     if (!logs.length) {
       document.getElementById('el-insight-section').style.display = 'none';
       return;
     }
     const pendingLogs = logs.filter(l => !l.reattempt_status);
-    const insights = DB.getErrorInsights(pendingLogs);
+    const insights = await DB.getErrorInsights(pendingLogs);
     const section = document.getElementById('el-insight-section');
     section.style.display = 'flex';
 
@@ -179,7 +186,7 @@ const ErrorLog = {
         const dropdown = document.getElementById('el-type-filter');
         if (dropdown) dropdown.value = this._activeTypeFilter || 'all';
         this.saveState();
-        this._renderLogList(DB.getErrorLogs({}));
+        this.render();
       });
     });
   },
@@ -247,7 +254,7 @@ const ErrorLog = {
       <div class="el-item ${log.reattempt_status ? 'fixed' : ''}" id="el-${log.id}">
         <span class="el-type-badge ${log.error_type}">${typeLabels[log.error_type] || log.error_type}</span>
         <div class="el-body">
-          <div class="el-question">${log.question_text || 'Question text unavailable'}</div>
+          <div class="el-question" data-raw="${encodeURIComponent(log.question_text || 'Question text unavailable')}"></div>
           <div class="el-meta">
             ${log.subject ? `<span>${log.subject}</span>` : ''}
             ${log.topic ? `<span> · ${log.topic}</span>` : ''}
@@ -261,28 +268,47 @@ const ErrorLog = {
       }
       </div>
     `).join('');
+
+    // Render math + line breaks in each question cell after innerHTML is set
+    container.querySelectorAll('.el-question[data-raw]').forEach(el => {
+      const raw = decodeURIComponent(el.dataset.raw);
+      if (typeof renderMath === 'function') {
+        renderMath(el, raw);
+      } else {
+        el.innerHTML = raw.replace(/\\n/g, '<br>');
+      }
+    });
   },
 
   async markFixed(id) {
-    await DB.markErrorFixed(id);
-    this.render();
-    const pending = DB.getPendingErrorCount();
-    const badge = document.getElementById('nav-error-count');
-    if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline' : 'none'; }
-    showToast('Marked as fixed ✓', 'success');
+    showLoading('Updating...');
+    try {
+      await DB.markErrorFixed(id);
+      await this.render();
+      const pending = await DB.getPendingErrorCount();
+      const badge = document.getElementById('nav-error-count');
+      if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline' : 'none'; }
+      showToast('Marked as fixed ✓', 'success');
+    } catch (e) {
+      showToast('Error marking fixed', 'error');
+    } finally {
+      hideLoading();
+    }
   },
 
   // ── FIX MY MISTAKES ──────────────────────────────────────────
 
   async fixMyMistakes() {
-    const weakestTopic = DB.getWeakestTopic();
-    if (!weakestTopic) {
-      showToast('No mistakes logged yet — start practicing!', 'error');
-      App.navigate('practice');
-      return;
-    }
-    showLoading(`Loading questions on "${weakestTopic}"...`);
+    showLoading('Finding your weakest topic...');
     try {
+      const weakestTopic = await DB.getWeakestTopic();
+      if (!weakestTopic) {
+        hideLoading();
+        showToast('No mistakes logged yet — start practicing!', 'error');
+        App.navigate('practice');
+        return;
+      }
+      showLoading(`Loading questions on "${weakestTopic}"...`);
       const questions = await DB.getQuestionsByTopic(weakestTopic, 5);
       hideLoading();
       if (!questions.length) {

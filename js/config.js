@@ -1,10 +1,45 @@
 // ============================================================
-// CONFIG.JS — Supabase credentials + demo data
+// CONFIG.JS — ENV detection · Supabase credentials · Feature flags
 // ============================================================
 
-const SUPABASE_URL = 'https://lvbqmaarriglqaegemgc.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2YnFtYWFycmlnbHFhZWdlbWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NzA2MTQsImV4cCI6MjA5MzQ0NjYxNH0.o284rHiW_XCPulBUdmFSMFJftNKTCkipCJ-mTwBQjaw';
+// ── ENVIRONMENT DETECTION ───────────────────────────────────
+// 'dev'  → localhost / 127.0.0.1 / any hostname containing 'dev.' or 'staging'
+// 'prod' → everything else (deployed site, Netlify, etc.)
+const ENV = (() => {
+  const host = location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') return 'dev';
+  if (host.includes('dev.') || host.includes('staging')) return 'dev';
+  return 'prod';
+})();
 
+// ── SUPABASE CREDENTIALS (per-env) ──────────────────────────
+// PROD → your live Supabase project (real users, real data)
+// DEV  → separate Supabase project for safe testing (ywejteozxichsmterelj)
+const _CONFIGS = {
+  prod: {
+    SUPABASE_URL: 'https://lvbqmaarriglqaegemgc.supabase.co',
+    SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2YnFtYWFycmlnbHFhZWdlbWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NzA2MTQsImV4cCI6MjA5MzQ0NjYxNH0.o284rHiW_XCPulBUdmFSMFJftNKTCkipCJ-mTwBQjaw',
+  },
+  dev: {
+    SUPABASE_URL: 'https://ywejteozxichsmterelj.supabase.co',
+    SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3ZWp0ZW96eGljaHNtdGVyZWxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NjA3MzUsImV4cCI6MjA5NDAzNjczNX0.Isd_uUZ4Y5cKkIyoF1sdcLPRRkVl1cvB8LQV69q0bjw',
+  }
+};
+
+// Exported as top-level vars — identical names to before, zero changes needed elsewhere
+const SUPABASE_URL = _CONFIGS[ENV].SUPABASE_URL;
+const SUPABASE_KEY = _CONFIGS[ENV].SUPABASE_KEY;
+
+// ── FEATURE FLAGS ────────────────────────────────────────────
+// Toggle features without code changes. To disable a feature: set to false, save, deploy.
+// To re-enable: set to true. No git revert needed.
+const FLAGS = {
+  SUPABASE_SYNC: true,   // Write attempts/errors/reports/feedback to Supabase
+  // Set to false to go fully local (safe testing / offline mode)
+  DEBUG_LOG: ENV === 'dev',  // Console logs only in dev
+};
+
+// ── RUNTIME STATE ────────────────────────────────────────────
 let sbClient = null;
 let USE_DEMO = false;
 

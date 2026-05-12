@@ -4,25 +4,47 @@
 
 const Auth = {
   currentUser: null,
+  _initialized: false,
+  _handlers: null,
 
   init() {
-    document.getElementById('login-btn').addEventListener('click', () => this.login());
-    document.getElementById('signup-btn').addEventListener('click', () => this.signup());
-    document.getElementById('demo-btn').addEventListener('click', () => this.demoMode());
-    // NOTE: logout listener is attached in onLogin() to cover all auth paths (real + demo + reload)
+    if (!this._handlers) {
+      this._handlers = {
+        login: () => this.login(),
+        signup: () => this.signup(),
+        demo: () => this.demoMode(),
+        loginKey: (e) => { if (e.key === 'Enter') this.login(); },
+        signupKey: (e) => { if (e.key === 'Enter') this.signup(); },
+        tabClick: (e) => {
+          const tab = e.currentTarget;
+          document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+          this.hideError();
+        }
+      };
+    }
+
+    const lBtn = document.getElementById('login-btn');
+    if (lBtn) { lBtn.removeEventListener('click', this._handlers.login); lBtn.addEventListener('click', this._handlers.login); }
+
+    const sBtn = document.getElementById('signup-btn');
+    if (sBtn) { sBtn.removeEventListener('click', this._handlers.signup); sBtn.addEventListener('click', this._handlers.signup); }
+
+    const dBtn = document.getElementById('demo-btn');
+    if (dBtn) { dBtn.removeEventListener('click', this._handlers.demo); dBtn.addEventListener('click', this._handlers.demo); }
 
     document.querySelectorAll('.auth-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-        this.hideError();
-      });
+      tab.removeEventListener('click', this._handlers.tabClick);
+      tab.addEventListener('click', this._handlers.tabClick);
     });
 
-    document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') this.login(); });
-    document.getElementById('signup-password').addEventListener('keydown', e => { if (e.key === 'Enter') this.signup(); });
+    const lPass = document.getElementById('login-password');
+    if (lPass) { lPass.removeEventListener('keydown', this._handlers.loginKey); lPass.addEventListener('keydown', this._handlers.loginKey); }
+
+    const sPass = document.getElementById('signup-password');
+    if (sPass) { sPass.removeEventListener('keydown', this._handlers.signupKey); sPass.addEventListener('keydown', this._handlers.signupKey); }
   },
 
   async login() {
@@ -160,6 +182,8 @@ const Auth = {
     document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
     document.querySelector('.auth-tab[data-tab="login"]').classList.add('active');
     document.getElementById('tab-login').classList.add('active');
+    
+    Auth.init(); // Ensure event listeners exist if they were skipped on auto-login
     showToast('Logged out');
   },
 

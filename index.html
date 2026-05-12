@@ -10,6 +10,10 @@
     href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <!-- KaTeX for LaTeX math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 </head>
 
 <body>
@@ -98,7 +102,7 @@
         <!-- Trial countdown -->
         <div class="trial-banner" id="trial-banner" style="display:none">
           <span>🕑 Trial: <strong id="trial-days-left">7</strong> days left</span>
-          <button class="btn-skip" onclick="document.getElementById('upgrade-modal').classList.remove('hidden')"
+          <button class="btn-skip" id="sidebar-upgrade-btn"
             style="font-size:0.72rem;color:var(--accent);padding:0">Upgrade</button>
         </div>
         <div class="daily-goal-mini" id="sidebar-goal">
@@ -731,7 +735,6 @@
   <script src="js/dashboard.js"></script>
   <script src="js/practice.js"></script>
   <script src="js/test.js"></script>
-  <script src="js/review.js"></script>
   <script src="js/errorlog.js"></script>
   <script src="js/app.js"></script>
 </body>

@@ -163,13 +163,14 @@ const TestMode = {
     }, 1000);
   },
 
-  endTest() {
+  async endTest() {
     clearInterval(this.timer);
     document.getElementById('test-active').classList.add('hidden');
     document.getElementById('test-results').classList.remove('hidden');
 
     let correct = 0, wrong = 0, skipped = 0;
     const breakdown = [];
+    const savePromises = [];
 
     this.questions.forEach(q => {
       const ans = this.answers[q.id];
@@ -190,7 +191,7 @@ const TestMode = {
       breakdown.push({ q, displayAns, isCorrect, skipped: !ans });
 
       if (ans) {
-        DB.saveAttempt({
+        savePromises.push(DB.saveAttempt({
           question_id: q.id,
           user_id: Auth.currentUser && Auth.currentUser.id,
           selected_option: q.answer_type === 'mcq' ? ans.option : null,
@@ -200,9 +201,11 @@ const TestMode = {
           source: 'test',
           subject: q.subject,
           topic: q.topic
-        });
+        }));
       }
     });
+
+    await Promise.all(savePromises);
 
     const score = (correct * this.correctMarks) - (wrong * this.wrongMarks);
     document.getElementById('results-score').textContent = score.toFixed(1);
@@ -228,8 +231,7 @@ const TestMode = {
         </div>`;
       }).join('');
 
-    Dashboard.todayDone = (Dashboard.todayDone || 0) + correct + wrong;
-    Dashboard.updateGoalUI();
+    await Dashboard.refresh();
   },
 
   resetTest() {

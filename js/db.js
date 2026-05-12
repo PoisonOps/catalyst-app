@@ -11,14 +11,38 @@ const DB = {
       let qs = DEMO_QUESTIONS.map(q => this._attachPassage(q));
       return this._applyFilters(qs, filters);
     }
-    let query = sbClient.from('questions').select('*, sets(passage, instruction, topic, subject)').eq('is_active', true).limit(50);
-    if (filters.subject && filters.subject !== 'all') query = query.eq('subject', filters.subject);
-    if (filters.topic && filters.topic !== 'all') query = query.eq('topic', filters.topic);
-    if (filters.difficulty && filters.difficulty !== 'all') query = query.eq('difficulty', filters.difficulty);
+
+    // Normalise filter values — lowercase + trim so 'all'/'All'/'ALL' all match
+    const subject = (filters.subject || '').trim();
+    const topic = (filters.topic || '').trim();
+    const difficulty = (filters.difficulty || '').trim();
+
+    if (FLAGS.DEBUG_LOG) console.log('[DB] getQuestions filters:', { subject, topic, difficulty });
+
+    // sets!left → LEFT JOIN: questions where set_id IS NULL (standalone) are kept.
+    // Without !left PostgREST defaults to INNER JOIN → drops all standalone questions → 0 rows.
+    let query = sbClient
+      .from('questions')
+      .select('*, sets!left(passage, instruction, topic, subject)')
+      .eq('is_active', true)
+      .limit(50);
+
+    // Apply filters ONLY when a real value is selected (not 'all' / empty)
+    if (subject && subject.toLowerCase() !== 'all') query = query.eq('subject', subject);
+    if (topic && topic.toLowerCase() !== 'all') query = query.eq('topic', topic);
+    if (difficulty && difficulty.toLowerCase() !== 'all') query = query.eq('difficulty', difficulty);
+
     const { data, error } = await query;
+
+    if (FLAGS.DEBUG_LOG) {
+      console.log('[DB] getQuestions result:', data?.length ?? 0, 'rows');
+      if (error) console.error('[DB] getQuestions error detail:', JSON.stringify(error, null, 2));
+      else if (!data || data.length === 0) console.log('[DB] getQuestions empty result. Check RLS policies in Supabase dashboard.');
+    }
     if (error) throw error;
     return (data || []).map(q => this._attachPassageFromJoin(q));
   },
+
 
   _attachPassage(q) {
     if (!q.set_id) return q;
@@ -47,16 +71,16 @@ const DB = {
       return [...new Set(qs.map(q => q.topic).filter(Boolean))].sort();
     }
     try {
-      let query = sbClient.from('questions').select('topic');
-      if (subject !== 'all') query = query.eq('subject', subject);
+      let query = sbClient.from('questions').select('topic').eq('is_active', true);
+      if (subject && subject.toLowerCase() !== 'all') query = query.eq('subject', subject);
       const { data } = await query;
       return [...new Set((data || []).map(r => r.topic).filter(Boolean))].sort();
     } catch (e) { return []; }
   },
 
   // Smart queue: unattempted first → low accuracy → oldest
-  sortBySmartQueue(questions) {
-    const attempts = this._getLocal('cat_attempts', []);
+  async sortBySmartQueue(questions) {
+    const attempts = await this.getAttempts();
     const statsMap = {};
     attempts.forEach(a => {
       if (!statsMap[a.question_id]) statsMap[a.question_id] = { attempts: 0, correct: 0, last: 0 };
@@ -82,10 +106,21 @@ const DB = {
   async saveAttempt(attempt) {
     const key = 'cat_attempts';
     const existing = this._getLocal(key, []);
+
+    let userId = attempt.user_id || 'demo';
+    if (!USE_DEMO && sbClient && typeof FLAGS !== 'undefined' && FLAGS.SUPABASE_SYNC) {
+      try {
+        const { data } = await sbClient.auth.getUser();
+        if (data && data.user) userId = data.user.id;
+      } catch (e) {
+        console.warn('Failed to get user', e);
+      }
+    }
+
     const entry = {
       id: crypto.randomUUID(),
       question_id: attempt.question_id,
-      user_id: attempt.user_id || 'demo',
+      user_id: userId,
       selected_option: attempt.selected_option || null,
       selected_value: attempt.selected_value || null,
       is_correct: attempt.is_correct,
@@ -94,45 +129,73 @@ const DB = {
       subject: attempt.subject,
       topic: attempt.topic,
       question_type: attempt.question_type || 'single',
+      set_id: attempt.set_id || null,
       timestamp: Date.now()
     };
     existing.push(entry);
     if (existing.length > 1000) existing.splice(0, existing.length - 1000);
     this._setLocal(key, existing);
 
-    if (!USE_DEMO && sbClient) {
+    if (!USE_DEMO && sbClient && typeof FLAGS !== 'undefined' && FLAGS.SUPABASE_SYNC) {
       try {
-        await sbClient.from('attempt_logs').insert([{
-          id: entry.id,                              // Bug C fix: use same UUID as local
-          user_id: attempt.user_id,
+        const payload = {
+          id: entry.id,
+          user_id: userId,
           question_id: attempt.question_id,
           selected_option: attempt.selected_option,
           selected_value: attempt.selected_value,
           is_correct: attempt.is_correct,
           time_taken: attempt.time_taken || 0,
           source: attempt.source || 'practice',
-          subject: attempt.subject,                 // Bug C fix: was missing
-          topic: attempt.topic                      // Bug C fix: was missing
-        }]);
-      } catch (e) { console.warn('Attempt log error:', e.message); }
+          subject: attempt.subject,
+          topic: attempt.topic
+        };
+        console.log('[DB] saving attempt', payload);
+        const { data, error } = await sbClient.from('attempt_logs').insert([payload]);
+        console.log('[DB] saveAttempt result', data, error);
+        if (error) {
+          console.error('[DB ERROR]', JSON.stringify(error, null, 2));
+        }
+      } catch (e) {
+        console.error('[DB ERROR]', JSON.stringify(e, null, 2));
+      }
     }
     return entry;
   },
 
-  getAttempts(filters = {}) {
+  async getAttempts(filters = {}) {
+    if (!USE_DEMO && sbClient && FLAGS.SUPABASE_SYNC) {
+      try {
+        let query = sbClient.from('attempt_logs').select('*, questions(set_id, question_type)').eq('user_id', Auth.currentUser.id);
+        if (filters.subject && filters.subject !== 'all') query = query.eq('subject', filters.subject);
+        if (filters.correct !== undefined) query = query.eq('is_correct', filters.correct);
+        const { data, error } = await query;
+        if (error) throw error;
+        return (data || []).map(a => ({
+          ...a,
+          set_id: a.questions?.set_id || null,
+          question_type: a.questions?.question_type || null,
+          timestamp: new Date(a.created_at).getTime()
+        }));
+      } catch (e) {
+        console.warn('DB getAttempts failed:', e);
+      }
+    }
     let attempts = this._getLocal('cat_attempts', []);
     if (filters.subject && filters.subject !== 'all') attempts = attempts.filter(a => a.subject === filters.subject);
     if (filters.correct !== undefined) attempts = attempts.filter(a => a.is_correct === filters.correct);
     return attempts;
   },
 
-  getAttemptedQuestionIds() {
-    return [...new Set(this._getLocal('cat_attempts', []).map(a => a.question_id))];
+  async getAttemptedQuestionIds() {
+    const attempts = await this.getAttempts();
+    return [...new Set(attempts.map(a => a.question_id))];
   },
 
-  getLastAttemptForQuestion(qId) {
-    const all = this._getLocal('cat_attempts', []).filter(a => a.question_id === qId);
-    return all.length ? all[all.length - 1] : null;
+  async getLastAttemptForQuestion(qId) {
+    const all = await this.getAttempts();
+    const filtered = all.filter(a => a.question_id === qId);
+    return filtered.length ? filtered[filtered.length - 1] : null;
   },
 
   // ── ERROR LOGS ─────────────────────────────────────────────
@@ -140,6 +203,16 @@ const DB = {
   async saveErrorLog(log) {
     const key = 'cat_error_logs';
     const existing = this._getLocal(key, []);
+
+    let userId = log.user_id || 'demo';
+    if (!USE_DEMO && sbClient && typeof FLAGS !== 'undefined' && FLAGS.SUPABASE_SYNC) {
+      try {
+        const { data } = await sbClient.auth.getUser();
+        if (data && data.user) userId = data.user.id;
+      } catch (e) {
+        console.warn('Failed to get user', e);
+      }
+    }
 
     // ── DEDUP: localStorage ─────────────────────────────────────
     // Skip if an unfixed entry for this question already exists locally
@@ -154,7 +227,7 @@ const DB = {
     const entry = {
       id: crypto.randomUUID(),
       question_id: log.question_id,
-      user_id: log.user_id || 'demo',
+      user_id: userId,
       error_type: log.error_type,
       user_note: log.user_note || '',
       subject: log.subject,
@@ -166,26 +239,26 @@ const DB = {
     existing.push(entry);
     this._setLocal(key, existing);
 
-    if (!USE_DEMO && sbClient) {
+    if (!USE_DEMO && sbClient && typeof FLAGS !== 'undefined' && FLAGS.SUPABASE_SYNC) {
       try {
         // ── DEDUP: Supabase ───────────────────────────────────────
         // maybeSingle() returns null (not an error) when no row found
         const { data: sbDupe } = await sbClient
           .from('error_logs')
           .select('id')
-          .eq('user_id', log.user_id)
+          .eq('user_id', userId)
           .eq('question_id', log.question_id)
           .eq('reattempt_status', false)
           .maybeSingle();
 
         if (sbDupe) {
-          console.log('[DB] Skipped duplicate error log (Supabase):', log.question_id);
-          return entry;  // already exists in DB — local entry still saved above
+          if (typeof FLAGS !== 'undefined' && FLAGS.DEBUG_LOG) console.log('[DB] Skipped duplicate error log (Supabase):', log.question_id);
+          return entry;
         }
 
-        await sbClient.from('error_logs').insert([{
+        const payload = {
           id: entry.id,
-          user_id: log.user_id,
+          user_id: userId,
           question_id: log.question_id,
           error_type: log.error_type,
           user_note: log.user_note || '',
@@ -193,13 +266,35 @@ const DB = {
           question_text: log.question_text || '',
           subject: log.subject,
           topic: log.topic
-        }]);
-      } catch (e) { console.warn('Error log error:', e.message); }
+        };
+        console.log('[DB] saving error_log', payload);
+        const { data, error } = await sbClient.from('error_logs').insert([payload]);
+        console.log('[DB] saveErrorLog result', data, error);
+        if (error) {
+          console.error('[DB ERROR]', JSON.stringify(error, null, 2));
+        }
+      } catch (e) {
+        console.error('[DB ERROR]', JSON.stringify(e, null, 2));
+      }
     }
     return entry;
   },
 
-  getErrorLogs(filters = {}) {
+  async getErrorLogs(filters = {}) {
+    if (!USE_DEMO && sbClient && FLAGS.SUPABASE_SYNC) {
+      try {
+        let query = sbClient.from('error_logs').select('*').eq('user_id', Auth.currentUser.id);
+        if (filters.subject && filters.subject !== 'all') query = query.eq('subject', filters.subject);
+        if (filters.error_type && filters.error_type !== 'all') query = query.eq('error_type', filters.error_type);
+        if (filters.status === 'pending') query = query.eq('reattempt_status', false);
+        if (filters.status === 'fixed') query = query.eq('reattempt_status', true);
+        const { data, error } = await query;
+        if (error) throw error;
+        return data || [];
+      } catch (e) {
+        console.warn('DB getErrorLogs failed:', e);
+      }
+    }
     let logs = this._getLocal('cat_error_logs', []);
     if (filters.subject && filters.subject !== 'all') logs = logs.filter(l => l.subject === filters.subject);
     if (filters.error_type && filters.error_type !== 'all') logs = logs.filter(l => l.error_type === filters.error_type);
@@ -220,7 +315,7 @@ const DB = {
       logs[idx].reattempted_at = new Date().toISOString();
       this._setLocal(key, logs);
     }
-    if (!USE_DEMO && sbClient) {
+    if (!USE_DEMO && sbClient && FLAGS.SUPABASE_SYNC) {
       const { error } = await sbClient.from('error_logs').update({
         reattempt_status: true,
         reattempted_at: new Date().toISOString()
@@ -229,17 +324,19 @@ const DB = {
     }
   },
 
-  getPendingErrorCount() {
-    return this._getLocal('cat_error_logs', []).filter(l => !l.reattempt_status).length;
+  async getPendingErrorCount() {
+    const logs = await this.getErrorLogs({ status: 'pending' });
+    return logs.length;
   },
 
   // ── INSIGHT HELPERS ─────────────────────────────────────────
 
   // Returns topic with most pending (unfixed) mistakes
-  getWeakestTopic() {
-    const logs = this._getLocal('cat_error_logs', []).filter(l => !l.reattempt_status && l.topic);
+  async getWeakestTopic() {
+    const logs = await this.getErrorLogs({ status: 'pending' });
+    const pendingLogs = logs.filter(l => l.topic);
     const topicCounts = {};
-    logs.forEach(l => { topicCounts[l.topic] = (topicCounts[l.topic] || 0) + 1; });
+    pendingLogs.forEach(l => { topicCounts[l.topic] = (topicCounts[l.topic] || 0) + 1; });
     if (!Object.keys(topicCounts).length) return null;
     return Object.entries(topicCounts).sort((a, b) => b[1] - a[1])[0][0];
   },
@@ -249,16 +346,16 @@ const DB = {
     if (!topic) return [];
     if (USE_DEMO) {
       let qs = DEMO_QUESTIONS.filter(q => q.topic === topic);
-      // Shuffle and take first `limit`
       qs = qs.sort(() => Math.random() - 0.5).slice(0, limit);
       return qs.map(q => this._attachPassage(q));
     }
     try {
       const { data, error } = await sbClient
         .from('questions')
-        .select('*, sets(passage, instruction, topic, subject)')
+        .select('*, sets!left(passage, instruction, topic, subject)')  // !left = LEFT JOIN
+        .eq('is_active', true)
         .eq('topic', topic)
-        .limit(limit * 3); // fetch more, shuffle client-side
+        .limit(limit * 3);
       if (error) throw error;
       const shuffled = (data || []).sort(() => Math.random() - 0.5).slice(0, limit);
       return shuffled.map(q => this._attachPassageFromJoin(q));
@@ -266,8 +363,8 @@ const DB = {
   },
 
   // Returns insight object: weakest topic, most common error type, counts
-  getErrorInsights(customLogs) {
-    const logs = customLogs || this._getLocal('cat_error_logs', []).filter(l => !l.reattempt_status);
+  async getErrorInsights(customLogs) {
+    const logs = customLogs || await this.getErrorLogs({ status: 'pending' });
 
     // Topic mistake counts
     const topicCounts = {};
@@ -292,7 +389,7 @@ const DB = {
   // ── REPORTS ────────────────────────────────────────────────
 
   async saveReport(report) {
-    if (!USE_DEMO && sbClient) {
+    if (!USE_DEMO && sbClient && FLAGS.SUPABASE_SYNC) {
       try {
         await sbClient.from('reports').insert([{
           user_id: report.user_id,
@@ -312,7 +409,7 @@ const DB = {
   // ── FEEDBACK ───────────────────────────────────────────────
 
   async saveFeedback(fb) {
-    if (!USE_DEMO && sbClient) {
+    if (!USE_DEMO && sbClient && FLAGS.SUPABASE_SYNC) {
       try {
         await sbClient.from('feedback').insert([{
           user_id: fb.user_id,
@@ -359,10 +456,13 @@ const DB = {
 
   // ── STATS ──────────────────────────────────────────────────
 
-  getStats() {
-    const attempts = this._getLocal('cat_attempts', []);
+  async getStats() {
+    const attempts = await this.getAttempts();
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const todayAttempts = attempts.filter(a => a.timestamp >= today.getTime());
+
+    const allProgress = await this.calculateProgressStats(attempts, attempts);
+    const todayProgress = await this.calculateProgressStats(todayAttempts, attempts);
 
     const correct = attempts.filter(a => a.is_correct).length;
     const accuracy = attempts.length ? Math.round((correct / attempts.length) * 100) : 0;
@@ -397,9 +497,9 @@ const DB = {
     }));
 
     return {
-      total: attempts.length,
+      total: allProgress.total,
       accuracy,
-      todayCount: todayAttempts.length,
+      todayCount: todayProgress.total,
       subjectStats,
       weakTopics,
       streak: streak.count,
@@ -452,22 +552,74 @@ const DB = {
     this._setLocal('cat_daily_goal_v2', goals);
   },
 
+  async calculateProgressStats(targetAttempts, allAttempts) {
+    const quant = targetAttempts.filter(a => a.subject === 'Quant').length;
+
+    const setIdsInTarget = [...new Set(targetAttempts.filter(a => a.set_id || a.question_type === 'set' || a.question_type === 'set_question').map(a => a.set_id).filter(Boolean))];
+
+    let lrdi_sets = 0;
+    let varc_rc = 0;
+
+    if (setIdsInTarget.length > 0) {
+      let setTotalQuestions = {};
+      if (USE_DEMO) {
+        DEMO_QUESTIONS.forEach(q => {
+          if (setIdsInTarget.includes(q.set_id)) {
+            setTotalQuestions[q.set_id] = (setTotalQuestions[q.set_id] || 0) + 1;
+          }
+        });
+      } else if (sbClient) {
+        try {
+          const { data } = await sbClient.from('questions').select('id, set_id').eq('is_active', true).in('set_id', setIdsInTarget);
+          (data || []).forEach(q => {
+            setTotalQuestions[q.set_id] = (setTotalQuestions[q.set_id] || 0) + 1;
+          });
+        } catch (e) {
+          console.warn('[DB] Failed to fetch set counts for progress calculation');
+        }
+      }
+
+      const attemptsBySet = {};
+      allAttempts.forEach(a => {
+        if (a.set_id && setIdsInTarget.includes(a.set_id)) {
+          if (!attemptsBySet[a.set_id]) attemptsBySet[a.set_id] = new Set();
+          attemptsBySet[a.set_id].add(a.question_id);
+        }
+      });
+
+      setIdsInTarget.forEach(sid => {
+        const attemptedCount = attemptsBySet[sid] ? attemptsBySet[sid].size : 0;
+        const totalCount = setTotalQuestions[sid] || 999;
+        if (attemptedCount >= totalCount && totalCount > 0) {
+          const sample = targetAttempts.find(a => a.set_id === sid);
+          if (sample) {
+            if (sample.subject === 'LRDI') lrdi_sets++;
+            else if (sample.subject === 'VARC') varc_rc++;
+          }
+        }
+      });
+    }
+
+    const varcAll = targetAttempts.filter(a => a.subject === 'VARC');
+    const varc_va = varcAll.filter(a => !a.set_id && a.question_type !== 'set' && a.question_type !== 'set_question').length;
+    const varc = varcAll.length;
+
+    return {
+      quant,
+      lrdi: lrdi_sets,
+      varc,
+      varc_rc,
+      varc_va,
+      total: quant + lrdi_sets + varc_rc + varc_va
+    };
+  },
+
   // Returns today's progress per subject from attempt log
-  getTodaySubjectProgress() {
-    const attempts = this._getLocal('cat_attempts', []);
+  async getTodaySubjectProgress() {
+    const attempts = await this.getAttempts();
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const todayA = attempts.filter(a => a.timestamp >= today.getTime());
-
-    const quant = todayA.filter(a => a.subject === 'Quant').length;
-    const lrdi = todayA.filter(a => a.subject === 'LRDI').length;
-
-    // Split VARC into RC (set_question) and VA (single) to avoid double-counting
-    const varcAll = todayA.filter(a => a.subject === 'VARC');
-    const varc_rc = varcAll.filter(a => a.question_type === 'set_question').length;
-    const varc_va = varcAll.filter(a => a.question_type !== 'set_question').length;
-    const varc = varcAll.length; // kept for backward-compat
-
-    return { quant, lrdi, varc, varc_rc, varc_va, total: quant + lrdi + varc };
+    return await this.calculateProgressStats(todayA, attempts);
   },
 
   // ── TRIAL + PAID SYSTEM ────────────────────────────────────

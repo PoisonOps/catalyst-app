@@ -3,6 +3,32 @@
 //               real timer, report, session end summary
 // ============================================================
 
+/**
+ * renderMath(el, rawText)
+ * ─────────────────────────────────────────────────────────
+ * 1. Replaces literal "\n" sequences with <br> tags.
+ * 2. Sets element innerHTML so <br> is rendered.
+ * 3. Runs KaTeX auto-render over the element so LaTeX
+ *    delimiters ($...$ and $$...$$) are typeset.
+ */
+function renderMath(el, rawText) {
+  if (!el) return;
+  // Replace literal \n (two chars: backslash + n) with <br>
+  const html = String(rawText || '').replace(/\\n/g, '<br>');
+  el.innerHTML = html;
+  if (typeof renderMathInElement === 'function') {
+    renderMathInElement(el, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true  },
+        { left: '$',  right: '$',  display: false },
+        { left: '\\(',  right: '\\)', display: false },
+        { left: '\\[',  right: '\\]', display: true  }
+      ],
+      throwOnError: false
+    });
+  }
+}
+
 const Practice = {
   questions: [],
   currentIdx: 0,
@@ -108,7 +134,7 @@ const Practice = {
     showLoading('Loading questions...');
     try {
       let questions = await DB.getQuestions(filters);
-      questions = DB.sortBySmartQueue(questions);
+      questions = await DB.sortBySmartQueue(questions);
       this.questions = questions;
       this._sessionCorrect = 0;
       this._sessionWrong = 0;
@@ -152,13 +178,13 @@ const Practice = {
       typeTag.classList.add('hidden');
     }
 
-    document.getElementById('question-text').textContent = q.question;
+    renderMath(document.getElementById('question-text'), q.question);
 
     // Passage
     const passageWrap = document.getElementById('passage-context');
     if (q._passage) {
       passageWrap.classList.remove('hidden');
-      document.getElementById('passage-context-text').textContent = q._passage;
+      renderMath(document.getElementById('passage-context-text'), q._passage);
     } else {
       passageWrap.classList.add('hidden');
     }
@@ -183,7 +209,9 @@ const Practice = {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.dataset.letter = letter;
-        btn.innerHTML = `<span class="option-label">${letter}</span><span>${text}</span>`;
+        // Build structure first, then render math into the text span
+        btn.innerHTML = `<span class="option-label">${letter}</span><span class="option-text"></span>`;
+        renderMath(btn.querySelector('.option-text'), text);
         btn.addEventListener('click', () => this._selectMCQ(letter, btn));
         optGrid.appendChild(btn);
       });
@@ -217,7 +245,7 @@ const Practice = {
     return Math.round((Date.now() - this._startTime) / 1000);
   },
 
-  _selectMCQ(letter, btn) {
+  async _selectMCQ(letter, btn) {
     if (this.answered) return;
     this.answered = true;
     const q = this.questions[this.currentIdx];
@@ -231,14 +259,14 @@ const Practice = {
       else if (b.dataset.letter === letter && !isCorrect) b.classList.add('wrong');
     });
 
-    this._showSolution(q, isCorrect, q.correct_option);
-    this._recordAttempt(q, { selected_option: letter }, isCorrect, timeTaken);
+    await this._recordAttempt(q, { selected_option: letter }, isCorrect, timeTaken);
+    await this._showSolution(q, isCorrect, q.correct_option);
 
     if (isCorrect) this._sessionCorrect++; else this._sessionWrong++;
     if (!isCorrect) this._showInlineErrorTag(q);
   },
 
-  _submitTITA() {
+  async _submitTITA() {
     if (this.answered) return;
     const q = this.questions[this.currentIdx];
     const val = document.getElementById('tita-input').value.trim();
@@ -252,14 +280,14 @@ const Practice = {
     document.getElementById('tita-input').disabled = true;
     document.getElementById('tita-submit').disabled = true;
 
-    this._showSolution(q, isCorrect, q.correct_value);
-    this._recordAttempt(q, { selected_value: val }, isCorrect, timeTaken);
+    await this._recordAttempt(q, { selected_value: val }, isCorrect, timeTaken);
+    await this._showSolution(q, isCorrect, q.correct_value);
 
     if (isCorrect) this._sessionCorrect++; else this._sessionWrong++;
     if (!isCorrect) this._showInlineErrorTag(q);
   },
 
-  _showSolution(q, isCorrect, correctAnswer) {
+  async _showSolution(q, isCorrect, correctAnswer) {
     document.getElementById('hint-toggle-pre').classList.add('hidden');
     document.getElementById('answer-area').classList.remove('hidden');
 
@@ -269,15 +297,18 @@ const Practice = {
     document.getElementById('correct-ans-display').textContent = correctAnswer;
 
     const solEl = document.getElementById('solution-text');
-    solEl.innerHTML = q.solution
-      ? `<strong>Solution:</strong> ${q.solution}`
-      : `<span style="color:var(--text3)">Refer source material for solution.</span>`;
+    if (q.solution) {
+      solEl.innerHTML = '<strong>Solution:</strong> <span class="sol-body"></span>';
+      renderMath(solEl.querySelector('.sol-body'), q.solution);
+    } else {
+      solEl.innerHTML = `<span style="color:var(--text3)">Refer source material for solution.</span>`;
+    }
 
-    Dashboard.incrementToday();
+    await Dashboard.incrementToday();
   },
 
-  _recordAttempt(q, answer, isCorrect, timeTaken) {
-    DB.saveAttempt({
+  async _recordAttempt(q, answer, isCorrect, timeTaken) {
+    await DB.saveAttempt({
       question_id: q.id,
       user_id: Auth.currentUser && Auth.currentUser.id,
       selected_option: answer.selected_option || null,
@@ -287,7 +318,8 @@ const Practice = {
       source: 'practice',
       subject: q.subject,
       topic: q.topic,
-      question_type: q.question_type || 'single'
+      question_type: q.question_type || 'single',
+      set_id: q.set_id || null
     });
   },
 
@@ -380,7 +412,8 @@ const Practice = {
     });
     if (noteEl) noteEl.value = '';
     this._hideInlineErrorTag();
-    this._refreshErrorBadge();
+    await this._refreshErrorBadge();
+    if (typeof ErrorLog !== 'undefined') await ErrorLog.render(true);
     showToast('Mistake logged ✓', 'success');
   },
 
@@ -398,12 +431,13 @@ const Practice = {
       question_text: q.question
     });
     this._hideInlineErrorTag();
-    this._refreshErrorBadge();
+    await this._refreshErrorBadge();
+    if (typeof ErrorLog !== 'undefined') await ErrorLog.render(true);
     showToast('Saved as unclassified', 'success');
   },
 
-  _refreshErrorBadge() {
-    const pending = DB.getPendingErrorCount();
+  async _refreshErrorBadge() {
+    const pending = await DB.getPendingErrorCount();
     const badge = document.getElementById('nav-error-count');
     if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline' : 'none'; }
   },
@@ -462,9 +496,10 @@ const Practice = {
     showToast('Mistake logged ✓', 'success');
 
     // Refresh badge
-    const pending = DB.getPendingErrorCount();
+    const pending = await DB.getPendingErrorCount();
     const badge = document.getElementById('nav-error-count');
     if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline' : 'none'; }
+    if (typeof ErrorLog !== 'undefined') await ErrorLog.render(true);
   },
 
   // ── REPORT MODAL ───────────────────────────────────────────
@@ -526,7 +561,7 @@ const Practice = {
     document.getElementById('btn-hint-toggle').textContent = showing ? '💡 Show Hint' : '💡 Hide Hint';
     if (!showing) {
       const q = this.questions[this.currentIdx];
-      document.getElementById('hint-text').textContent = `Topic: ${q.topic || 'General'}. Think step by step before selecting.`;
+      renderMath(document.getElementById('hint-text'), `Topic: ${q.topic || 'General'}. Think step by step before selecting.`);
     }
   },
 

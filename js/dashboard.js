@@ -74,62 +74,71 @@ const Dashboard = {
     if (vvaDec) vvaDec.addEventListener('click', () => this._adjustSubjectGoal('varc_va', -5, 5, 30));
   },
 
-  _adjustSubjectGoal(key, delta, min, max) {
+  async _adjustSubjectGoal(key, delta, min, max) {
     const goals = DB.getDailyGoalPerSubject();
     goals[key] = Math.min(max, Math.max(min, (goals[key] || min) + delta));
     DB.setDailyGoalPerSubject(goals);
-    this._renderSubjectGoals();
+    await this._renderSubjectGoals();
   },
 
-  async refresh() {
-    const stats = DB.getStats();
-    this.todayDone = stats.todayCount;
+  async refresh(silent = false) {
+    if (!silent) showLoading('Loading Dashboard...');
+    try {
+      const stats = await DB.getStats();
+      const progress = await DB.getTodaySubjectProgress();
+      this.todayDone = progress.total;
 
-    document.getElementById('stat-total').textContent = stats.total;
-    document.getElementById('stat-accuracy').textContent = stats.accuracy + '%';
-    document.getElementById('stat-streak').textContent = stats.streak;
-    document.getElementById('stat-time').textContent = stats.timeToday + 'm';
+      document.getElementById('stat-total').textContent = stats.total;
+      document.getElementById('stat-accuracy').textContent = stats.accuracy + '%';
+      document.getElementById('stat-streak').textContent = stats.streak;
+      document.getElementById('stat-time').textContent = stats.timeToday + 'm';
 
-    // Subject bars (hidden in DOM but keep updated)
-    ['Quant', 'LRDI', 'VARC'].forEach(sub => {
-      const pct = stats.subjectStats[sub] || 0;
-      const key = sub.toLowerCase();
-      const bar = document.getElementById('bar-' + key);
-      const pctEl = document.getElementById('pct-' + key);
-      if (bar) bar.style.width = pct + '%';
-      if (pctEl) pctEl.textContent = pct + '%';
-    });
+      // Subject bars (hidden in DOM but keep updated)
+      ['Quant', 'LRDI', 'VARC'].forEach(sub => {
+        const pct = stats.subjectStats[sub] || 0;
+        const key = sub.toLowerCase();
+        const bar = document.getElementById('bar-' + key);
+        const pctEl = document.getElementById('pct-' + key);
+        if (bar) bar.style.width = pct + '%';
+        if (pctEl) pctEl.textContent = pct + '%';
+      });
 
-    this.updateGoalUI();
-    this._renderSubjectGoals();
-    this._renderWeakTopics(stats);
+      this.updateGoalUI();
+      await this._renderSubjectGoals();
+      await this._renderWeakTopics(stats);
 
-    const pending = DB.getPendingErrorCount();
-    const fixSub = document.getElementById('dash-fix-sub');
-    if (fixSub) {
-      fixSub.textContent = pending > 0
-        ? `${pending} mistake${pending > 1 ? 's' : ''} unresolved — tackle your weakest topic`
-        : 'Track mistakes, understand them, fix them';
-    }
+      const pending = await DB.getPendingErrorCount();
+      const fixSub = document.getElementById('dash-fix-sub');
+      if (fixSub) {
+        fixSub.textContent = pending > 0
+          ? `${pending} mistake${pending > 1 ? 's' : ''} unresolved — tackle your weakest topic`
+          : 'Track mistakes, understand them, fix them';
+      }
 
-    const badge = document.getElementById('nav-error-count');
-    if (badge) {
-      badge.textContent = pending;
-      badge.style.display = pending > 0 ? 'inline' : 'none';
-    }
+      const badge = document.getElementById('nav-error-count');
+      if (badge) {
+        badge.textContent = pending;
+        badge.style.display = pending > 0 ? 'inline' : 'none';
+      }
 
-    // Recent activity (hidden element, still updated)
-    const actEl = document.getElementById('recent-activity');
-    if (actEl) {
-      actEl.innerHTML = stats.recent.length
-        ? stats.recent.map(a => `<div class="activity-item"><div class="activity-dot"></div><span>${a.text}</span><span style="margin-left:auto;font-size:0.75rem;color:var(--text3)">${a.time}</span></div>`).join('')
-        : '<p class="empty-state">No activity yet. Start practicing!</p>';
+      // Recent activity (hidden element, still updated)
+      const actEl = document.getElementById('recent-activity');
+      if (actEl) {
+        actEl.innerHTML = stats.recent.length
+          ? stats.recent.map(a => `<div class="activity-item"><div class="activity-dot"></div><span>${a.text}</span><span style="margin-left:auto;font-size:0.75rem;color:var(--text3)">${a.time}</span></div>`).join('')
+          : '<p class="empty-state">No activity yet. Start practicing!</p>';
+      }
+    } catch (e) {
+      console.error(e);
+      if (!silent) showToast('Error loading dashboard data', 'error');
+    } finally {
+      if (!silent) hideLoading();
     }
   },
 
-  _renderSubjectGoals() {
+  async _renderSubjectGoals() {
     const goals = DB.getDailyGoalPerSubject();
-    const progress = DB.getTodaySubjectProgress();
+    const progress = await DB.getTodaySubjectProgress();
     const container = document.getElementById('subject-goals-widget');
     if (!container) return;
 
@@ -146,7 +155,7 @@ const Dashboard = {
       {
         label: 'LRDI',
         icon: '📊',
-        done: Math.floor(progress.lrdi / 3),  // rough: 3 Q per set
+        done: progress.lrdi,  // Actual set count
         target: goals.lrdi_sets,
         unit: 'sets',
         color: 'var(--lrdi-color)',
@@ -155,7 +164,7 @@ const Dashboard = {
       {
         label: 'VARC·RC',
         icon: '📖',
-        done: Math.floor(progress.varc_rc / 4),  // RC set_questions, 4 Q per set
+        done: progress.varc_rc,  // Actual set count
         target: goals.varc_rc,
         unit: 'sets',
         color: 'var(--varc-color)',
@@ -199,11 +208,11 @@ const Dashboard = {
     this._initSubjectGoalAdj();
   },
 
-  _renderWeakTopics(stats) {
+  async _renderWeakTopics(stats) {
     const weakEl = document.getElementById('weak-topics-list');
     if (!weakEl) return;
 
-    const insights = DB.getErrorInsights();
+    const insights = await DB.getErrorInsights();
     const errorTopics = insights.sortedTopics.slice(0, 3);
 
     if (errorTopics.length) {
@@ -248,10 +257,8 @@ const Dashboard = {
     if (sidebarCount) sidebarCount.textContent = `${done} / ${this.goalTarget}`;
   },
 
-  incrementToday() {
-    this.todayDone = (this.todayDone || 0) + 1;
-    this.updateGoalUI();
-    this._renderSubjectGoals();  // live update subject progress bars
+  async incrementToday() {
+    await this.refresh(true);
   },
 
   clearMemory() {
