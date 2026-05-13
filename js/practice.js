@@ -3,24 +3,90 @@
 //               real timer, report, session end summary
 // ============================================================
 
+// ── BASE URL for image assets ─────────────────────────────
+// Images stored in Supabase Storage or a CDN; prefix every image_url with this.
+const BASE_URL = (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL)
+  ? SUPABASE_URL + '/storage/v1/object/public/cat-assets/'
+  : '';
+
 /**
- * renderMath(el, rawText)
+ * formatText(text)
  * ─────────────────────────────────────────────────────────
- * 1. Replaces literal "\n" sequences with <br> tags.
+ * Converts the /n/ line-break marker (used in DB content)
+ * and the literal \n escape sequence into HTML <br> tags.
+ * Safely masks LaTeX blocks to prevent mangling \ne, \n etc.
+ * Returns sanitised HTML string — safe to set as innerHTML.
+ */
+function formatText(text) {
+  if (!text) return '';
+  
+  const mathBlocks = [];
+  // 1. Temporarily mask LaTeX blocks so line-break replacements don't mangle them.
+  // Matches $$...$$, \[...\], and \(...\) blocks. (Excludes single $ to protect currency)
+  let maskedText = String(text).replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g, (match) => {
+    // Escape < and > inside math blocks so the browser doesn't interpret them as HTML tags
+    const escapedMatch = match.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    mathBlocks.push(escapedMatch);
+    return `__MATH_BLOCK_${mathBlocks.length - 1}__`;
+  });
+
+  // 2. Apply line breaks ONLY to normal text
+  maskedText = maskedText
+    .replaceAll('/n/', '<br>')          // DB-style marker: /n/
+    .replace(/\\n/g, '<br>')           // escaped literal: \n
+    .replace(/\n/g, '<br>');           // real newline character
+
+  // 3. Restore LaTeX blocks intact
+  mathBlocks.forEach((block, i) => {
+    maskedText = maskedText.replace(`__MATH_BLOCK_${i}__`, () => block);
+  });
+
+  return maskedText;
+}
+
+/**
+ * formatRC(text)
+ * ─────────────────────────────────────────────────────────
+ * Formats RC passages into clean paragraphs instead of using <br>.
+ * Safely masks LaTeX blocks to prevent mangling them during split.
+ */
+function formatRC(text) {
+  if (!text) return '';
+  
+  const mathBlocks = [];
+  let maskedText = String(text).replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g, (match) => {
+    const escapedMatch = match.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    mathBlocks.push(escapedMatch);
+    return `__MATH_BLOCK_${mathBlocks.length - 1}__`;
+  });
+
+  maskedText = maskedText
+    .split('/n/n/') // paragraph separation
+    .map(p => `<p class="rc-para">${p.replaceAll('/n/', '<br>')}</p>`)
+    .join('');
+
+  mathBlocks.forEach((block, i) => {
+    maskedText = maskedText.replace(`__MATH_BLOCK_${i}__`, () => block);
+  });
+
+  return maskedText;
+}
+
+/**
+ * renderMath(el, rawText, isRC)
+ * ─────────────────────────────────────────────────────────
+ * 1. Applies formatText() safely separating math and text.
  * 2. Sets element innerHTML so <br> is rendered.
  * 3. Runs KaTeX auto-render over the element so LaTeX
- *    delimiters ($...$ and $$...$$) are typeset.
+ *    delimiters are typeset correctly.
  */
-function renderMath(el, rawText) {
+function renderMath(el, rawText, isRC = false) {
   if (!el) return;
-  // Replace literal \n (two chars: backslash + n) with <br>
-  const html = String(rawText || '').replace(/\\n/g, '<br>');
-  el.innerHTML = html;
+  el.innerHTML = isRC ? formatRC(rawText) : formatText(rawText);
   if (typeof renderMathInElement === 'function') {
     renderMathInElement(el, {
       delimiters: [
         { left: '$$', right: '$$', display: true  },
-        { left: '$',  right: '$',  display: false },
         { left: '\\(',  right: '\\)', display: false },
         { left: '\\[',  right: '\\]', display: true  }
       ],
@@ -66,17 +132,18 @@ const Practice = {
     document.getElementById('tita-submit').addEventListener('click', () => this._submitTITA());
     document.getElementById('tita-input').addEventListener('keydown', e => { if (e.key === 'Enter') this._submitTITA(); });
 
-    // ── Inline error tag buttons ──────────────────────────────
-    document.querySelectorAll('.etag-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.etag-btn').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        this._selectedInlineType = btn.dataset.type;
-        document.getElementById('etag-save').disabled = false;
-      });
+    // ── Solution toggle ──────────────────────────────────────────────────
+    document.getElementById('show-solution-btn').addEventListener('click', () => {
+      const solText = document.getElementById('solution-text');
+      const solBtn  = document.getElementById('show-solution-btn');
+      const isHidden = solText.classList.toggle('hidden');
+      solBtn.textContent = isHidden ? '💡 Show Solution' : '🔼 Hide Solution';
     });
-    document.getElementById('etag-save').addEventListener('click', () => this._saveInlineError());
-    document.getElementById('etag-skip').addEventListener('click', () => this._skipInlineError());
+    // ── Inline error tag: 1-click save ────────────────────────────────
+    document.querySelectorAll('.etag-btn').forEach(btn => {
+      btn.addEventListener('click', () => this._saveInlineErrorWithType(btn.dataset.type));
+    });
+    document.getElementById('etag-skip').addEventListener('click', () => this._saveInlineErrorWithType('unclassified'));
 
     // ── Legacy error modal (preserved, not triggered in MVP) ──
     document.querySelectorAll('.error-type-btn').forEach(btn => {
@@ -162,6 +229,15 @@ const Practice = {
     this.answered = false;
     this._startTimer();
 
+    // Mode Badge
+    const badgeEl = document.getElementById('practice-mode-badge');
+    if (this._isFixSession) {
+      badgeEl.textContent = this._fixModeLabel || 'Fix Mode';
+      badgeEl.classList.remove('hidden');
+    } else {
+      badgeEl.classList.add('hidden');
+    }
+
     // Meta bar
     document.getElementById('q-counter').textContent = `Q ${this.currentIdx + 1} / ${this.questions.length}`;
     document.getElementById('q-subject-tag').textContent = q.subject || 'General';
@@ -180,11 +256,46 @@ const Practice = {
 
     renderMath(document.getElementById('question-text'), q.question);
 
-    // Passage
+    // ── Passage block: instruction → passage text → passage image ──
     const passageWrap = document.getElementById('passage-context');
-    if (q._passage) {
+    if (q._passage || q._instruction || (q.has_image && q.image_url)) {
       passageWrap.classList.remove('hidden');
-      renderMath(document.getElementById('passage-context-text'), q._passage);
+
+      // Make passage-context sticky for sets
+      const isSticky = !!q.set_id;
+      if (isSticky) {
+        passageWrap.classList.add('is-sticky');
+      } else {
+        passageWrap.classList.remove('is-sticky');
+      }
+
+      // Rebuild inner content cleanly each render
+      let passageHTML = '<div class="passage-context-label">📄 Passage / Data</div>';
+      passageHTML += `<div class="passage-box${isSticky ? ' has-scroll' : ''}">`;
+
+      // 1. Instruction
+      if (q._instruction) {
+        passageHTML += `<div class="passage-instruction">${formatText(q._instruction)}</div>`;
+      }
+
+      // 2. Passage text — empty div; filled by renderMath after DOM insert
+      if (q._passage) {
+        passageHTML += `<div class="passage-body" id="passage-context-text"></div>`;
+      }
+
+      // 3. Passage image
+      if (q.has_image && q.image_url) {
+        const imgSrc = q.image_url.startsWith('http') ? q.image_url : BASE_URL + q.image_url;
+        passageHTML += `<div class="passage-image-wrap"><img class="passage-img" src="${imgSrc}" alt="Passage image" loading="lazy" /></div>`;
+      }
+
+      passageHTML += '</div>'; // close .passage-box
+      passageWrap.innerHTML = passageHTML;
+
+      // Run renderMath on passage after it's in the DOM
+      if (q._passage) {
+        renderMath(document.getElementById('passage-context-text'), q._passage, q.subject === 'VARC');
+      }
     } else {
       passageWrap.classList.add('hidden');
     }
@@ -207,9 +318,8 @@ const Practice = {
         const text = q['option_' + letter.toLowerCase()];
         if (!text) return;
         const btn = document.createElement('button');
-        btn.className = 'option-btn';
+        btn.className = 'option-btn option'; // .option for task-spec targeting
         btn.dataset.letter = letter;
-        // Build structure first, then render math into the text span
         btn.innerHTML = `<span class="option-label">${letter}</span><span class="option-text"></span>`;
         renderMath(btn.querySelector('.option-text'), text);
         btn.addEventListener('click', () => this._selectMCQ(letter, btn));
@@ -225,6 +335,20 @@ const Practice = {
     document.getElementById('note-area').classList.add('hidden');
     document.getElementById('btn-bookmark').classList.toggle('active', DB.isBookmarked(q.id));
     document.getElementById('btn-difficult').classList.toggle('active', DB.isDifficult(q.id));
+
+    // Task 7 — safe KaTeX re-render after full DOM update
+    setTimeout(() => {
+      if (typeof renderMathInElement === 'function') {
+        renderMathInElement(document.getElementById('question-card') || document.body, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '\\(', right: '\\)', display: false },
+            { left: '\\[', right: '\\]', display: true }
+          ],
+          throwOnError: false
+        });
+      }
+    }, 0);
   },
 
   _startTimer() {
@@ -262,8 +386,13 @@ const Practice = {
     await this._recordAttempt(q, { selected_option: letter }, isCorrect, timeTaken);
     await this._showSolution(q, isCorrect, q.correct_option);
 
-    if (isCorrect) this._sessionCorrect++; else this._sessionWrong++;
-    if (!isCorrect) this._showInlineErrorTag(q);
+    if (isCorrect) {
+      this._sessionCorrect++;
+      if (this._isFixSession) await DB.markErrorFixedByQuestionId(q.id);
+    } else {
+      this._sessionWrong++;
+      this._showInlineErrorTag(q);
+    }
   },
 
   async _submitTITA() {
@@ -283,8 +412,13 @@ const Practice = {
     await this._recordAttempt(q, { selected_value: val }, isCorrect, timeTaken);
     await this._showSolution(q, isCorrect, q.correct_value);
 
-    if (isCorrect) this._sessionCorrect++; else this._sessionWrong++;
-    if (!isCorrect) this._showInlineErrorTag(q);
+    if (isCorrect) {
+      this._sessionCorrect++;
+      if (this._isFixSession) await DB.markErrorFixedByQuestionId(q.id);
+    } else {
+      this._sessionWrong++;
+      this._showInlineErrorTag(q);
+    }
   },
 
   async _showSolution(q, isCorrect, correctAnswer) {
@@ -296,12 +430,39 @@ const Practice = {
     badge.className = 'correct-badge' + (isCorrect ? '' : ' wrong-badge');
     document.getElementById('correct-ans-display').textContent = correctAnswer;
 
-    const solEl = document.getElementById('solution-text');
+    // Reset solution toggle state: hidden, button text reset
+    const solText = document.getElementById('solution-text');
+    const solBtn  = document.getElementById('show-solution-btn');
+    solText.classList.add('hidden');
+    if (solBtn) solBtn.textContent = '💡 Show Solution';
+
+    // ── Solution box: rebuild cleanly on every answer ──
+    const solEl = solText;
+    solEl.innerHTML = ''; // clear previous
+
+    // Solution text
+    const solBody = document.createElement('div');
+    solBody.className = 'sol-body';
     if (q.solution) {
-      solEl.innerHTML = '<strong>Solution:</strong> <span class="sol-body"></span>';
-      renderMath(solEl.querySelector('.sol-body'), q.solution);
+      const label = document.createElement('strong');
+      label.textContent = 'Solution: ';
+      solEl.appendChild(label);
+      solEl.appendChild(solBody);
+      renderMath(solBody, q.solution); // uses formatText internally
     } else {
-      solEl.innerHTML = `<span style="color:var(--text3)">Refer source material for solution.</span>`;
+      solBody.innerHTML = `<span style="color:var(--text3)">Refer source material for solution.</span>`;
+      solEl.appendChild(solBody);
+    }
+
+    // Solution image
+    if (q.solution_image_url) {
+      const imgSrc = q.solution_image_url.startsWith('http')
+        ? q.solution_image_url
+        : BASE_URL + q.solution_image_url;
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'solution-img-wrap';
+      imgWrap.innerHTML = `<img class="solution-img" src="${imgSrc}" alt="Solution diagram" loading="lazy" />`;
+      solEl.appendChild(imgWrap);
     }
 
     await Dashboard.incrementToday();
@@ -334,6 +495,8 @@ const Practice = {
     }
     this.currentIdx = newIdx;
     this.renderQuestion();
+    // Task 3 — scroll to top smoothly on navigation
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 
   _showSessionSummary() {
@@ -361,10 +524,8 @@ const Practice = {
   endPractice() {
     const answered = this._sessionCorrect + this._sessionWrong;
     if (answered > 0) {
-      // Show summary with what was completed so far
       this._showSessionSummary();
     } else {
-      // Nothing answered yet — just reset to filter bar
       clearInterval(this._timerInterval);
       document.getElementById('practice-area').classList.add('hidden');
       document.getElementById('session-summary').classList.add('hidden');
@@ -374,16 +535,19 @@ const Practice = {
     }
   },
 
-
   // ── INLINE ERROR TAGGING ────────────────────────────────────
 
   _showInlineErrorTag(q) {
     this._errorQuestion = q;
     this._selectedInlineType = null;
-    // Reset button states
-    document.querySelectorAll('.etag-btn').forEach(b => b.classList.remove('selected'));
-    document.getElementById('etag-save').disabled = true;
-    // Reveal panel with animation
+    // Reset all buttons to active state
+    document.querySelectorAll('.etag-btn').forEach(b => {
+      b.classList.remove('selected', 'saved');
+      b.disabled = false;
+    });
+    const noteEl = document.getElementById('etag-note-input');
+    if (noteEl) noteEl.value = '';
+    // Reveal panel
     const panel = document.getElementById('error-tag-inline');
     panel.classList.remove('hidden');
     panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -395,12 +559,21 @@ const Practice = {
     this._selectedInlineType = null;
   },
 
-  async _saveInlineError() {
+  // ── 1-click save: called directly by each type button ───────────────
+  async _saveInlineErrorWithType(type) {
     const q = this._errorQuestion;
     if (!q) return;
-    const type = this._selectedInlineType || 'unclassified';
+
+    // Visually mark selected + disable all buttons instantly
+    document.querySelectorAll('.etag-btn').forEach(b => {
+      b.disabled = true;
+      b.classList.remove('selected');
+      if (b.dataset.type === type) b.classList.add('selected');
+    });
+
     const noteEl = document.getElementById('etag-note-input');
     const userNote = noteEl ? noteEl.value.trim() : '';
+
     await DB.saveErrorLog({
       question_id: q.id,
       user_id: Auth.currentUser && Auth.currentUser.id,
@@ -410,30 +583,22 @@ const Practice = {
       topic: q.topic,
       question_text: q.question
     });
-    if (noteEl) noteEl.value = '';
-    this._hideInlineErrorTag();
-    await this._refreshErrorBadge();
-    if (typeof ErrorLog !== 'undefined') await ErrorLog.render(true);
-    showToast('Mistake logged ✓', 'success');
+
+    // Hide panel after brief highlight so user sees what was saved
+    setTimeout(() => this._hideInlineErrorTag(), 350);
+
+    // Silent sync
+    this._refreshErrorBadge();
+    if (typeof ErrorLog !== 'undefined') ErrorLog.render(true);
+
+    const label = type === 'unclassified' ? 'Skipped' : 'Logged ✓';
+    showToast(label, 'success');
   },
 
-  async _skipInlineError() {
-    const q = this._errorQuestion;
-    if (!q) { this._hideInlineErrorTag(); return; }
-    // Save as unclassified so we still track it
-    await DB.saveErrorLog({
-      question_id: q.id,
-      user_id: Auth.currentUser && Auth.currentUser.id,
-      error_type: 'unclassified',
-      user_note: '',
-      subject: q.subject,
-      topic: q.topic,
-      question_text: q.question
-    });
-    this._hideInlineErrorTag();
-    await this._refreshErrorBadge();
-    if (typeof ErrorLog !== 'undefined') await ErrorLog.render(true);
-    showToast('Saved as unclassified', 'success');
+  // Legacy kept for safety (not triggered from UI)
+  async _saveInlineError() {
+    const type = this._selectedInlineType || 'unclassified';
+    await this._saveInlineErrorWithType(type);
   },
 
   async _refreshErrorBadge() {
@@ -444,12 +609,13 @@ const Practice = {
 
   // ── FIX MY MISTAKES: load a targeted session ────────────────
 
-  loadFixSession(questions) {
+  loadFixSession(questions, modeLabel = 'Fix Mode') {
     if (!questions || !questions.length) {
       showToast('No questions found for this topic', 'error');
       return;
     }
     this._isFixSession = true;
+    this._fixModeLabel = modeLabel;
     this.questions = questions;
     this._sessionCorrect = 0;
     this._sessionWrong = 0;

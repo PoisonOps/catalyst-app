@@ -59,6 +59,9 @@ const App = {
       this._handlers.upgradeBtnClick = () => {
         document.getElementById('upgrade-modal').classList.remove('hidden');
       };
+      this._handlers.overlayClick = () => {
+        document.getElementById('sidebar').classList.remove('open');
+      };
     }
 
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -76,6 +79,12 @@ const App = {
     if (upgradeBtn) {
       upgradeBtn.removeEventListener('click', this._handlers.upgradeBtnClick);
       upgradeBtn.addEventListener('click', this._handlers.upgradeBtnClick);
+    }
+
+    const overlay = document.getElementById('sidebar-overlay');
+    if (overlay) {
+      overlay.removeEventListener('click', this._handlers.overlayClick);
+      overlay.addEventListener('click', this._handlers.overlayClick);
     }
   },
 

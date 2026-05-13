@@ -376,6 +376,10 @@ body {
   padding: 0.4rem 0.6rem;
   cursor: pointer;
   font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
   transition: all 0.2s;
 }
 
@@ -409,6 +413,15 @@ body {
 
 .sidebar.hidden {
   transform: translateX(-100%);
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 90;
+  backdrop-filter: blur(2px);
 }
 
 .sidebar-brand {
@@ -1012,6 +1025,18 @@ body {
 }
 
 /* ===== QUESTION CARD ===== */
+.practice-mode-badge {
+  display: inline-block;
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 0.35rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
 .q-meta-bar {
   display: flex;
   align-items: center;
@@ -1112,6 +1137,28 @@ body {
   margin-bottom: 1.25rem;
 }
 
+.passage-context.is-sticky {
+  position: sticky;
+  top: 65px;
+  z-index: 10;
+  background: #111827;
+  /* Solid background to hide text scrolling underneath */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  /* Subtle shadow for sticky separation */
+}
+
+/* Inner wrapper for structured passage content */
+.passage-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.passage-box.has-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
 .passage-context-label {
   font-size: 0.75rem;
   font-weight: 600;
@@ -1121,13 +1168,54 @@ body {
   margin-bottom: 0.5rem;
 }
 
-.passage-context-text {
-  font-size: 0.875rem;
-  line-height: 1.8;
+.passage-context-text,
+.passage-body {
+  font-size: 15px;
+  line-height: 1.75;
   color: var(--text2);
-  white-space: pre-line;
-  max-height: 180px;
-  overflow-y: auto;
+}
+
+.rc-para {
+  margin-bottom: 14px;
+  line-height: 1.7;
+}
+
+/* Instruction text shown above the passage for RC/LRDI sets */
+.passage-instruction {
+  font-size: 0.8rem;
+  color: var(--text3);
+  font-style: italic;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Images inside the passage block */
+.passage-image-wrap {
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.passage-img {
+  max-width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+/* Solution diagram shown below solution text */
+.solution-img-wrap {
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.solution-img {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
 }
 
 .options-grid {
@@ -1175,6 +1263,8 @@ body {
 
 .option-btn.disabled {
   cursor: default;
+  pointer-events: none;
+  opacity: 0.85;
 }
 
 .option-label {
@@ -1288,6 +1378,24 @@ body {
   flex-wrap: wrap;
 }
 
+.show-solution-btn {
+  margin-left: auto;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.9rem;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.show-solution-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .correct-badge {
   background: var(--green);
   color: white;
@@ -1346,74 +1454,55 @@ body {
 
 /* ===== INLINE ERROR TAGGING PANEL ===== */
 .error-tag-inline {
-  margin-top: 1.25rem;
-  background: linear-gradient(135deg, rgba(244, 76, 96, 0.06), rgba(124, 106, 247, 0.04));
-  border: 1px solid rgba(244, 76, 96, 0.25);
-  border-radius: var(--radius);
-  padding: 1.25rem;
+  margin-top: 1rem;
+  background: linear-gradient(135deg, rgba(244, 76, 96, 0.05), rgba(124, 106, 247, 0.03));
+  border: 1px solid rgba(244, 76, 96, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.9rem 1rem;
   animation: slideUp 0.2s ease;
 }
 
 .etag-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 0.4rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.65rem;
 }
 
 .etag-prompt {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text);
 }
 
 .etag-hint {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--text3);
 }
 
-.etag-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-  margin-bottom: 1rem;
+/* Compact pill row — replaces old 2-column card grid */
+.etag-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 .etag-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.2rem;
-  padding: 0.9rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.9rem;
   background: var(--bg2);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
   cursor: pointer;
   font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
   color: var(--text);
-  text-align: left;
   transition: all 0.15s;
-  width: 100%;
-}
-
-.etag-icon {
-  font-size: 1.4rem;
-  margin-bottom: 0.1rem;
-}
-
-.etag-btn strong {
-  font-size: 0.85rem;
-  display: block;
-  font-weight: 600;
-}
-
-.etag-btn small {
-  font-size: 0.72rem;
-  color: var(--text3);
-  line-height: 1.3;
+  white-space: nowrap;
 }
 
 .etag-btn:hover {
@@ -1424,21 +1513,21 @@ body {
 
 .etag-btn.selected {
   border-color: var(--red);
-  background: rgba(244, 76, 96, 0.1);
-  box-shadow: 0 0 0 3px rgba(244, 76, 96, 0.15);
+  background: rgba(244, 76, 96, 0.15);
+  color: var(--red);
+  box-shadow: 0 0 0 2px rgba(244, 76, 96, 0.2);
 }
 
-.etag-btn.selected small {
-  color: rgba(244, 76, 96, 0.7);
+.etag-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
 .etag-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border);
+  margin-top: 0.5rem;
 }
 
 .etag-skip {
@@ -1446,27 +1535,15 @@ body {
   border: none;
   color: var(--text3);
   font-family: var(--font-body);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   cursor: pointer;
-  padding: 0.4rem;
+  padding: 0.3rem 0;
   transition: color 0.2s;
   text-decoration: underline;
 }
 
 .etag-skip:hover {
   color: var(--text2);
-}
-
-.etag-save {
-  width: auto;
-  padding: 0.65rem 1.5rem;
-  font-size: 0.9rem;
-}
-
-.etag-save:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none !important;
 }
 
 
@@ -2303,6 +2380,10 @@ body {
   height: 48px;
   border-radius: 50%;
   background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   font-size: 1.25rem;
   cursor: pointer;
@@ -2410,6 +2491,10 @@ body {
     transform: translateX(0);
   }
 
+  .sidebar.open+.sidebar-overlay {
+    display: block;
+  }
+
   .main-content {
     margin-left: 0;
   }
@@ -2446,6 +2531,88 @@ body {
 
   .etag-grid {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .passage-box.has-scroll {
+    max-height: 150px;
+  }
+
+  .option-btn {
+    padding: 1.15rem 1rem;
+    width: 100%;
+  }
+
+  .tita-input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tita-input-row .btn-primary,
+  .tita-input-row input {
+    width: 100%;
+  }
+
+  #tita-submit {
+    width: 100% !important;
+  }
+
+  .question-text,
+  .passage-body,
+  .passage-context-text {
+    font-size: 15px;
+    line-height: 1.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .error-tag-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .etag-btn {
+    width: 100%;
+  }
+
+  /* Fix empty space issues on mobile */
+  .filter-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
+  #load-practice-btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .q-meta-bar {
+    /* No space-between needed if we use flex-grow */
+  }
+
+  .q-tags {
+    flex: 1;
+    /* Pushes the next elements to line 2 */
+    min-width: 100px;
+  }
+
+  .q-actions {
+    flex: 1;
+    display: flex;
+    gap: 0.5rem;
+    min-width: 200px;
+    /* Force it to wrap if needed */
+  }
+
+  .q-actions .icon-btn {
+    flex: 1;
+    padding: 0.6rem 0;
   }
 }
 

@@ -299,25 +299,31 @@ const ErrorLog = {
   // ── FIX MY MISTAKES ──────────────────────────────────────────
 
   async fixMyMistakes() {
-    showLoading('Finding your weakest topic...');
+    showLoading('Finding your mistakes...');
     try {
-      const weakestTopic = await DB.getWeakestTopic();
-      if (!weakestTopic) {
-        hideLoading();
-        showToast('No mistakes logged yet — start practicing!', 'error');
-        App.navigate('practice');
-        return;
+      let questions = await DB.getMistakeQuestions();
+      let modeLabel = 'Fix Mode';
+
+      if (!questions || !questions.length) {
+        // Fallback Logic
+        questions = await DB.getFallbackFixQuestions();
+        if (!questions || !questions.length) {
+          hideLoading();
+          showToast('No questions found! Start practicing broadly.', 'error');
+          App.navigate('practice');
+          return;
+        }
+
+        // Try to figure out what topic the fallback questions are from
+        const sampleTopic = questions[0].topic || 'General';
+        modeLabel = `Practicing your weak area: ${sampleTopic}`;
+        showToast(`No pending mistakes. ${modeLabel}`, 'success');
+      } else {
+        showToast(`Fixing ${questions.length} mistake(s)`, 'success');
       }
-      showLoading(`Loading questions on "${weakestTopic}"...`);
-      const questions = await DB.getQuestionsByTopic(weakestTopic, 5);
+
       hideLoading();
-      if (!questions.length) {
-        showToast(`No questions found for "${weakestTopic}". Try practicing broadly.`, 'error');
-        App.navigate('practice');
-        return;
-      }
-      showToast(`Fixing: ${weakestTopic} (${questions.length} questions)`, 'success');
-      Practice.loadFixSession(questions);
+      Practice.loadFixSession(questions, modeLabel);
     } catch (e) {
       hideLoading();
       showToast('Error loading fix session: ' + e.message, 'error');

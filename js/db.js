@@ -23,7 +23,7 @@ const DB = {
     // Without !left PostgREST defaults to INNER JOIN → drops all standalone questions → 0 rows.
     let query = sbClient
       .from('questions')
-      .select('*, sets!left(passage, instruction, topic, subject)')
+      .select('*, sets!left(passage, instruction, topic, subject, has_image, image_url)')
       .eq('is_active', true)
       .limit(50);
 
@@ -47,12 +47,23 @@ const DB = {
   _attachPassage(q) {
     if (!q.set_id) return q;
     const set = DEMO_SETS.find(s => s.id === q.set_id);
-    return set ? { ...q, _passage: set.passage, _instruction: set.instruction } : q;
+    if (!set) return q;
+    const res = { ...q, _passage: set.passage, _instruction: set.instruction };
+    if (set.has_image) {
+      res.has_image = set.has_image;
+      res.image_url = set.image_url;
+    }
+    return res;
   },
 
   _attachPassageFromJoin(q) {
     if (!q.sets) return q;
-    return { ...q, _passage: q.sets.passage, _instruction: q.sets.instruction };
+    const res = { ...q, _passage: q.sets.passage, _instruction: q.sets.instruction };
+    if (q.sets.has_image) {
+      res.has_image = q.sets.has_image;
+      res.image_url = q.sets.image_url;
+    }
+    return res;
   },
 
   _applyFilters(qs, filters) {
@@ -324,6 +335,68 @@ const DB = {
     }
   },
 
+  async markErrorFixedByQuestionId(qId) {
+    const logs = await this.getErrorLogs({ status: 'pending' });
+    const pendingLog = logs.find(l => l.question_id === qId);
+    if (pendingLog) {
+      await this.markErrorFixed(pendingLog.id);
+    }
+  },
+
+  async getQuestionsByIds(ids) {
+    if (!ids || !ids.length) return [];
+    if (USE_DEMO) {
+      return DEMO_QUESTIONS.filter(q => ids.includes(q.id)).map(q => this._attachPassage(q));
+    }
+    try {
+      const { data, error } = await sbClient
+        .from('questions')
+        .select('*, sets!left(passage, instruction, topic, subject, has_image, image_url)')
+        .in('id', ids)
+        .eq('is_active', true);
+      if (error) throw error;
+      return (data || []).map(q => this._attachPassageFromJoin(q));
+    } catch (e) { return []; }
+  },
+
+  async getMistakeQuestions() {
+    const logs = await this.getErrorLogs({ status: 'pending' });
+    const pendingIds = [...new Set(logs.map(l => l.question_id))];
+    if (pendingIds.length === 0) return [];
+    return await this.getQuestionsByIds(pendingIds);
+  },
+
+  async getFallbackFixQuestions() {
+    const attempts = await this.getAttempts();
+    if (!attempts || attempts.length === 0) {
+      // Fallback to random normal questions
+      return await this.getQuestions({ limit: 20 });
+    }
+
+    // Group by topic, count wrong
+    const topicStats = {};
+    attempts.forEach(a => {
+      if (!a.topic) return;
+      if (!topicStats[a.topic]) topicStats[a.topic] = 0;
+      if (!a.is_correct) topicStats[a.topic]++;
+    });
+
+    let maxTopic = null;
+    let maxWrong = -1;
+    for (const [topic, wrongCount] of Object.entries(topicStats)) {
+      if (wrongCount > maxWrong) {
+        maxWrong = wrongCount;
+        maxTopic = topic;
+      }
+    }
+
+    if (!maxTopic || maxWrong === 0) {
+      return await this.getQuestions({ limit: 20 });
+    }
+
+    return await this.getQuestionsByTopic(maxTopic, 20);
+  },
+
   async getPendingErrorCount() {
     const logs = await this.getErrorLogs({ status: 'pending' });
     return logs.length;
@@ -352,7 +425,7 @@ const DB = {
     try {
       const { data, error } = await sbClient
         .from('questions')
-        .select('*, sets!left(passage, instruction, topic, subject)')  // !left = LEFT JOIN
+        .select('*, sets!left(passage, instruction, topic, subject, has_image, image_url)')  // !left = LEFT JOIN
         .eq('is_active', true)
         .eq('topic', topic)
         .limit(limit * 3);

@@ -2,6 +2,9 @@
 // AUTH.JS — Phase 2: demo persistence + trial/paid init
 // ============================================================
 
+// Email format regex — basic RFC-compatible check
+const _EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 const Auth = {
   currentUser: null,
   _initialized: false,
@@ -52,6 +55,7 @@ const Auth = {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
     if (!email || !password) { this.showError('Please fill in all fields'); return; }
+    if (!_EMAIL_RE.test(email)) { this.showError('Enter a valid email'); return; }
     showLoading('Logging in...');
     try {
       const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
@@ -59,10 +63,12 @@ const Auth = {
       this.currentUser = data.user;
       this.onLogin(data.user);
     } catch (err) {
-      let msg = err.message || 'Login failed';
-      if (msg.includes('Email not confirmed')) msg = '⚠️ Email not confirmed. Go to Supabase → Auth → Settings → disable "Enable email confirmations".';
-      else if (msg.includes('Invalid login credentials')) msg = 'Wrong email or password.';
-      this.showError(msg);
+      const msg = err.message || '';
+      if (msg.includes('Invalid login credentials') || msg.includes('invalid_credentials')) {
+        this.showError('Invalid credentials. Check your email and password.');
+      } else {
+        this.showError('Login failed. Please try again.');
+      }
     } finally { hideLoading(); }
   },
 
@@ -72,21 +78,36 @@ const Auth = {
     const email = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value;
     if (!name || !email || !password) { this.showError('Please fill in all fields'); return; }
+    if (!_EMAIL_RE.test(email)) { this.showError('Enter a valid email'); return; }
     if (password.length < 6) { this.showError('Password must be at least 6 characters'); return; }
     showLoading('Creating account...');
     try {
       const { data, error } = await sbClient.auth.signUp({ email, password, options: { data: { full_name: name } } });
       if (error) throw error;
+
       if (data.session) {
+        // Session returned — auto-login immediately
         this.currentUser = data.user;
-        // Init trial on new signup
         DB.initTrial();
         this.onLogin(data.user);
       } else {
-        this.showError('✅ Account created! Confirm your email, or disable email confirmation in Supabase Auth settings.');
+        // No session (email confirmation might be on in Supabase).
+        // Attempt immediate sign-in so the user isn't blocked.
+        const { data: loginData, error: loginErr } = await sbClient.auth.signInWithPassword({ email, password });
+        if (loginErr) throw loginErr;
+        this.currentUser = loginData.user;
+        DB.initTrial();
+        this.onLogin(loginData.user);
       }
     } catch (err) {
-      this.showError(err.message || 'Signup failed');
+      const msg = err.message || '';
+      if (msg.includes('already registered') || msg.includes('already been registered')) {
+        this.showError('This email is already registered. Try logging in instead.');
+      } else if (msg.includes('Email not confirmed')) {
+        this.showError('Account created but email confirmation is required in Supabase. Disable it in Auth → Settings.');
+      } else {
+        this.showError('Signup failed. Please try again.');
+      }
     } finally { hideLoading(); }
   },
 
@@ -182,7 +203,7 @@ const Auth = {
     document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
     document.querySelector('.auth-tab[data-tab="login"]').classList.add('active');
     document.getElementById('tab-login').classList.add('active');
-    
+
     Auth.init(); // Ensure event listeners exist if they were skipped on auto-login
     showToast('Logged out');
   },

@@ -70,13 +70,38 @@ const TestMode = {
     document.getElementById('test-progress-fill').style.width = ((this.currentIdx + 1) / this.questions.length * 100) + '%';
     document.getElementById('test-q-subject').textContent = q.subject || 'General';
     document.getElementById('test-q-topic').textContent = q.topic || 'General';
-    document.getElementById('test-question-text').textContent = q.question;
+    // Use renderMath so LaTeX and line-breaks render correctly
+    if (typeof renderMath === 'function') {
+      renderMath(document.getElementById('test-question-text'), q.question);
+    } else {
+      document.getElementById('test-question-text').textContent = q.question;
+    }
 
-    // Passage
+    // Passage / instruction block
     const passageWrap = document.getElementById('test-passage-context');
-    if (q._passage) {
+    const passageTextEl = document.getElementById('test-passage-text');
+    if (q._passage || q._instruction) {
       passageWrap.classList.remove('hidden');
-      document.getElementById('test-passage-text').textContent = q._passage;
+      let passageHTML = '';
+      if (q._instruction) {
+        passageHTML += `<div class="passage-instruction">${typeof formatText === 'function' ? formatText(q._instruction) : q._instruction}</div>`;
+      }
+      if (q._passage) {
+        passageHTML += `<div class="passage-body" id="test-passage-text"></div>`;
+      }
+      // Passage image
+      if (q.has_image && q.image_url) {
+        const imgSrc = q.image_url.startsWith('http') ? q.image_url
+          : (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + q.image_url;
+        passageHTML += `<div class="passage-image-wrap"><img class="passage-img" src="${imgSrc}" alt="Passage image" loading="lazy" /></div>`;
+      }
+      document.getElementById('test-passage-context').innerHTML =
+        '<div class="passage-context-label">📄 Passage / Data</div>' + passageHTML;
+      if (q._passage) {
+        const bodyEl = document.getElementById('test-passage-text');
+        if (typeof renderMath === 'function') renderMath(bodyEl, q._passage);
+        else bodyEl.textContent = q._passage;
+      }
     } else {
       passageWrap.classList.add('hidden');
     }
@@ -100,7 +125,12 @@ const TestMode = {
         btn.className = 'option-btn';
         btn.dataset.letter = letter;
         if (saved && saved.option === letter) btn.classList.add('selected');
-        btn.innerHTML = `<span class="option-label">${letter}</span><span>${text}</span>`;
+        btn.innerHTML = `<span class="option-label">${letter}</span><span class="option-text"></span>`;
+        if (typeof renderMath === 'function') {
+          renderMath(btn.querySelector('.option-text'), text);
+        } else {
+          btn.querySelector('.option-text').textContent = text;
+        }
         btn.addEventListener('click', () => {
           this.answers[q.id] = { option: letter };
           document.querySelectorAll('#test-options-grid .option-btn').forEach(b => b.classList.remove('selected'));
