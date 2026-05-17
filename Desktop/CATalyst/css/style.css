@@ -26,6 +26,16 @@
   --font-body: 'DM Sans', sans-serif;
   --font-mono: 'DM Mono', monospace;
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  /* V2 fix-mode phase colors */
+  --fix-p1-color: #f44c60;
+  --fix-p1-bg: rgba(244, 76, 96, 0.07);
+  --fix-p1-border: rgba(244, 76, 96, 0.3);
+  --fix-p2-color: #7c6af7;
+  --fix-p2-bg: rgba(124, 106, 247, 0.07);
+  --fix-p2-border: rgba(124, 106, 247, 0.3);
+  --orange: #f59e0b;
+  --orange-bg: rgba(245, 158, 11, 0.1);
+  --orange-border: rgba(245, 158, 11, 0.35);
 }
 
 [data-theme="light"] {
@@ -2936,4 +2946,104 @@ body {
 .btn-end-practice:hover {
   background: rgba(244, 76, 96, 0.1);
   border-color: var(--red);
+}
+
+/* ============================================================
+   V2 SYSTEM — Phase A CSS additions
+   All classes below are new. Nothing above is modified.
+   ============================================================ */
+
+/* ── Wrong state: applied to #question-card on wrong answer ── */
+.question-card.wrong-state {
+  border-color: var(--fix-p1-border);
+  background: var(--fix-p1-bg);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+/* ── Fix Mode Phase 1 (red accent) ─────────────────────────── */
+/* Applied to #practice-area. Overrides accent-colored elements */
+.fix-mode-p1 .q-counter {
+  color: var(--fix-p1-color);
+}
+.fix-mode-p1 .btn-primary {
+  background: var(--fix-p1-color);
+}
+.fix-mode-p1 .btn-primary:hover {
+  background: #e03550;
+}
+.fix-mode-p1 .option-btn.correct {
+  border-color: var(--green);
+  background: rgba(62, 207, 122, 0.12);
+}
+.fix-mode-p1 .option-btn.wrong {
+  border-color: var(--fix-p1-color);
+  background: rgba(244, 76, 96, 0.12);
+}
+
+/* ── Fix Mode Phase 2 (blue/accent — same as default) ──────── */
+/* Explicit class for clarity; visually same as normal practice */
+.fix-mode-p2 .q-counter {
+  color: var(--fix-p2-color);
+}
+
+/* ── Diagnostic callout box (S5 session complete) ───────────── */
+/* "🔥 This is why your score is stuck." */
+.diagnostic-box {
+  background: var(--orange-bg);
+  border: 1px solid var(--orange-border);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1.1rem;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--orange);
+  margin: 1rem 0;
+  letter-spacing: 0.01em;
+}
+
+/* ── Session error type pills (S5 wrong answer breakdown) ───── */
+.session-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 0.75rem 0;
+}
+.session-error-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+}
+.session-error-pill.calculation,
+.session-error-pill.silly {
+  border-color: var(--fix-p1-border);
+  color: var(--fix-p1-color);
+  background: var(--fix-p1-bg);
+}
+.session-error-pill.concept_gap,
+.session-error-pill.conceptual {
+  border-color: rgba(124, 106, 247, 0.3);
+  color: var(--accent2);
+  background: var(--fix-p2-bg);
+}
+.session-error-pill.misread {
+  border-color: rgba(74, 158, 255, 0.3);
+  color: var(--blue);
+  background: rgba(74, 158, 255, 0.07);
+}
+.session-error-pill.guess {
+  border-color: rgba(245, 166, 35, 0.3);
+  color: var(--yellow);
+  background: rgba(245, 166, 35, 0.07);
+}
+.session-error-pill.unclassified {
+  border-color: var(--border);
+  color: var(--text3);
 }
