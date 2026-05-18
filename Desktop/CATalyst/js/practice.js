@@ -108,6 +108,10 @@ const Practice = {
   _sessionWrong: 0,
   _sessionTimes: [],
   _isFixSession: false,       // true when launched by Fix My Mistakes
+  _fixPhase: 1,               // 1 = fixing past mistakes (red), 2 = strengthen weak area (blue)
+  _weakTopic: '',             // weakest topic shown in S8 transition
+  _transitionTimer: null,     // auto-advance timer for S8
+  _fixedInSession: 0,         // Phase 1 correct answers = mistakes actually fixed
   _hasAutoLoaded: false,      // auto-load once per session
 
   async init() {
@@ -119,6 +123,8 @@ const Practice = {
     document.getElementById('filter-topic').addEventListener('change', () => this.saveState());
     document.getElementById('filter-difficulty').addEventListener('change', () => this.saveState());
     document.getElementById('load-practice-btn').addEventListener('click', () => this.loadQuestions());
+    const filterToggleBtn = document.getElementById('filter-toggle-btn');
+    if (filterToggleBtn) filterToggleBtn.addEventListener('click', () => this.toggleFilters());
     document.getElementById('prev-btn').addEventListener('click', () => this.navigate(-1));
     document.getElementById('next-btn').addEventListener('click', () => this.navigate(1));
     document.getElementById('end-practice-btn').addEventListener('click', () => this.endPractice());
@@ -160,6 +166,16 @@ const Practice = {
     // Report modal
     document.getElementById('save-report-btn').addEventListener('click', () => this._saveReport());
     document.getElementById('cancel-report-btn').addEventListener('click', () => document.getElementById('report-modal').classList.add('hidden'));
+
+    // S8 transition buttons
+    const ftContinue = document.getElementById('ft-continue');
+    const ftSkip = document.getElementById('ft-skip');
+    if (ftContinue) ftContinue.addEventListener('click', () => { clearTimeout(this._transitionTimer); this._startPhase2(); });
+    if (ftSkip) ftSkip.addEventListener('click', () => { clearTimeout(this._transitionTimer); document.getElementById('fix-transition').classList.add('hidden'); this._showFixSessionComplete(); });
+
+    // S10 fix session complete CTA
+    const fscCta = document.getElementById('fsc-cta');
+    if (fscCta) fscCta.addEventListener('click', () => { document.getElementById('fix-session-complete').classList.add('hidden'); this.clearMemory(); App.navigate('dashboard'); });
 
     // Session summary
     document.getElementById('ss-view-errors').addEventListener('click', () => { App.navigate('errorlog'); });
@@ -229,13 +245,34 @@ const Practice = {
     this.answered = false;
     this._startTimer();
 
-    // Mode Badge
+    // Fix Mode banner + phase class
     const badgeEl = document.getElementById('practice-mode-badge');
+    const practiceArea = document.getElementById('practice-area');
+    const wrongBeforeLabel = document.getElementById('wrong-before-label');
     if (this._isFixSession) {
-      badgeEl.textContent = this._fixModeLabel || 'Fix Mode';
+      if (this._fixPhase === 1) {
+        badgeEl.textContent = `⚡ Fix Mode — fixing your past mistakes · ${this.currentIdx + 1}/${this.questions.length}`;
+        practiceArea.classList.add('fix-mode-p1');
+        practiceArea.classList.remove('fix-mode-p2');
+        if (wrongBeforeLabel) {
+          wrongBeforeLabel.textContent = '⚠️ You got this wrong before';
+          wrongBeforeLabel.classList.remove('hidden');
+        }
+      } else {
+        const topic = this._weakTopic || 'topic';
+        badgeEl.textContent = `⚡ Strengthening: ${topic} — new questions to build the skill · ${this.currentIdx + 1}/${this.questions.length}`;
+        practiceArea.classList.add('fix-mode-p2');
+        practiceArea.classList.remove('fix-mode-p1');
+        if (wrongBeforeLabel) {
+          wrongBeforeLabel.textContent = `⚡ Strengthening: ${topic}`;
+          wrongBeforeLabel.classList.remove('hidden');
+        }
+      }
       badgeEl.classList.remove('hidden');
     } else {
       badgeEl.classList.add('hidden');
+      practiceArea.classList.remove('fix-mode-p1', 'fix-mode-p2');
+      if (wrongBeforeLabel) wrongBeforeLabel.classList.add('hidden');
     }
 
     // Meta bar
@@ -314,7 +351,7 @@ const Practice = {
     } else {
       optGrid.style.display = '';
       titaArea.classList.add('hidden');
-      ['A', 'B', 'C', 'D'].forEach(letter => {
+      ['A', 'B', 'C', 'D', 'E'].forEach(letter => {
         const text = q['option_' + letter.toLowerCase()];
         if (!text) return;
         const btn = document.createElement('button');
@@ -333,6 +370,9 @@ const Practice = {
     document.getElementById('btn-hint-toggle').textContent = '💡 Show Hint';
     document.getElementById('hint-toggle-pre').classList.remove('hidden');
     document.getElementById('note-area').classList.add('hidden');
+    document.getElementById('question-card').classList.remove('wrong-state');
+    const wrongBanner = document.getElementById('wrong-banner');
+    if (wrongBanner) wrongBanner.classList.add('hidden');
     document.getElementById('btn-bookmark').classList.toggle('active', DB.isBookmarked(q.id));
     document.getElementById('btn-difficult').classList.toggle('active', DB.isDifficult(q.id));
 
@@ -428,6 +468,10 @@ const Practice = {
     const badge = document.getElementById('answer-result-badge');
     badge.textContent = isCorrect ? '✓ Correct!' : '✗ Wrong';
     badge.className = 'correct-badge' + (isCorrect ? '' : ' wrong-badge');
+
+    document.getElementById('question-card').classList.toggle('wrong-state', !isCorrect);
+    const wrongBanner = document.getElementById('wrong-banner');
+    if (wrongBanner) wrongBanner.classList.toggle('hidden', isCorrect);
     document.getElementById('correct-ans-display').textContent = correctAnswer;
 
     // Reset solution toggle state: hidden, button text reset
@@ -490,7 +534,13 @@ const Practice = {
     const newIdx = this.currentIdx + dir;
     if (newIdx < 0) return;
     if (newIdx >= this.questions.length) {
-      this._showSessionSummary();
+      if (this._isFixSession && this._fixPhase === 1) {
+        this._showFixTransition();
+      } else if (this._isFixSession) {
+        this._showFixSessionComplete();
+      } else {
+        this._showSessionSummary();
+      }
       return;
     }
     this.currentIdx = newIdx;
@@ -508,8 +558,14 @@ const Practice = {
       ? Math.round(this._sessionTimes.reduce((a, b) => a + b, 0) / this._sessionTimes.length)
       : 0;
 
-    document.getElementById('ss-score').textContent = `${this._sessionCorrect} / ${total}`;
-    document.getElementById('ss-acc').textContent = `Accuracy: ${acc}%`;
+    document.getElementById('ss-score').innerHTML =
+      `<span class="ss-correct">${this._sessionCorrect} correct</span>` +
+      `<span class="ss-dot"> · </span>` +
+      `<span class="ss-wrong-num">${this._sessionWrong} wrong</span>`;
+    document.getElementById('ss-acc').textContent = `${acc}% accuracy`;
+
+    const diag = document.getElementById('ss-diagnostic');
+    if (diag) diag.classList.toggle('hidden', this._sessionWrong === 0);
 
     document.getElementById('ss-stats').innerHTML = `
       <div class="ss-stat"><div class="ss-stat-val" style="color:var(--green)">${this._sessionCorrect}</div><div class="ss-stat-label">Correct</div></div>
@@ -520,11 +576,90 @@ const Practice = {
     document.getElementById('session-summary').scrollIntoView({ behavior: 'smooth' });
   },
 
+  async _showFixTransition() {
+    clearInterval(this._timerInterval);
+    document.getElementById('practice-area').classList.add('hidden');
+    this._fixedInSession = this._sessionCorrect; // lock in Phase 1 fixes
+
+    const insights = await DB.getErrorInsights();
+    const topic = (insights.sortedTopics && insights.sortedTopics[0])
+      ? insights.sortedTopics[0][0]
+      : (insights.weakestTopic || 'your weak area');
+    this._weakTopic = topic;
+
+    const topicEl = document.getElementById('ft-topic-name');
+    if (topicEl) topicEl.textContent = topic;
+
+    document.getElementById('fix-transition').classList.remove('hidden');
+    App.navigate('practice');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Auto-advance after 2.5s if no interaction
+    this._transitionTimer = setTimeout(() => this._startPhase2(), 2500);
+  },
+
+  async _startPhase2() {
+    clearTimeout(this._transitionTimer);
+    document.getElementById('fix-transition').classList.add('hidden');
+    this._fixPhase = 2;
+
+    showLoading('Loading strengthening questions...');
+    try {
+      const filters = { subject: 'all', topic: this._weakTopic, difficulty: 'all' };
+      let questions = await DB.getQuestions(filters);
+      questions = await DB.sortBySmartQueue(questions);
+      if (questions.length) {
+        this.questions = questions.slice(0, 5);
+        this.currentIdx = 0;
+        this._sessionCorrect = 0;
+        this._sessionWrong = 0;
+        // _sessionTimes intentionally NOT reset — accumulates for total session time in S10
+        document.getElementById('session-summary').classList.add('hidden');
+        document.getElementById('practice-area').classList.remove('hidden');
+        this.renderQuestion();
+      } else {
+        this._showFixSessionComplete();
+      }
+    } catch (e) {
+      this._showFixSessionComplete();
+    } finally {
+      hideLoading();
+    }
+  },
+
+  async _showFixSessionComplete() {
+    clearInterval(this._timerInterval);
+    document.getElementById('practice-area').classList.add('hidden');
+    document.getElementById('fix-transition').classList.add('hidden');
+
+    const fixed = this._fixedInSession || this._sessionCorrect;
+    const pending = await DB.getPendingErrorCount();
+    const totalSecs = this._sessionTimes.reduce((a, b) => a + b, 0);
+    const totalMin = Math.max(1, Math.round(totalSecs / 60));
+
+    document.getElementById('fsc-fixed').textContent = fixed;
+    document.getElementById('fsc-remain').textContent = `${pending} still remain.`;
+    document.getElementById('fsc-stats').innerHTML = `
+      <div class="fsc-stat"><div class="fsc-stat-val fsc-green">${fixed}</div><div class="fsc-stat-label">Fixed today</div></div>
+      <div class="fsc-stat"><div class="fsc-stat-val fsc-red">${pending}</div><div class="fsc-stat-label">Still pending</div></div>
+      <div class="fsc-stat"><div class="fsc-stat-val">${totalMin}m</div><div class="fsc-stat-label">Session time</div></div>
+    `;
+
+    document.getElementById('fix-session-complete').classList.remove('hidden');
+    App.navigate('practice');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  },
+
   // End practice mid-session
   endPractice() {
     const answered = this._sessionCorrect + this._sessionWrong;
     if (answered > 0) {
-      this._showSessionSummary();
+      if (this._isFixSession) {
+        if (this._fixPhase === 1) this._fixedInSession = this._sessionCorrect;
+        this._showFixSessionComplete();
+      } else {
+        this._showSessionSummary();
+      }
     } else {
       clearInterval(this._timerInterval);
       document.getElementById('practice-area').classList.add('hidden');
@@ -584,8 +719,11 @@ const Practice = {
       question_text: q.question
     });
 
-    // Hide panel after brief highlight so user sees what was saved
-    setTimeout(() => this._hideInlineErrorTag(), 350);
+    // Hide panel + auto-advance after brief highlight
+    setTimeout(() => {
+      this._hideInlineErrorTag();
+      this.navigate(1);
+    }, 200);
 
     // Silent sync
     this._refreshErrorBadge();
@@ -607,6 +745,15 @@ const Practice = {
     if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline' : 'none'; }
   },
 
+  toggleFilters() {
+    const panel = document.getElementById('practice-filters');
+    const btn = document.getElementById('filter-toggle-btn');
+    if (!panel) return;
+    const willCollapse = !panel.classList.contains('collapsed');
+    panel.classList.toggle('collapsed', willCollapse);
+    if (btn) btn.classList.toggle('is-open', !willCollapse);
+  },
+
   // ── FIX MY MISTAKES: load a targeted session ────────────────
 
   loadFixSession(questions, modeLabel = 'Fix Mode') {
@@ -615,6 +762,7 @@ const Practice = {
       return;
     }
     this._isFixSession = true;
+    this._fixPhase = 1;
     this._fixModeLabel = modeLabel;
     this.questions = questions;
     this._sessionCorrect = 0;
@@ -623,10 +771,27 @@ const Practice = {
     this.currentIdx = 0;
     document.getElementById('practice-empty').classList.add('hidden');
     document.getElementById('session-summary').classList.add('hidden');
+    document.getElementById('practice-area').classList.add('hidden');
+    App.navigate('practice');
+    this._showFixModeEntry();
+    showToast('Fix session loaded! Let\'s go 💪', 'success');
+  },
+
+  _showFixModeEntry() {
+    const el = document.getElementById('fix-mode-entry');
+    if (!el) {
+      document.getElementById('practice-area').classList.remove('hidden');
+      this.renderQuestion();
+      return;
+    }
+    el.classList.remove('hidden');
+  },
+
+  _startFixSession() {
+    const el = document.getElementById('fix-mode-entry');
+    if (el) el.classList.add('hidden');
     document.getElementById('practice-area').classList.remove('hidden');
     this.renderQuestion();
-    App.navigate('practice');
-    showToast('Fix session loaded! Let\'s go 💪', 'success');
   },
 
   // ── LEGACY ERROR MODAL (preserved, not triggered by default) ─
@@ -771,14 +936,25 @@ const Practice = {
     this._sessionWrong = 0;
     this._sessionTimes = [];
     this._isFixSession = false;
+    this._fixPhase = 1;
+    this._weakTopic = '';
+    this._fixedInSession = 0;
+    clearTimeout(this._transitionTimer);
+    this._transitionTimer = null;
     this._hasAutoLoaded = false;
 
     // Reset visible UI — use correct IDs from index.html
     const practiceArea = document.getElementById('practice-area');
     const sessionSummary = document.getElementById('session-summary');
     const practiceEmpty = document.getElementById('practice-empty');
-    if (practiceArea) practiceArea.classList.add('hidden');
+    if (practiceArea) { practiceArea.classList.add('hidden'); practiceArea.classList.remove('fix-mode-p1', 'fix-mode-p2'); }
     if (sessionSummary) sessionSummary.classList.add('hidden');
     if (practiceEmpty) practiceEmpty.classList.add('hidden');
+    const fixTransition = document.getElementById('fix-transition');
+    if (fixTransition) fixTransition.classList.add('hidden');
+    const fixModeEntry = document.getElementById('fix-mode-entry');
+    if (fixModeEntry) fixModeEntry.classList.add('hidden');
+    const fixSC = document.getElementById('fix-session-complete');
+    if (fixSC) fixSC.classList.add('hidden');
   }
 };

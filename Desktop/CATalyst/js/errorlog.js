@@ -4,6 +4,25 @@
 // Improved empty state · Fix My Mistakes flow · Status system
 // ============================================================
 
+const EL_TYPE_LABELS = {
+  calculation:  'Silly mistakes',
+  silly:        'Silly mistakes',
+  concept_gap:  'Concept gaps',
+  conceptual:   'Concept gaps',
+  misread:      'Misreads',
+  guess:        'Guessing',
+  time:         'Guessing',
+  unclassified: 'Other mistakes',
+};
+
+const EL_COST_MAP = {
+  calculation:  { cost: '~8–12 marks',  gain: '+6–10 marks' },
+  concept_gap:  { cost: '~10–15 marks', gain: '+8–12 marks' },
+  misread:      { cost: '~6–10 marks',  gain: '+5–8 marks'  },
+  guess:        { cost: '~4–8 marks',   gain: '+3–6 marks'  },
+  unclassified: { cost: '~4–8 marks',   gain: '+3–6 marks'  },
+};
+
 const ErrorLog = {
 
   _activeTypeFilter: null,  // set when clicking a summary card
@@ -58,10 +77,11 @@ const ErrorLog = {
     try {
       const allLogs = await DB.getErrorLogs({});
       const filteredLogs = this._getFilteredLogs(allLogs);
-      this._renderCTABanner(filteredLogs);
-      await this._renderInsightSection(filteredLogs);
-      this._renderSummaryCards(filteredLogs);
+      await this._renderBiggestIssue(filteredLogs);
+      this._renderSummaryCards(allLogs);
+      this._renderFilterPills();
       this._renderLogList(allLogs);
+      this._renderFooterBar(allLogs);
     } catch (e) {
       if (!silent) showToast('Error loading error logs', 'error');
     } finally {
@@ -69,126 +89,105 @@ const ErrorLog = {
     }
   },
 
-  _renderCTABanner(logs) {
-    const pending = logs.filter(l => !l.reattempt_status).length;
-    const sub = document.getElementById('el-cta-sub');
-    if (sub) {
-      sub.textContent = pending > 0
-        ? `You have ${pending} unresolved mistake${pending > 1 ? 's' : ''} — fix your weakest topic now`
-        : 'Start practicing — we\'ll track your weak areas';
-    }
-  },
+  async _renderBiggestIssue(logs) {
+    const block = document.getElementById('el-biggest-issue');
+    if (!block) return;
 
-  async _renderInsightSection(logs) {
-    if (!logs.length) {
-      document.getElementById('el-insight-section').style.display = 'none';
-      return;
-    }
-    const pendingLogs = logs.filter(l => !l.reattempt_status);
-    const insights = await DB.getErrorInsights(pendingLogs);
-    const section = document.getElementById('el-insight-section');
-    section.style.display = 'flex';
+    const pending = logs.filter(l => !l.reattempt_status);
+    if (!pending.length) { block.classList.add('hidden'); return; }
 
-    const typeLabels = {
-      concept_gap: '🧠 Concept Gap',
-      calculation: '🔢 Calculation Error',
-      misread: '👁️ Misread Question',
-      guess: '🎲 Guess',
-      unclassified: '❓ Unclassified',
-      // legacy keys (backward compat)
-      conceptual: '🧠 Conceptual',
-      silly: '🤦 Silly Mistake',
-      time: '⏱️ Time Pressure',
-    };
+    const insights = await DB.getErrorInsights(pending);
+    const type = insights.mostCommonError;
+    if (!type) { block.classList.add('hidden'); return; }
 
-    const topicEl = document.getElementById('el-insight-topic-val');
-    const errorEl = document.getElementById('el-insight-error-val');
+    // Normalise legacy keys to canonical keys for cost lookup
+    const canonical = { silly: 'calculation', conceptual: 'concept_gap', time: 'guess' };
+    const costKey = canonical[type] || type;
 
-    if (topicEl) {
-      topicEl.textContent = insights.weakestTopic
-        ? `${insights.weakestTopic} (${insights.topicCounts[insights.weakestTopic]} mistakes)`
-        : '—';
-    }
-    if (errorEl) {
-      errorEl.textContent = insights.mostCommonError
-        ? `${typeLabels[insights.mostCommonError] || insights.mostCommonError}`
-        : '—';
-    }
+    const label = EL_TYPE_LABELS[type] || type;
+    const { cost, gain } = EL_COST_MAP[costKey] || { cost: '~4–8 marks', gain: '+3–6 marks' };
+
+    document.getElementById('el-bi-type').textContent = label;
+    document.getElementById('el-bi-cost').textContent = `Cost: ${cost} — fix this = ${gain}`;
+
+    block.classList.remove('hidden');
   },
 
   _renderSummaryCards(logs) {
-    const types = {
-      concept_gap: { icon: '🧠', label: 'Concept Gap', count: 0, color: 'concept_gap' },
-      calculation: { icon: '🔢', label: 'Calculation Error', count: 0, color: 'calculation' },
-      misread: { icon: '👁️', label: 'Misread', count: 0, color: 'misread' },
-      guess: { icon: '🎲', label: 'Guess', count: 0, color: 'guess' },
-      unclassified: { icon: '❓', label: 'Unclassified', count: 0, color: 'unclassified' },
-      // Legacy keys
-      conceptual: { icon: '🧠', label: 'Conceptual', count: 0, color: 'concept_gap' },
-      silly: { icon: '🤦', label: 'Silly Mistake', count: 0, color: 'calculation' },
-      time: { icon: '⏱️', label: 'Time Pressure', count: 0, color: 'guess' },
-    };
-
-    logs.forEach(l => { if (types[l.error_type]) types[l.error_type].count++; });
-
     const pending = logs.filter(l => !l.reattempt_status).length;
     const fixed = logs.filter(l => l.reattempt_status).length;
 
-    // Dedupe (combine legacy + new keys for display)
-    const displayTypes = [
-      { key: 'concept_gap', ...types.concept_gap, extraCount: types.conceptual.count },
-      { key: 'calculation', ...types.calculation, extraCount: types.silly.count },
-      { key: 'misread', ...types.misread, extraCount: 0 },
-      { key: 'guess', ...types.guess, extraCount: types.time.count },
-      { key: 'unclassified', ...types.unclassified, extraCount: 0 },
-    ];
-
     const grid = document.getElementById('error-summary-grid');
     grid.innerHTML = `
-      ${displayTypes.map(t => `
-        <div class="es-card ${t.color} es-card-clickable" data-type="${t.key}" title="Filter by ${t.label}">
-          <div class="es-icon">${t.icon}</div>
-          <div class="es-count">${t.count + t.extraCount}</div>
-          <div class="es-label">${t.label}</div>
-        </div>
-      `).join('')}
-      <div class="es-card" style="border-color:rgba(244,76,96,0.4)">
-        <div class="es-icon">🔁</div>
-        <div class="es-count" style="color:var(--red)">${pending}</div>
-        <div class="es-label">Pending</div>
+      <div class="el-stat-box el-stat-pending">
+        <div class="el-stat-num">${pending}</div>
+        <div class="el-stat-label">Pending</div>
       </div>
-      <div class="es-card" style="border-color:rgba(62,207,122,0.4)">
-        <div class="es-icon">✅</div>
-        <div class="es-count" style="color:var(--green)">${fixed}</div>
-        <div class="es-label">Fixed</div>
+      <div class="el-stat-box el-stat-fixed">
+        <div class="el-stat-num">${fixed}</div>
+        <div class="el-stat-label">Fixed</div>
       </div>
-      <div class="es-card">
-        <div class="es-icon">📋</div>
-        <div class="es-count">${logs.length}</div>
-        <div class="es-label">Total Logged</div>
+      <div class="el-stat-box el-stat-total">
+        <div class="el-stat-num">${logs.length}</div>
+        <div class="el-stat-label">Total Logged</div>
       </div>
     `;
+  },
 
-    // Make type cards clickable for filtering
-    grid.querySelectorAll('.es-card-clickable').forEach(card => {
-      card.addEventListener('click', () => {
-        const type = card.dataset.type;
-        if (this._activeTypeFilter === type) {
-          // Toggle off
-          this._activeTypeFilter = null;
-          card.classList.remove('es-card-active');
-        } else {
-          this._activeTypeFilter = type;
-          grid.querySelectorAll('.es-card-clickable').forEach(c => c.classList.remove('es-card-active'));
-          card.classList.add('es-card-active');
-        }
-        // Sync dropdown
-        const dropdown = document.getElementById('el-type-filter');
-        if (dropdown) dropdown.value = this._activeTypeFilter || 'all';
+  _renderFilterPills() {
+    const container = document.getElementById('el-filter-pills');
+    if (!container) return;
+
+    const typeFilter = this._activeTypeFilter || document.getElementById('el-type-filter').value;
+    const statusFilter = document.getElementById('el-status-filter').value;
+
+    const pills = [
+      { label: 'All',     type: 'all',         status: 'all' },
+      { label: 'Silly',   type: 'calculation',  status: 'all' },
+      { label: 'Concept', type: 'concept_gap',  status: 'all' },
+      { label: 'Misread', type: 'misread',      status: 'all' },
+      { label: 'Guess',   type: 'guess',        status: 'all' },
+      { label: 'Pending', type: 'all',          status: 'pending' },
+    ];
+
+    container.innerHTML = pills.map(p => {
+      const isActive = p.type === typeFilter && p.status === statusFilter
+        || (p.label === 'All' && typeFilter === 'all' && statusFilter === 'all')
+        || (p.label === 'Pending' && statusFilter === 'pending');
+      return `<button class="el-pill${isActive ? ' active' : ''}" data-type="${p.type}" data-status="${p.status}">${p.label}</button>`;
+    }).join('');
+
+    // Deduplicate "All" active when Pending is also active
+    const activePills = container.querySelectorAll('.el-pill.active');
+    if (activePills.length > 1) activePills[0].classList.remove('active');
+
+    container.querySelectorAll('.el-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = btn.dataset.type;
+        const s = btn.dataset.status;
+        this._activeTypeFilter = t === 'all' ? null : t;
+        document.getElementById('el-type-filter').value = t;
+        document.getElementById('el-status-filter').value = s;
         this.saveState();
         this.render();
       });
     });
+  },
+
+  _renderFooterBar(logs) {
+    const bar = document.getElementById('el-footer-bar');
+    const msg = document.getElementById('el-footer-msg');
+    const btn = document.getElementById('el-footer-fix-btn');
+    if (!bar) return;
+
+    const pending = logs.filter(l => !l.reattempt_status).length;
+    if (pending > 0) {
+      msg.textContent = `${pending} mistake${pending === 1 ? '' : 's'} still unresolved. Don't let them repeat.`;
+      bar.classList.remove('hidden');
+      if (btn) btn.onclick = () => ErrorLog.fixMyMistakes();
+    } else {
+      bar.classList.add('hidden');
+    }
   },
 
   _renderLogList(allLogs) {
@@ -264,7 +263,7 @@ const ErrorLog = {
         </div>
         ${log.reattempt_status
         ? `<span class="el-fixed-badge">✓ Fixed</span>`
-        : `<button class="el-fix-btn" onclick="ErrorLog.markFixed('${log.id}')">Mark as Fixed ✓</button>`
+        : `<button class="el-fix-pill" onclick="ErrorLog.markFixed('${log.id}')">Fix →</button>`
       }
       </div>
     `).join('');

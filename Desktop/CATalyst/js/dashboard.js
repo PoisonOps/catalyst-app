@@ -121,6 +121,19 @@ const Dashboard = {
         badge.style.display = pending > 0 ? 'inline' : 'none';
       }
 
+      const sfbBar = document.getElementById('sidebar-fix-bar');
+      const sfbCount = document.getElementById('sfb-count');
+      if (sfbBar && sfbCount) {
+        if (pending > 0) {
+          sfbCount.textContent = `${pending} mistake${pending !== 1 ? 's' : ''} left`;
+          sfbBar.style.display = 'flex';
+        } else {
+          sfbBar.style.display = 'none';
+        }
+      }
+
+      await this._renderHeroState(stats, pending);
+
       // Recent activity (hidden element, still updated)
       const actEl = document.getElementById('recent-activity');
       if (actEl) {
@@ -240,6 +253,66 @@ const Dashboard = {
       `).join('');
     } else {
       weakEl.innerHTML = '<p class="empty-state">Start practicing to reveal weak topics</p>';
+    }
+  },
+
+  async _renderHeroState(stats, pending) {
+    const hero = document.getElementById('dash-hero-block');
+    if (!hero) return;
+
+    const statsGrid = document.querySelector('#page-dashboard .stats-grid');
+    const fixCta = document.getElementById('dash-fix-cta');
+    const dashGrid = document.querySelector('#page-dashboard .dash-grid');
+
+    const isNewUser = stats.total === 0 && pending === 0;
+
+    if (isNewUser) {
+      hero.innerHTML = `
+        <div class="dash-state-hero dash-state-new">
+          <h2 class="dash-state-title">Let's find your weak areas</h2>
+          <p class="dash-state-sub">Solve 1 quick session — we'll show your mistakes</p>
+          <button class="btn-fix-mistakes" onclick="App.navigate('practice')">Start Session (2 min) →</button>
+        </div>`;
+      hero.style.display = 'block';
+      if (statsGrid) statsGrid.style.display = 'none';
+      if (fixCta) fixCta.style.display = 'none';
+      if (dashGrid) dashGrid.style.display = 'none';
+      return;
+    }
+
+    // Returning user — restore all existing blocks
+    if (statsGrid) statsGrid.style.display = '';
+    if (fixCta) fixCta.style.display = '';
+    if (dashGrid) dashGrid.style.display = '';
+
+    if (pending > 0) {
+      const insights = await DB.getErrorInsights();
+      const typeLabels = {
+        concept_gap: 'Concept Gap', calculation: 'Silly mistakes', misread: 'Misread',
+        guess: 'Guess', unclassified: 'Unclassified',
+        conceptual: 'Concept Gap', silly: 'Silly mistakes', time: 'Guess'
+      };
+      const topType = insights.mostCommonError;
+      const topCount = topType ? (insights.errorTypeCounts[topType] || 0) : 0;
+      const typeName = topType ? (typeLabels[topType] || topType) : '';
+      const subText = topCount > 0
+        ? `${topCount} are ${typeName} — the most damaging type`
+        : 'Fix your mistakes to improve your score';
+
+      hero.innerHTML = `
+        <div class="dash-state-hero dash-state-returning">
+          <div class="dash-state-left">
+            <div class="dash-state-text">
+              <span class="dash-state-icon">🔥</span>
+              <h2 class="dash-state-title">You still have <span class="dash-state-count">${pending} mistake${pending !== 1 ? 's' : ''}</span> to fix</h2>
+              <p class="dash-state-sub">${subText}</p>
+            </div>
+          </div>
+          <button class="btn-fix-mistakes dash-state-cta" onclick="App.navigate('errorlog'); setTimeout(()=>ErrorLog.fixMyMistakes(),100)">Fix Now →</button>
+        </div>`;
+      hero.style.display = 'block';
+    } else {
+      hero.style.display = 'none';
     }
   },
 

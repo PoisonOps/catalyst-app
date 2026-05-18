@@ -19,7 +19,7 @@
 
 <body>
 
-  <!-- AUTH SCREEN -->
+  <!-- AUTH SCREEN — V2 -->
   <div id="auth-screen" class="screen active">
     <div class="auth-bg">
       <div class="auth-orb orb1"></div>
@@ -27,12 +27,39 @@
       <div class="auth-orb orb3"></div>
     </div>
     <div class="auth-container">
+
+      <!-- Wordmark (compact) -->
       <div class="auth-brand">
         <span class="brand-icon">⚡</span>
         <h1>CATalyst</h1>
-        <p>Fix mistakes before the exam does</p>
       </div>
-      <div class="auth-card">
+
+      <!-- V2: Hero message -->
+      <div class="auth-hero">
+        <h2 class="auth-headline">
+          You repeat <span class="auth-headline-accent">mistakes.</span>
+        </h2>
+        <p class="auth-sub1">That's why your score isn't improving.</p>
+        <p class="auth-sub2">Start fixing your mistakes in 2 minutes.</p>
+      </div>
+
+      <!-- V2: Primary CTAs -->
+      <div class="auth-ctas">
+        <button class="btn-fix-session" id="fix-session-btn"
+          onclick="localStorage.setItem('last_page_demo','practice'); Auth.demoMode();">
+          Try 2-min Fix Session ⚡
+        </button>
+        <p class="auth-login-link">
+          Already have an account?
+          <button class="auth-login-toggle"
+            onclick="document.getElementById('auth-card-collapsible').classList.toggle('auth-card--open')">
+            Login / Sign up
+          </button>
+        </p>
+      </div>
+
+      <!-- Login / Sign up form (collapsed by default, toggled by link above) -->
+      <div class="auth-card" id="auth-card-collapsible">
         <div class="auth-tabs">
           <button class="auth-tab active" data-tab="login">Login</button>
           <button class="auth-tab" data-tab="signup">Sign Up</button>
@@ -48,7 +75,6 @@
             <input type="password" id="login-password" placeholder="••••••••" />
           </div>
           <button class="btn-primary" id="login-btn">Login</button>
-          <button class="btn-demo" id="demo-btn">Try Demo (No Login)</button>
         </div>
         <div id="tab-signup" class="auth-form">
           <div class="form-group">
@@ -66,6 +92,7 @@
           <button class="btn-primary" id="signup-btn">Create Account</button>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -98,6 +125,11 @@
         </a>
       </nav>
       <div class="sidebar-bottom">
+        <!-- Mistakes fix bar — shown when pending > 0 -->
+        <div class="sidebar-fix-bar" id="sidebar-fix-bar" style="display:none">
+          <span class="sfb-label" id="sfb-count">0 mistakes left</span>
+          <button class="sfb-fix" onclick="App.navigate('errorlog'); setTimeout(()=>ErrorLog.fixMyMistakes(),100)">Fix →</button>
+        </div>
         <!-- Upgrade Button -->
         <button class="upgrade-btn" id="upgrade-btn">⚡ Upgrade to Pro</button>
         <!-- Trial countdown -->
@@ -141,6 +173,9 @@
           <p class="page-sub" id="greeting-text">Good morning!</p>
         </div>
 
+        <!-- S1: State-aware hero — JS populates (new user vs returning) -->
+        <div id="dash-hero-block" style="display:none"></div>
+
         <!-- Core stats — only 2 shown in MVP (streak/time hidden via JS) -->
         <div class="stats-grid">
           <div class="stat-card accent">
@@ -164,18 +199,6 @@
             <div class="stat-value" id="stat-time">0m</div>
             <div class="stat-label">Time Today</div>
           </div>
-        </div>
-
-        <!-- Fix My Mistakes — primary CTA -->
-        <div class="fix-cta-banner" id="dash-fix-cta">
-          <div class="fix-cta-left">
-            <div class="fix-cta-icon">🔥</div>
-            <div>
-              <div class="fix-cta-title">Fix Your Mistakes</div>
-              <div class="fix-cta-sub" id="dash-fix-sub">Track mistakes, understand them, fix them</div>
-            </div>
-          </div>
-          <button class="btn-fix-mistakes" id="dash-fix-btn">Fix My Mistakes →</button>
         </div>
 
         <div class="dash-grid">
@@ -247,10 +270,14 @@
 
       <!-- PRACTICE -->
       <div class="page" id="page-practice">
-        <div class="page-header">
-          <h2 class="page-title">Practice</h2>
+        <div class="practice-topbar" id="practice-topbar">
+          <button class="filter-toggle-btn is-open" id="filter-toggle-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+            Filters
+            <svg class="ftb-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
         </div>
-        <div class="filter-bar" id="practice-filters">
+        <div class="filter-panel" id="practice-filters">
           <select id="filter-subject" class="filter-select">
             <option value="all">All Subjects</option>
             <option value="Quant">Quant</option>
@@ -270,6 +297,7 @@
         </div>
 
         <div id="practice-area" class="hidden">
+          <p class="practice-nudge">Focus: notice where you go wrong on each question</p>
           <div class="practice-mode-badge hidden" id="practice-mode-badge"></div>
           <div class="q-meta-bar">
             <span class="q-counter" id="q-counter">Q 1 / 10</span>
@@ -312,6 +340,7 @@
               <div class="passage-context-label">📄 Passage / Data</div>
               <div class="passage-context-text" id="passage-context-text"></div>
             </div>
+            <div id="wrong-before-label" class="wrong-before-label hidden">⚠️ You got this wrong before</div>
             <p class="question-text" id="question-text">Loading...</p>
 
             <!-- MCQ options -->
@@ -334,6 +363,11 @@
             </div>
 
             <div class="answer-area hidden" id="answer-area">
+              <!-- Wrong state banner — shown only on incorrect answer -->
+              <div class="wrong-banner hidden" id="wrong-banner">
+                <span class="wrong-banner-title">✗ You got this wrong!</span>
+                <span class="wrong-banner-sub">This is costing you marks.</span>
+              </div>
               <div class="solution-box" id="solution-box">
                 <div class="solution-header">
                   <span class="correct-badge" id="answer-result-badge">✓ Correct!</span>
@@ -346,7 +380,7 @@
               <!-- INLINE ERROR TAGGING — shown after wrong answer -->
               <div class="error-tag-inline hidden" id="error-tag-inline">
                 <div class="etag-header">
-                  <span class="etag-prompt">Why did you get this wrong?</span>
+                  <span class="etag-prompt">Why did this happen?</span>
                   <span class="etag-hint">1 tap = saved</span>
                 </div>
                 <div class="etag-pills">
@@ -382,6 +416,40 @@
           </div>
         </div>
 
+        <!-- S6: Fix Mode entry interstitial -->
+        <div id="fix-mode-entry" class="hidden fix-mode-entry-card">
+          <div class="fme-icon">⚡</div>
+          <h2 class="fme-title">Fix Mode ON</h2>
+          <p class="fme-sub">Fixing your past mistakes — let's break the pattern.</p>
+          <ul class="fme-checklist">
+            <li>We'll show your wrong answers</li>
+            <li>You solve them again</li>
+            <li>We make sure you don't repeat</li>
+          </ul>
+          <button class="btn-fix-session fme-cta" onclick="Practice._startFixSession()">Let's Fix →</button>
+        </div>
+
+        <!-- S8: Transition between Phase 1 and Phase 2 -->
+        <div id="fix-transition" class="hidden fix-transition-card">
+          <div class="ft-check">✓ Mistakes fixed.</div>
+          <h2 class="ft-title">But you're still weak in <span class="ft-topic" id="ft-topic-name">LRDI</span>.</h2>
+          <p class="ft-sub">Let's strengthen it now — 2 more minutes.</p>
+          <button class="btn-primary ft-cta" id="ft-continue">Continue →</button>
+          <button class="ft-skip" id="ft-skip">Skip for now</button>
+        </div>
+
+        <!-- S10: Fix Session Complete (unfinished loop) -->
+        <div id="fix-session-complete" class="hidden fix-sc-card">
+          <div class="fsc-hero">
+            <div class="fsc-title">You fixed <span class="fsc-green" id="fsc-fixed">0</span> mistakes</div>
+            <div class="fsc-remain" id="fsc-remain">0 still remain.</div>
+          </div>
+          <div class="fsc-alert">🔥 You're still repeating this.</div>
+          <div class="fsc-stats" id="fsc-stats"></div>
+          <button class="btn-primary fsc-cta" id="fsc-cta">Continue tomorrow (2 min) →</button>
+          <p class="fsc-footer">Consistency fixes scores.</p>
+        </div>
+
         <div id="practice-empty" class="empty-state-full hidden">
           <div class="empty-icon">📭</div>
           <p>No questions found. Adjust filters.</p>
@@ -390,14 +458,15 @@
         <!-- SESSION SUMMARY (shown after last question) -->
         <div id="session-summary" class="hidden session-summary-card">
           <div class="ss-hero">
-            <div class="ss-title">Session Complete 🎉</div>
-            <div class="ss-score" id="ss-score">0 / 0</div>
-            <div class="ss-acc" id="ss-acc">Accuracy: 0%</div>
+            <div class="ss-title">Session complete</div>
+            <div class="ss-result-line" id="ss-score">0 correct · 0 wrong</div>
+            <div class="ss-acc" id="ss-acc">0% accuracy</div>
           </div>
           <div class="ss-stats" id="ss-stats"></div>
+          <div class="ss-diagnostic hidden" id="ss-diagnostic">🔥 This is why your score is stuck.</div>
           <div class="ss-actions">
-            <button class="btn-primary" id="ss-view-errors">View My Errors →</button>
-            <button class="btn-nav" id="ss-practice-more">Practice More</button>
+            <button class="btn-fix-mistakes" id="ss-view-errors">Fix My Mistakes →</button>
+            <button class="ss-text-cta" id="ss-practice-more">Practice more</button>
           </div>
         </div>
       </div>
@@ -517,61 +586,54 @@
 
       <!-- ERROR LOG -->
       <div class="page" id="page-errorlog">
-        <div class="page-header">
-          <h2 class="page-title">My Error Log</h2>
+        <div class="page-header el-page-header">
+          <h2 class="page-title">You are still making these mistakes.</h2>
           <p class="page-sub">Every mistake tracked. Fix them before the exam does.</p>
         </div>
 
-        <!-- Primary CTA -->
-        <div class="el-cta-banner" id="el-cta-banner">
-          <div class="el-cta-text">
-            <strong>Ready to improve?</strong>
-            <span id="el-cta-sub">Fix your weakest topic now</span>
+        <!-- Biggest Issue (S11) -->
+        <div class="el-biggest-issue hidden" id="el-biggest-issue">
+          <div class="el-bi-content">
+            <div class="el-bi-label">Biggest issue: <span class="el-bi-type" id="el-bi-type">Silly mistakes</span></div>
+            <div class="el-bi-cost" id="el-bi-cost">Cost: ~8–12 marks · fix these first</div>
           </div>
-          <button class="btn-fix-mistakes" id="el-fix-btn">Fix My Mistakes →</button>
+          <button class="btn-fix-mistakes el-bi-cta" id="el-fix-btn">Fix this now →</button>
         </div>
 
-        <!-- Insight Section -->
-        <div class="el-insight-section" id="el-insight-section" style="display:none">
-          <div class="el-insight-card" id="el-insight-topic">
-            <span class="el-insight-icon">🎯</span>
-            <div>
-              <div class="el-insight-label">Weakest Topic</div>
-              <div class="el-insight-value" id="el-insight-topic-val">—</div>
-            </div>
-          </div>
-          <div class="el-insight-card" id="el-insight-error">
-            <span class="el-insight-icon">📊</span>
-            <div>
-              <div class="el-insight-label">Most Common Mistake</div>
-              <div class="el-insight-value" id="el-insight-error-val">—</div>
-            </div>
-          </div>
-        </div>
+        <!-- 3-stat row -->
+        <div class="el-stats-row" id="error-summary-grid"></div>
 
-        <div class="error-summary-grid" id="error-summary-grid"></div>
-        <div class="filter-bar" style="margin-top:1.5rem">
-          <select id="el-subject-filter" class="filter-select">
-            <option value="all">All Subjects</option>
-            <option value="Quant">Quant</option>
-            <option value="LRDI">LRDI</option>
-            <option value="VARC">VARC</option>
-          </select>
-          <select id="el-type-filter" class="filter-select">
-            <option value="all">All Error Types</option>
-            <option value="concept_gap">Concept Gap</option>
-            <option value="calculation">Calculation Error</option>
-            <option value="misread">Misread Question</option>
-            <option value="guess">Guess</option>
-            <option value="unclassified">Unclassified</option>
-          </select>
-          <select id="el-status-filter" class="filter-select">
-            <option value="all">All</option>
-            <option value="pending">Pending Reattempt</option>
-            <option value="fixed">Fixed</option>
-          </select>
-        </div>
+        <!-- Hidden selects preserved for saveState/loadState -->
+        <select id="el-subject-filter" class="filter-select" style="display:none">
+          <option value="all">All Subjects</option>
+          <option value="Quant">Quant</option>
+          <option value="LRDI">LRDI</option>
+          <option value="VARC">VARC</option>
+        </select>
+        <select id="el-type-filter" class="filter-select" style="display:none">
+          <option value="all">All Error Types</option>
+          <option value="concept_gap">Concept Gap</option>
+          <option value="calculation">Calculation Error</option>
+          <option value="misread">Misread Question</option>
+          <option value="guess">Guess</option>
+          <option value="unclassified">Unclassified</option>
+        </select>
+        <select id="el-status-filter" class="filter-select" style="display:none">
+          <option value="all">All</option>
+          <option value="pending">Pending Reattempt</option>
+          <option value="fixed">Fixed</option>
+        </select>
+
+        <!-- Pill filter buttons -->
+        <div class="el-filter-pills" id="el-filter-pills"></div>
+
         <div id="error-log-list" class="error-log-list"></div>
+
+        <!-- Footer bar -->
+        <div class="el-footer-bar hidden" id="el-footer-bar">
+          <span class="el-footer-msg" id="el-footer-msg">0 mistakes still unresolved.</span>
+          <button class="el-footer-cta" id="el-footer-fix-btn">Fix this now →</button>
+        </div>
       </div>
 
     </main>
