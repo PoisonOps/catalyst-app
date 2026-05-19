@@ -3478,6 +3478,11 @@ body {
   font-weight: 700;
   color: var(--accent);
   letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.pay-upi:hover {
+  text-decoration: underline;
 }
 
 .pay-whatsapp {
