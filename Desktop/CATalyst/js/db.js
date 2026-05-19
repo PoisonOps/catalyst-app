@@ -752,7 +752,7 @@ const DB = {
   getTrialStatus() {
     const trial = this._getLocal('cat_trial', null);
     if (!trial) return { active: false, started: false, daysLeft: 0 };
-    const TRIAL_DAYS = 7;
+    const TRIAL_DAYS = 3;
     const elapsed = Date.now() - trial.started_at;
     const daysLeft = Math.max(0, TRIAL_DAYS - Math.floor(elapsed / 86400000));
     return {
