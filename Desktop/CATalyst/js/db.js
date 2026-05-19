@@ -13,11 +13,14 @@ const DB = {
     }
 
     // Normalise filter values — lowercase + trim so 'all'/'All'/'ALL' all match
-    const subject = (filters.subject || '').trim();
-    const topic = (filters.topic || '').trim();
+    const subject    = (filters.subject || '').trim();
+    const topic      = (filters.topic || '').trim();
     const difficulty = (filters.difficulty || '').trim();
+    // subtopics: always an array; strip 'all' sentinel values
+    const subtopics  = (filters.subtopics || []).filter(s => s && s.toLowerCase() !== 'all');
+    const matchAll   = !!filters.matchAll; // true → row must contain ALL selected subtopics
 
-    if (FLAGS.DEBUG_LOG) console.log('[DB] getQuestions filters:', { subject, topic, difficulty });
+    if (FLAGS.DEBUG_LOG) console.log('[DB] getQuestions filters:', { subject, topic, subtopics, matchAll, difficulty });
 
     // sets!left → LEFT JOIN: questions where set_id IS NULL (standalone) are kept.
     // Without !left PostgREST defaults to INNER JOIN → drops all standalone questions → 0 rows.
@@ -31,6 +34,15 @@ const DB = {
     if (subject && subject.toLowerCase() !== 'all') query = query.eq('subject', subject);
     if (topic && topic.toLowerCase() !== 'all') query = query.eq('topic', topic);
     if (difficulty && difficulty.toLowerCase() !== 'all') query = query.eq('difficulty', difficulty);
+
+    // subtopic is text[] in Supabase.
+    // matchAll=false → overlaps (&&): row has ANY of the selected subtopics
+    // matchAll=true  → contains (@>): row has ALL of the selected subtopics
+    if (subtopics.length > 0) {
+      query = matchAll
+        ? query.contains('subtopic', subtopics)
+        : query.overlaps('subtopic', subtopics);
+    }
 
     const { data, error } = await query;
 
@@ -67,10 +79,22 @@ const DB = {
   },
 
   _applyFilters(qs, filters) {
+    const subtopics = (filters.subtopics || []).filter(s => s && s.toLowerCase() !== 'all');
+    const matchAll  = !!filters.matchAll;
     return qs.filter(q => {
       if (filters.subject && filters.subject !== 'all' && q.subject !== filters.subject) return false;
       if (filters.topic && filters.topic !== 'all' && q.topic !== filters.topic) return false;
       if (filters.difficulty && filters.difficulty !== 'all' && q.difficulty !== filters.difficulty) return false;
+      if (subtopics.length > 0) {
+        const qSubs = Array.isArray(q.subtopic) ? q.subtopic : [];
+        if (matchAll) {
+          // every selected subtopic must be present in the question's array
+          if (!subtopics.every(s => qSubs.includes(s))) return false;
+        } else {
+          // at least one selected subtopic must appear
+          if (!subtopics.some(s => qSubs.includes(s))) return false;
+        }
+      }
       return true;
     });
   },
@@ -86,6 +110,24 @@ const DB = {
       if (subject && subject.toLowerCase() !== 'all') query = query.eq('subject', subject);
       const { data } = await query;
       return [...new Set((data || []).map(r => r.topic).filter(Boolean))].sort();
+    } catch (e) { return []; }
+  },
+
+  async getSubtopics(subject = 'all', topic = 'all') {
+    if (USE_DEMO) {
+      let qs = DEMO_QUESTIONS;
+      if (subject !== 'all') qs = qs.filter(q => q.subject === subject);
+      if (topic !== 'all') qs = qs.filter(q => q.topic === topic);
+      const all = qs.flatMap(q => Array.isArray(q.subtopic) ? q.subtopic : []).filter(Boolean);
+      return [...new Set(all)].sort();
+    }
+    try {
+      let query = sbClient.from('questions').select('subtopic').eq('is_active', true);
+      if (subject && subject.toLowerCase() !== 'all') query = query.eq('subject', subject);
+      if (topic && topic.toLowerCase() !== 'all') query = query.eq('topic', topic);
+      const { data } = await query;
+      const all = (data || []).flatMap(r => Array.isArray(r.subtopic) ? r.subtopic : []).filter(Boolean);
+      return [...new Set(all)].sort();
     } catch (e) { return []; }
   },
 

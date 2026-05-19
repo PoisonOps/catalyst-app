@@ -286,6 +286,7 @@
           </select>
           <select id="filter-topic" class="filter-select">
             <option value="all">All Topics</option>
+            <!-- populated from CAT_TAXONOMY by practice.js -->
           </select>
           <select id="filter-difficulty" class="filter-select">
             <option value="all">All Difficulty</option>
@@ -294,6 +295,12 @@
             <option value="Hard">Hard</option>
           </select>
           <button class="btn-primary btn-sm" id="load-practice-btn">Load Questions</button>
+          <!-- Subtopic pills row — shown below filters when a topic is selected -->
+          <div id="filter-subtopic" class="subtopic-pills hidden"></div>
+          <label class="filter-match-all-label hidden" id="filter-match-all-wrap">
+            <input type="checkbox" id="filter-match-all">
+            <span>Match all selected</span>
+          </label>
         </div>
 
         <div id="practice-area" class="hidden">

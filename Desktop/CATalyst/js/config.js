@@ -43,6 +43,28 @@ const FLAGS = {
 let sbClient = null;
 let USE_DEMO = false;
 
+// ── CAT TAXONOMY ─────────────────────────────────────────────
+// Static subject → topic → subtopic tree used to populate filter dropdowns.
+// subtopic values here are the individual leaf strings; multi-value combinations
+// (e.g. ["Philosophy","Abstract"]) are stored in the DB but filtered via overlaps.
+const CAT_TAXONOMY = {
+  Quant: {
+    Algebra:       ['Linear Equations','Quadratic Equations','Inequalities','Logarithms','Functions','Modulus','Progressions','Polynomials','Maxima-Minima','Surds & Indices'],
+    Arithmetic:    ['Percentages','Profit & Loss','Simple Interest','Compound Interest','Ratio & Proportion','Mixtures & Alligations','Averages','Time & Work','Pipes & Cisterns','Time Speed Distance','Boats & Streams'],
+    Geometry:      ['Lines & Angles','Triangles','Quadrilaterals','Circles','Polygons','Coordinate Geometry','Mensuration 2D','Mensuration 3D'],
+    'Modern Math': ['Permutations & Combinations','Probability','Set Theory','Venn Diagrams','Sequences & Series','Binomial Theorem'],
+    'Number System':['Divisibility','LCM & HCF','Remainders','Factorials','Base System','Cyclic Pattern','Units Digit','Number Properties'],
+  },
+  VARC: {
+    RC: ['Philosophy','Economics','Science','History','Sociology','Politics','Environment','Abstract'],
+    VA: ['Para Jumbles','Odd One Out','Summary','Sentence Completion','Sentence Correction'],
+  },
+  LRDI: {
+    LR: ['Arrangements','Selections','Games & Tournaments','Blood Relations','Directions','Venn Diagram Based','Ranking'],
+    DI: ['Tables','Bar Graph','Line Graph','Pie Chart','Caselets','Mixed Graphs'],
+  },
+};
+
 // ============================================================
 // DEMO DATA
 // All questions use correct_option (A/B/C/D) for MCQ

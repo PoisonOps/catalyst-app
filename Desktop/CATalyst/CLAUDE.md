@@ -99,3 +99,18 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 - `Plan/Growth_Plan.md` — Screen-by-screen copy targets and psychology goals per screen
 - `js/config.js` — Feature flags, demo question bank (`DEMO_QUESTIONS`, `DEMO_SETS`), Supabase credentials, `CAT_TAXONOMY`
 - `js/db.js` — Single source of truth for all data shapes and storage keys
+## Current Business Context
+
+- Builder: Sahil Solankey, CAT 2026 aspirant, solo founder
+- Status: MVP complete, 0 users, deploying this week to Vercel
+- Immediate goal: Get 10 free trial users, validate the loop
+- Pricing: ₹99/month (placeholder, not finalized)
+- Question bank: 800 questions (Quant, LRDI, VARC) from Cracku PDFs
+- Do NOT suggest new features until we have paying users
+- Do NOT change the core Fix Mode loop — it is the product
+
+## Current Priorities (in order)
+1. Deploy to Vercel
+2. Fix any production bugs
+3. Outreach to get first 10 users
+4. Set up proper UPI payment automation

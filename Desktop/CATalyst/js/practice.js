@@ -113,15 +113,21 @@ const Practice = {
   _transitionTimer: null,     // auto-advance timer for S8
   _fixedInSession: 0,         // Phase 1 correct answers = mistakes actually fixed
   _hasAutoLoaded: false,      // auto-load once per session
+  _selectedSubtopics: [],     // tracks active subtopic pill selections
 
   async init() {
     this.loadState();
-    await this._populateTopics();
+    this._populateTopics();
     document.getElementById('filter-subject').addEventListener('change', () => {
-      this._populateTopics().then(() => this.saveState());
+      this._populateTopics();
+      this.saveState();
     });
-    document.getElementById('filter-topic').addEventListener('change', () => this.saveState());
+    document.getElementById('filter-topic').addEventListener('change', () => {
+      this._populateSubtopics();
+      this.saveState();
+    });
     document.getElementById('filter-difficulty').addEventListener('change', () => this.saveState());
+    document.getElementById('filter-subtopic').addEventListener('change', () => this.saveState());
     document.getElementById('load-practice-btn').addEventListener('click', () => this.loadQuestions());
     const filterToggleBtn = document.getElementById('filter-toggle-btn');
     if (filterToggleBtn) filterToggleBtn.addEventListener('click', () => this.toggleFilters());
@@ -196,23 +202,78 @@ const Practice = {
     setTimeout(() => this.loadQuestions(), 120);
   },
 
-  async _populateTopics() {
+  _populateTopics() {
     const subject = document.getElementById('filter-subject').value;
-    const topics = await DB.getAllTopics(subject);
+    const topicMap = (typeof CAT_TAXONOMY !== 'undefined' && CAT_TAXONOMY[subject]) || {};
+    const topics = Object.keys(topicMap);
+
     const el = document.getElementById('filter-topic');
     el.innerHTML = '<option value="all">All Topics</option>';
     topics.forEach(t => { el.innerHTML += `<option value="${t}">${t}</option>`; });
+
     if (el.dataset.pendingValue) {
       el.value = el.dataset.pendingValue;
       delete el.dataset.pendingValue;
     }
+    this._populateSubtopics();
+  },
+
+  _populateSubtopics() {
+    const subject = document.getElementById('filter-subject').value;
+    const topic   = document.getElementById('filter-topic').value;
+    const el      = document.getElementById('filter-subtopic');
+    const wrap    = document.getElementById('filter-match-all-wrap');
+
+    const topicMap  = (typeof CAT_TAXONOMY !== 'undefined' && CAT_TAXONOMY[subject]) || {};
+    const subtopics = (topic !== 'all' && topicMap[topic]) ? topicMap[topic] : [];
+
+    if (!subtopics.length) {
+      el.classList.add('hidden');
+      if (wrap) wrap.classList.add('hidden');
+      el.innerHTML = '';
+      this._selectedSubtopics = [];
+      return;
+    }
+
+    // On topic change reset selections; on restore keep them
+    if (!this._selectedSubtopics.every(s => subtopics.includes(s))) {
+      this._selectedSubtopics = [];
+    }
+
+    this._renderSubtopicPills(subtopics);
+    el.classList.remove('hidden');
+    if (wrap) wrap.classList.remove('hidden');
+  },
+
+  _renderSubtopicPills(subtopics) {
+    const el = document.getElementById('filter-subtopic');
+    el.innerHTML = subtopics.map(s => {
+      const active = this._selectedSubtopics.includes(s);
+      return `<button class="subtopic-pill${active ? ' active' : ''}" data-value="${s}">${s}</button>`;
+    }).join('');
+
+    el.querySelectorAll('.subtopic-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = btn.dataset.value;
+        if (this._selectedSubtopics.includes(val)) {
+          this._selectedSubtopics = this._selectedSubtopics.filter(s => s !== val);
+          btn.classList.remove('active');
+        } else {
+          this._selectedSubtopics.push(val);
+          btn.classList.add('active');
+        }
+        this.saveState();
+      });
+    });
   },
 
   async loadQuestions() {
     const filters = {
-      subject: document.getElementById('filter-subject').value,
-      topic: document.getElementById('filter-topic').value,
-      difficulty: document.getElementById('filter-difficulty').value
+      subject:    document.getElementById('filter-subject').value,
+      topic:      document.getElementById('filter-topic').value,
+      difficulty: document.getElementById('filter-difficulty').value,
+      subtopics:  [...this._selectedSubtopics],
+      matchAll:   document.getElementById('filter-match-all')?.checked ?? false,
     };
     showLoading('Loading questions...');
     try {
@@ -905,9 +966,11 @@ const Practice = {
   saveState() {
     const uid = Auth.currentUser ? Auth.currentUser.id : 'anon';
     const state = {
-      subject: document.getElementById('filter-subject').value,
-      topic: document.getElementById('filter-topic').value,
-      difficulty: document.getElementById('filter-difficulty').value
+      subject:    document.getElementById('filter-subject').value,
+      topic:      document.getElementById('filter-topic').value,
+      difficulty: document.getElementById('filter-difficulty').value,
+      subtopics:  [...this._selectedSubtopics],
+      matchAll:   document.getElementById('filter-match-all')?.checked ?? false,
     };
     localStorage.setItem(`practice_state_${uid}`, JSON.stringify(state));
   },
@@ -917,9 +980,12 @@ const Practice = {
     try {
       const state = JSON.parse(localStorage.getItem(`practice_state_${uid}`));
       if (state) {
-        if (state.subject) document.getElementById('filter-subject').value = state.subject;
-        if (state.topic) document.getElementById('filter-topic').dataset.pendingValue = state.topic; // applied in _populateTopics
+        if (state.subject)    document.getElementById('filter-subject').value = state.subject;
+        if (state.topic)      document.getElementById('filter-topic').dataset.pendingValue = state.topic;
         if (state.difficulty) document.getElementById('filter-difficulty').value = state.difficulty;
+        if (state.subtopics?.length) this._selectedSubtopics = state.subtopics;
+        const matchAllEl = document.getElementById('filter-match-all');
+        if (matchAllEl && state.matchAll) matchAllEl.checked = true;
       }
     } catch (e) { }
   },
@@ -942,6 +1008,7 @@ const Practice = {
     clearTimeout(this._transitionTimer);
     this._transitionTimer = null;
     this._hasAutoLoaded = false;
+    this._selectedSubtopics = [];
 
     // Reset visible UI — use correct IDs from index.html
     const practiceArea = document.getElementById('practice-area');
