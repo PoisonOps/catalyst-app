@@ -3379,6 +3379,17 @@ body {
   color: var(--text2);
 }
 
+.upgrade-founders {
+  font-size: 0.85rem;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+.upgrade-founders strong {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
 .upgrade-features {
   display: grid;
   grid-template-columns: 1fr 1fr;
