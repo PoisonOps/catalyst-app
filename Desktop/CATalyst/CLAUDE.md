@@ -32,7 +32,9 @@ All data operations go through `DB.*`. The same methods work in two modes, switc
 - **Demo / offline:** reads and writes to localStorage only
 - **Supabase:** syncs to the backend, with localStorage as a fallback cache
 
-Every user-specific localStorage key is namespaced as `cat_<key>_${userId}` to allow multi-user devices without conflicts. Global keys (theme, demo state) are not namespaced.
+Every user-specific localStorage key is namespaced as `cat_<key>_${userId}` to allow multi-user devices without conflicts. Global keys (theme, demo state) are not namespaced — the full list is in `DB._globalKeys`.
+
+Supabase tables: `questions`, `sets`, `attempt_logs`, `error_logs`, `reports`, `feedback`. The `questions` query always uses `sets!left` (LEFT JOIN) — without `!left`, PostgREST defaults to INNER JOIN and silently drops all standalone questions where `set_id IS NULL`.
 
 ### Environment Detection (`js/config.js`)
 
@@ -54,7 +56,18 @@ Fix session flow: `loadFixSession()` → Phase 1 questions → `_showFixTransiti
 
 State: `_activeTypeFilter` tracks card-click filtering separately from the dropdown value. Both must stay in sync. `saveState()`/`loadState()` depend on the hidden `<select>` element IDs (`el-subject-filter`, `el-type-filter`, `el-status-filter`) — do not remove those elements even though they're `display:none`.
 
-`DB.getErrorInsights(logs)` returns `{ mostCommonError, errorTypeCounts, topicCounts, sortedTopics, weakestTopic }`. Legacy error type keys (`silly`, `conceptual`, `time`) must always be mapped to canonical keys (`calculation`, `concept_gap`, `guess`) before cost/label lookups.
+`DB.getErrorInsights(logs)` returns `{ mostCommonError, errorTypeCounts, topicCounts, sortedTopics, weakestTopic }`. Legacy error type keys (`silly`, `conceptual`, `time`) must always be mapped to canonical keys (`calculation`, `concept_gap`, `guess`) before cost/label lookups. The canonical label and cost maps live at the top of `errorlog.js` (`EL_TYPE_LABELS`, `EL_COST_MAP`).
+
+### Math Rendering & Text Formatting
+
+KaTeX is loaded via CDN (`index.html`). Never set question content as raw `innerHTML` — always use `renderMath(el, rawText, isRC)` from `practice.js`. This function safely masks LaTeX delimiters (`$$...$$`, `\[...\]`, `\(...\)`) before applying line-break replacements, then restores them before calling KaTeX's auto-render. RC passages use `formatRC()` which splits on `/n/n/` for paragraph breaks and `/n/` for line breaks within paragraphs.
+
+### Question Data Shape
+
+- MCQ: `answer_type: 'mcq'`, `correct_option` is `'A'|'B'|'C'|'D'`
+- TITA: `answer_type: 'tita'`, `correct_value` is a string; `correct_option` is `null`
+- Set questions: `question_type: 'set_question'`, linked via `set_id` → data joins to `sets` table via `_passage` and `_instruction` fields attached by `_attachPassage()`/`_attachPassageFromJoin()`
+- Images: `has_image: true`, `image_url` must be prefixed with `BASE_URL` (defined at the top of `practice.js`)
 
 ### CSS Conventions
 
@@ -83,5 +96,6 @@ State: `_activeTypeFilter` tracks card-click filtering separately from the dropd
 ## Key Files
 
 - `Plan/Product.md` — Core product philosophy; read before making UX decisions
-- `js/config.js` — Feature flags, demo question bank, Supabase credentials
+- `Plan/Growth_Plan.md` — Screen-by-screen copy targets and psychology goals per screen
+- `js/config.js` — Feature flags, demo question bank (`DEMO_QUESTIONS`, `DEMO_SETS`), Supabase credentials, `CAT_TAXONOMY`
 - `js/db.js` — Single source of truth for all data shapes and storage keys
