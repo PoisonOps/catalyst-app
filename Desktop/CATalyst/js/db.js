@@ -742,10 +742,10 @@ const DB = {
   initTrial() {
     const existing = this._getLocal('cat_trial', null);
     if (!existing) {
-      this._setLocal('cat_trial', {
-        started_at: Date.now(),
-        is_paid: false
-      });
+      this._setLocal('cat_trial', { started_at: Date.now(), is_paid: false });
+      if (!USE_DEMO && typeof Auth !== 'undefined' && Auth.currentUser && Auth.currentUser.id !== 'demo') {
+        this.logEvent('trial_started', Auth.currentUser.id);
+      }
     }
   },
 
@@ -774,6 +774,18 @@ const DB = {
     this._setLocal('cat_trial', trial);
   },
 
+  // ── ANALYTICS ────────────────────────────────────────────
+
+  async logEvent(eventName, userId = null, metadata = {}) {
+    if (!sbClient) return;
+    try {
+      await sbClient.from('events').insert({
+        event:    eventName,
+        user_id:  userId || null,
+        metadata: Object.keys(metadata).length ? metadata : null,
+      });
+    } catch (_) { /* fire and forget — never block the UI */ }
+  },
 
   // ── USER DATA ISOLATION (Namespaced Storage) ─────────────
 

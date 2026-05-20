@@ -709,6 +709,9 @@ const Practice = {
     document.getElementById('fix-session-complete').classList.remove('hidden');
     App.navigate('practice');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!USE_DEMO && typeof Auth !== 'undefined' && Auth.currentUser) {
+      DB.logEvent('fix_mode_completed', Auth.currentUser.id, { fixed });
+    }
   },
 
   // End practice mid-session
@@ -825,6 +828,9 @@ const Practice = {
     this._isFixSession = true;
     this._fixPhase = 1;
     this._fixModeLabel = modeLabel;
+    if (!USE_DEMO && typeof Auth !== 'undefined' && Auth.currentUser) {
+      DB.logEvent('fix_mode_started', Auth.currentUser.id);
+    }
     this.questions = questions;
     this._sessionCorrect = 0;
     this._sessionWrong = 0;

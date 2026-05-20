@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CATalyst Analytics</title>
+  <style>
+    :root {
+      --bg:     #0f1117;
+      --bg2:    #1a1d27;
+      --bg3:    #252836;
+      --border: rgba(255,255,255,0.08);
+      --text:   #e8eaf0;
+      --text2:  #8b90a0;
+      --accent: #5b7af5;
+      --green:  #10b981;
+      --red:    #ef4444;
+      --amber:  #f59e0b;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.5rem 1rem 3rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    header h1 { font-size: 1.35rem; font-weight: 800; }
+    header h1 span { color: var(--accent); }
+
+    .meta { display: flex; align-items: center; gap: 1rem; }
+
+    .live-dot {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      color: var(--text2);
+    }
+    .live-dot::before {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+    #updated {
+      font-size: 0.7rem;
+      color: var(--text2);
+    }
+
+    .section-label {
+      font-size: 0.67rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text2);
+      margin-bottom: 0.65rem;
+    }
+
+    /* ── FUNNEL ───────────────────────────────────── */
+    .funnel {
+      display: flex;
+      margin-bottom: 1.5rem;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .funnel-step {
+      flex: 1;
+      background: var(--bg2);
+      padding: 1rem 0.75rem;
+      text-align: center;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+    .funnel-step:last-child { border-right: none; }
+
+    .f-count {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .f-label {
+      font-size: 0.68rem;
+      color: var(--text2);
+      margin-top: 0.3rem;
+    }
+    .f-conv {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--green);
+      margin-top: 0.35rem;
+      min-height: 1em;
+    }
+
+    /* ── METRIC CARDS ─────────────────────────────── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 580px) {
+      .metrics-grid { grid-template-columns: 1fr; }
+      .funnel { flex-direction: column; }
+      .funnel-step { border-right: none; border-bottom: 1px solid var(--border); }
+      .funnel-step:last-child { border-bottom: none; }
+    }
+
+    .metric-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+    }
+
+    .metric-label {
+      font-size: 0.67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text2);
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-value {
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text);
+    }
+    .metric-value.accent { color: var(--accent); }
+    .metric-value.green  { color: var(--green);  }
+    .metric-value.amber  { color: var(--amber);  }
+
+    .metric-sub {
+      font-size: 0.72rem;
+      color: var(--text2);
+      margin-top: 0.4rem;
+    }
+
+    /* ── BAR CHART ────────────────────────────────── */
+    .chart-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    #dau-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 110px;
+      margin-top: 1rem;
+    }
+
+    /* ── ERROR ────────────────────────────────────── */
+    #error-msg {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: var(--radius);
+      color: var(--red);
+      font-size: 0.8rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>⚡ <span>CATalyst</span> Analytics</h1>
+    <div class="meta">
+      <div class="live-dot">Live</div>
+      <div id="updated">—</div>
+    </div>
+  </header>
+
+  <div id="error-msg"></div>
+
+  <!-- TODAY'S FUNNEL -->
+  <div class="section-label">Today's Funnel</div>
+  <div class="funnel">
+    <div class="funnel-step">
+      <div class="f-count" id="f-demo">—</div>
+      <div class="f-label">Demo Started</div>
+      <div class="f-conv" id="f-c1"></div>
+    </div>
+    <div class="funnel-step">
+      <div class="f-count" id="f-demo-done">—</div>
+      <div class="f-label">Demo Completed</div>
+      <div class="f-conv" id="f-c2"></div>
+    </div>
+    <div class="funnel-step">
+      <div class="f-count" id="f-signup">—</div>
+      <div class="f-label">Signup</div>
+      <div class="f-conv" id="f-c3"></div>
+    </div>
+    <div class="funnel-step">
+      <div class="f-count" id="f-fix">—</div>
+      <div class="f-label">Fix Completed</div>
+      <div class="f-conv"></div>
+    </div>
+  </div>
+
+  <!-- METRIC CARDS -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">Fix Mode Completion</div>
+      <div class="metric-value accent" id="m-fixrate">—</div>
+      <div class="metric-sub" id="m-fixrate-sub">last 30 days</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Day 7 Returns</div>
+      <div class="metric-value green" id="m-day7">—</div>
+      <div class="metric-sub">users back on day 7</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Paying Users</div>
+      <div class="metric-value amber" id="m-paid">—</div>
+      <div class="metric-sub" id="m-paid-sub">of total signups</div>
+    </div>
+  </div>
+
+  <!-- DAU CHART -->
+  <div class="chart-card">
+    <div class="section-label">Daily Active Users — Last 7 Days</div>
+    <div id="dau-chart"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://lvbqmaarriglqaegemgc.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2YnFtYWFycmlnbHFhZWdlbWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NzA2MTQsImV4cCI6MjA5MzQ0NjYxNH0.o284rHiW_XCPulBUdmFSMFJftNKTCkipCJ-mTwBQjaw';
+
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function pct(num, denom) {
+      if (!denom) return '';
+      return Math.round((num / denom) * 100) + '%';
+    }
+
+    function shortDay(isoDate) {
+      return new Date(isoDate + 'T12:00:00').toLocaleDateString('en-IN', { weekday: 'short' }).slice(0, 3);
+    }
+
+    async function load() {
+      const today         = new Date().toISOString().split('T')[0];
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+      const sevenDaysAgo  = new Date(Date.now() -  7 * 86400000).toISOString();
+
+      // Fetch last 30 days for metrics, last 7 days for DAU
+      const { data: events, error } = await sb
+        .from('events')
+        .select('event, user_id, created_at')
+        .gte('created_at', thirtyDaysAgo)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        const el = document.getElementById('error-msg');
+        el.style.display = 'block';
+        el.textContent   = '⚠ ' + error.message + ' — did you run analytics-setup.sql in Supabase?';
+        return;
+      }
+
+      const count = (arr, type) => arr.filter(e => e.event === type).length;
+
+      // ── TODAY'S FUNNEL ──────────────────────────────
+      const today_ev   = events.filter(e => e.created_at.startsWith(today));
+      const fDemo      = count(today_ev, 'demo_started');
+      const fDemoDone  = count(today_ev, 'demo_completed');
+      const fSignup    = count(today_ev, 'signup');
+      const fFix       = count(today_ev, 'fix_mode_completed');
+
+      document.getElementById('f-demo').textContent      = fDemo;
+      document.getElementById('f-demo-done').textContent = fDemoDone;
+      document.getElementById('f-signup').textContent    = fSignup;
+      document.getElementById('f-fix').textContent       = fFix;
+      document.getElementById('f-c1').textContent        = pct(fDemoDone, fDemo);
+      document.getElementById('f-c2').textContent        = pct(fSignup,   fDemoDone);
+      document.getElementById('f-c3').textContent        = pct(fFix,      fSignup);
+
+      // ── FIX MODE COMPLETION RATE ────────────────────
+      const allStarted   = count(events, 'fix_mode_started');
+      const allCompleted = count(events, 'fix_mode_completed');
+      document.getElementById('m-fixrate').textContent     = allStarted ? pct(allCompleted, allStarted) : '—';
+      document.getElementById('m-fixrate-sub').textContent = `${allCompleted} of ${allStarted} started (30d)`;
+
+      // ── DAY 7 RETURNS ───────────────────────────────
+      const day7Users = new Set(
+        events.filter(e => e.event === 'day7_return' && e.user_id).map(e => e.user_id)
+      ).size;
+      document.getElementById('m-day7').textContent = day7Users || '0';
+
+      // ── PAYING VS FREE ──────────────────────────────
+      const totalSignups = new Set(
+        events.filter(e => e.event === 'signup' && e.user_id).map(e => e.user_id)
+      ).size;
+      const paidUsers = new Set(
+        events.filter(e => e.event === 'payment_completed' && e.user_id).map(e => e.user_id)
+      ).size;
+      document.getElementById('m-paid').textContent    = paidUsers;
+      document.getElementById('m-paid-sub').textContent = `of ${totalSignups} signups (30d)`;
+
+      // ── DAU BAR CHART (last 7 days) ─────────────────
+      const days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(Date.now() - (6 - i) * 86400000);
+        return d.toISOString().split('T')[0];
+      });
+
+      const recentEvents = events.filter(e => e.created_at >= sevenDaysAgo);
+      const dauByDay = days.map(day => {
+        const dayEvs = recentEvents.filter(e => e.created_at.startsWith(day));
+        const users  = new Set(dayEvs.filter(e => e.user_id).map(e => e.user_id)).size;
+        return { day, users };
+      });
+
+      const maxDAU = Math.max(1, ...dauByDay.map(d => d.users));
+      const MAX_H  = 90;
+
+      document.getElementById('dau-chart').innerHTML = dauByDay.map(({ day, users }) => {
+        const barH = Math.max(3, Math.round((users / maxDAU) * MAX_H));
+        const label = shortDay(day);
+        const isToday = day === today;
+        const barColor = isToday ? 'var(--accent)' : 'rgba(91,122,245,0.45)';
+        return `
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;justify-content:flex-end;height:${MAX_H + 28}px">
+            <div style="font-size:0.6rem;font-weight:600;color:var(--text2)">${users > 0 ? users : ''}</div>
+            <div style="width:100%;height:${barH}px;background:${barColor};border-radius:4px 4px 0 0"></div>
+            <div style="font-size:0.6rem;color:${isToday ? 'var(--text)' : 'var(--text2)'};font-weight:${isToday ? 700 : 400}">${label}</div>
+          </div>`;
+      }).join('');
+
+      document.getElementById('updated').textContent =
+        'Updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Load on open
+    load();
+
+    // Real-time: refresh whenever a new event is inserted
+    sb.channel('analytics-rt')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'events' }, () => load())
+      .subscribe();
+
+    // Fallback: refresh every 60s
+    setInterval(load, 60000);
+  </script>
+</body>
+</html>

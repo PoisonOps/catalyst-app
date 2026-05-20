@@ -89,6 +89,7 @@ const Auth = {
         // Session returned — auto-login immediately
         this.currentUser = data.user;
         DB.initTrial();
+        DB.logEvent('signup', data.user.id);
         this.onLogin(data.user);
       } else {
         // No session (email confirmation might be on in Supabase).
@@ -97,6 +98,7 @@ const Auth = {
         if (loginErr) throw loginErr;
         this.currentUser = loginData.user;
         DB.initTrial();
+        DB.logEvent('signup', loginData.user.id);
         this.onLogin(loginData.user);
       }
     } catch (err) {
@@ -115,6 +117,7 @@ const Auth = {
     USE_DEMO = true;
     const demoName = 'Demo User';
     this.currentUser = { id: 'demo', email: 'demo@catalyst.app', user_metadata: { full_name: demoName } };
+    DB.logEvent('demo_started');
 
     // Persist demo mode so reload auto-resumes
     localStorage.setItem('cat_demo_active', 'true');
@@ -158,6 +161,19 @@ const Auth = {
 
     DB.startSession();
     DB.updateStreak();
+
+    // Day-7 return check — fire once per user when they come back on day 7+
+    if (!USE_DEMO && user.id !== 'demo') {
+      const trial = DB._getLocal('cat_trial', null);
+      const firedKey = `cat_day7_fired_${user.id}`;
+      if (trial && !localStorage.getItem(firedKey)) {
+        const elapsed = Date.now() - trial.started_at;
+        if (elapsed >= 7 * 86400000) {
+          DB.logEvent('day7_return', user.id);
+          localStorage.setItem(firedKey, '1');
+        }
+      }
+    }
 
     if (typeof Practice !== 'undefined' && Practice.loadState) Practice.loadState();
     if (typeof ErrorLog !== 'undefined' && ErrorLog.loadState) ErrorLog.loadState();
