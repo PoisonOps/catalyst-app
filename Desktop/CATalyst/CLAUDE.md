@@ -34,7 +34,7 @@ All data operations go through `DB.*`. The same methods work in two modes, switc
 
 Every user-specific localStorage key is namespaced as `cat_<key>_${userId}` to allow multi-user devices without conflicts. Global keys (theme, demo state) are not namespaced — the full list is in `DB._globalKeys`.
 
-Supabase tables: `questions`, `sets`, `attempt_logs`, `error_logs`, `reports`, `feedback`. The `questions` query always uses `sets!left` (LEFT JOIN) — without `!left`, PostgREST defaults to INNER JOIN and silently drops all standalone questions where `set_id IS NULL`.
+Supabase tables: `questions`, `sets`, `attempt_logs`, `error_logs`, `reports`, `feedback`, `events`. The `questions` query always uses `sets!left` (LEFT JOIN) — without `!left`, PostgREST defaults to INNER JOIN and silently drops all standalone questions where `set_id IS NULL`.
 
 ### Environment Detection (`js/config.js`)
 
@@ -93,24 +93,57 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 - `showToast(msg, type)` — `type` is `'success'` or `'error'`
 - Modals toggled via `.hidden` on `#modal-id`
 
+### Trial & Payment System
+
+- Trial duration: **3 days** (`TRIAL_DAYS = 3` in `db.js → getTrialStatus()`)
+- Trial state stored in localStorage as `cat_trial` → `{ started_at, is_paid }`
+- `DB.initTrial()` — called on signup; creates the trial record and fires `trial_started` event
+- `DB.isPaid()` / `DB.markAsPaid()` — reads/writes `is_paid` flag locally only
+- Payment is **manual**: user pays ₹99 via UPI, sends WhatsApp screenshot, Sahil activates
+- To activate a paid user: run two SQL lines in Supabase — find UUID via `auth.users`, then insert a `payment_completed` event row (see `analytics-setup.sql`)
+
+### Analytics System
+
+- `DB.logEvent(eventName, userId, metadata)` — fire-and-forget, never blocks UI, no-ops if no Supabase client
+- Events table schema: `id, event, user_id (nullable uuid), metadata (jsonb), created_at`
+- Table + RLS policies created by running `analytics-setup.sql` in Supabase SQL Editor once
+- Dashboard: `analytics.html` — standalone page, uses prod anon key, real-time via Supabase channel subscription. Keep URL private.
+- Events fired automatically:
+
+| Event | Where |
+|---|---|
+| `demo_started` | `auth.js → demoMode()` |
+| `signup` | `auth.js → signup()` after successful auth |
+| `trial_started` | `db.js → initTrial()` on first call |
+| `fix_mode_started` | `practice.js → loadFixSession()` |
+| `fix_mode_completed` | `practice.js → _showFixSessionComplete()` |
+| `day7_return` | `auth.js → onLogin()` — fires once per user when elapsed ≥ 7 days; tracked by `cat_day7_fired_${userId}` in localStorage |
+
+### Social / OG
+
+- OG image: `og-image.png` in repo root, served at `/og-image.png` (1200×630px)
+- OG + Twitter Card meta tags in `index.html` `<head>` — absolute URLs pointing to `https://catalyst-app-six.vercel.app`
+
 ## Key Files
 
 - `Plan/Product.md` — Core product philosophy; read before making UX decisions
 - `Plan/Growth_Plan.md` — Screen-by-screen copy targets and psychology goals per screen
 - `js/config.js` — Feature flags, demo question bank (`DEMO_QUESTIONS`, `DEMO_SETS`), Supabase credentials, `CAT_TAXONOMY`
-- `js/db.js` — Single source of truth for all data shapes and storage keys
+- `js/db.js` — Single source of truth for all data shapes, storage keys, and `logEvent()`
+- `analytics.html` — Internal analytics dashboard (not linked from the app)
+- `analytics-setup.sql` — Run once in Supabase to create `events` table + RLS policies
+
 ## Current Business Context
 
 - Builder: Sahil Solankey, CAT 2026 aspirant, solo founder
-- Status: MVP complete, 0 users, deploying this week to Vercel
-- Immediate goal: Get 10 free trial users, validate the loop
-- Pricing: ₹99/month (placeholder, not finalized)
-- Question bank: 800 questions (Quant, LRDI, VARC) from Cracku PDFs
+- Status: Live at `https://catalyst-app-six.vercel.app`, connected to prod Supabase
+- Pricing: ₹99/month, UPI `7080442040@pthdfc`, activation via WhatsApp `+91 70804 42040`
+- Question bank: 794 questions + 145 sets (Quant, LRDI, VARC) migrated from dev to prod Supabase
+- Trial: 3 days free for all new signups
 - Do NOT suggest new features until we have paying users
 - Do NOT change the core Fix Mode loop — it is the product
 
 ## Current Priorities (in order)
-1. Deploy to Vercel
-2. Fix any production bugs
-3. Outreach to get first 10 users
-4. Set up proper UPI payment automation
+1. Outreach to get first 10 users (CAT WhatsApp/Telegram groups, Reddit r/CATPrep)
+2. Fix any production bugs reported by users
+3. Set up proper UPI payment automation
