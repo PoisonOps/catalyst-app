@@ -36,8 +36,6 @@ const Auth = {
     const sBtn = document.getElementById('signup-btn');
     if (sBtn) { sBtn.removeEventListener('click', this._handlers.signup); sBtn.addEventListener('click', this._handlers.signup); }
 
-    const dBtn = document.getElementById('demo-btn');
-    if (dBtn) { dBtn.removeEventListener('click', this._handlers.demo); dBtn.addEventListener('click', this._handlers.demo); }
 
     document.querySelectorAll('.auth-tab').forEach(tab => {
       tab.removeEventListener('click', this._handlers.tabClick);
@@ -70,7 +68,6 @@ const Auth = {
   },
 
   async login() {
-    if (USE_DEMO) { this.demoMode(); return; }
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
     if (!email || !password) { this.showError('Please fill in all fields'); return; }
@@ -92,7 +89,6 @@ const Auth = {
   },
 
   async signup() {
-    if (USE_DEMO) { this.demoMode(); return; }
     const name = document.getElementById('signup-name').value.trim();
     const email = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value;
@@ -109,6 +105,7 @@ const Auth = {
         this.currentUser = data.user;
         DB.initTrial();
         DB.logEvent('signup', data.user.id);
+        localStorage.setItem(`cat_first_session_${data.user.id}`, '1');
         this.onLogin(data.user);
       } else {
         // Email confirmation is on — user must verify before logging in
@@ -147,23 +144,6 @@ const Auth = {
     `;
   },
 
-  demoMode() {
-    USE_DEMO = true;
-    const demoName = 'Demo User';
-    this.currentUser = { id: 'demo', email: 'demo@catalyst.app', user_metadata: { full_name: demoName } };
-    DB.logEvent('demo_started');
-
-    // Persist demo mode so reload auto-resumes
-    localStorage.setItem('cat_demo_active', 'true');
-    localStorage.setItem('cat_demo_name', demoName);
-
-    // Init trial for demo too
-    DB.initTrial();
-
-    this.onLogin(this.currentUser);
-    showToast('Demo mode — data saved locally 📱', 'success');
-  },
-
   onLogin(user) {
     const name = (user.user_metadata && user.user_metadata.full_name) || user.email || 'User';
     document.getElementById('user-name-display').textContent = name;
@@ -193,20 +173,18 @@ const Auth = {
     const fab = document.getElementById('feedback-fab');
     if (fab) fab.style.display = 'flex';
 
-    if (!USE_DEMO) DB.initTrial();
+    DB.initTrial();
     DB.startSession();
     DB.updateStreak();
 
     // Day-7 return check — fire once per user when they come back on day 7+
-    if (!USE_DEMO && user.id !== 'demo') {
-      const trial = DB._getLocal('cat_trial', null);
-      const firedKey = `cat_day7_fired_${user.id}`;
-      if (trial && !localStorage.getItem(firedKey)) {
-        const elapsed = Date.now() - trial.started_at;
-        if (elapsed >= 7 * 86400000) {
-          DB.logEvent('day7_return', user.id);
-          localStorage.setItem(firedKey, '1');
-        }
+    const trial = DB._getLocal('cat_trial', null);
+    const firedKey = `cat_day7_fired_${user.id}`;
+    if (trial && !localStorage.getItem(firedKey)) {
+      const elapsed = Date.now() - trial.started_at;
+      if (elapsed >= 7 * 86400000) {
+        DB.logEvent('day7_return', user.id);
+        localStorage.setItem(firedKey, '1');
       }
     }
 
@@ -230,15 +208,10 @@ const Auth = {
     if (typeof TestMode !== 'undefined' && TestMode.clearMemory) TestMode.clearMemory();
     if (typeof ErrorLog !== 'undefined' && ErrorLog.clearMemory) ErrorLog.clearMemory();
 
-    // Clear demo persistence
-    localStorage.removeItem('cat_demo_active');
-    localStorage.removeItem('cat_demo_name');
-
-    if (!USE_DEMO && sbClient) {
+    if (sbClient) {
       try { await sbClient.auth.signOut(); } catch (e) { }
     }
     this.currentUser = null;
-    USE_DEMO = false;
     App.initialized = false;
 
     document.getElementById('app-screen').style.display = 'none';

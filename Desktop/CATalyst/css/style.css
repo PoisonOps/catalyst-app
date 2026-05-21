@@ -1225,13 +1225,21 @@ body {
   font-size: 0.82rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
   letter-spacing: 0.01em;
 }
 
-.filter-toggle-btn:hover {
-  background: var(--card-bg);
+/* Stands out when closed — signals it's interactive */
+.filter-toggle-btn:not(.is-open) {
   border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(91, 122, 245, 0.08);
+}
+
+.filter-toggle-btn:hover {
+  background: rgba(91, 122, 245, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .filter-toggle-btn .ftb-chevron {
@@ -1312,9 +1320,28 @@ body {
 
 .q-timer {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
-  color: var(--text3);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text2);
   margin-left: auto;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.2rem 0.6rem;
+  letter-spacing: 0.04em;
+  transition: color 0.4s, border-color 0.4s, background 0.4s;
+}
+
+.q-timer.timer-warn {
+  color: var(--amber);
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.q-timer.timer-urgent {
+  color: var(--red);
+  border-color: rgba(244, 76, 96, 0.4);
+  background: rgba(244, 76, 96, 0.06);
 }
 
 .q-tags {
@@ -1444,6 +1471,34 @@ body {
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border);
 }
+
+.passage-toggle-btn {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  font-size: 0.75rem;
+  font-family: var(--font-body);
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  width: 100%;
+  transition: color 0.15s, border-color 0.15s;
+}
+.passage-toggle-btn:hover { color: var(--text); border-color: var(--text2); }
+
+.first-session-nudge {
+  background: rgba(91, 122, 245, 0.08);
+  border: 1px solid rgba(91, 122, 245, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  font-size: 0.83rem;
+  color: var(--text2);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+.first-session-nudge strong { color: var(--accent); }
 
 /* Images inside the passage block */
 .passage-image-wrap {
@@ -3139,7 +3194,17 @@ body {
 
 @media (max-width: 768px) {
   .passage-box.has-scroll {
+    max-height: none;
+  }
+
+  .passage-toggle-btn {
+    display: block;
+  }
+
+  /* Collapsed = scrollable box, same as old sticky behavior */
+  .passage-context.passage-collapsed .passage-box {
     max-height: 150px;
+    overflow-y: auto;
   }
 
   .option-btn {
@@ -3222,13 +3287,9 @@ body {
 
   .q-actions .icon-btn {
     flex: 1;
-    padding: 0.4rem 0;
+    padding: 0.22rem 0;
     min-width: 0;
-  }
-
-  .q-actions .icon-btn svg {
-    width: 14px;
-    height: 14px;
+    border-radius: 6px;
   }
 
   /* Hide FAB on all mobile pages except dashboard */
@@ -3890,14 +3951,10 @@ body {
   text-decoration-color: rgba(255, 255, 255, 0.4);
 }
 
-/* Auth card: collapsed by default, open when toggled */
+/* Auth card: always visible (demo mode removed) */
 #auth-card-collapsible {
-  display: none !important;
+  display: block;
   width: 100%;
-}
-
-#auth-card-collapsible.auth-card--open {
-  display: block !important;
 }
 
 /* ── V2 Auth: targeted fixes ─────────────────────────────────── */

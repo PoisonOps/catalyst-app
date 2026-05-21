@@ -114,6 +114,7 @@ const Practice = {
   _fixedInSession: 0,         // Phase 1 correct answers = mistakes actually fixed
   _hasAutoLoaded: false,      // auto-load once per session
   _selectedSubtopics: [],     // tracks active subtopic pill selections
+  _isFirstSession: false,     // true for first-ever practice session
 
   async init() {
     this.loadState();
@@ -127,6 +128,7 @@ const Practice = {
       this.saveState();
     });
     document.getElementById('filter-difficulty').addEventListener('change', () => this.saveState());
+    document.getElementById('filter-count').addEventListener('change', () => this.saveState());
     document.getElementById('filter-subtopic').addEventListener('change', () => this.saveState());
     document.getElementById('load-practice-btn').addEventListener('click', () => this.loadQuestions());
     const filterToggleBtn = document.getElementById('filter-toggle-btn');
@@ -196,9 +198,17 @@ const Practice = {
 
   // Called by App.navigate('practice') — auto-loads on first visit
   async onPageEnter() {
+    // Auto-collapse filters on mobile to save space
+    if (window.innerWidth <= 768) {
+      const panel = document.getElementById('practice-filters');
+      const btn   = document.getElementById('filter-toggle-btn');
+      if (panel && !panel.classList.contains('collapsed')) {
+        panel.classList.add('collapsed');
+        if (btn) btn.classList.remove('is-open');
+      }
+    }
     if (this._hasAutoLoaded || this.questions.length > 0 || this._isFixSession) return;
     this._hasAutoLoaded = true;
-    // Small delay so the page renders first
     setTimeout(() => this.loadQuestions(), 120);
   },
 
@@ -279,7 +289,17 @@ const Practice = {
     try {
       let questions = await DB.getQuestions(filters);
       questions = await DB.sortBySmartQueue(questions);
-      this.questions = questions;
+
+      // First-session detection — cap to 10 questions
+      const userId = Auth.currentUser ? Auth.currentUser.id : null;
+      const firstKey = userId ? `cat_first_session_${userId}` : null;
+      this._isFirstSession = !!(firstKey && localStorage.getItem(firstKey) === '1');
+
+      const countEl = document.getElementById('filter-count');
+      const requestedCount = parseInt(countEl ? countEl.value : '25') || 25;
+      const finalCount = this._isFirstSession ? 10 : requestedCount;
+      this.questions = questions.slice(0, finalCount);
+
       this._sessionCorrect = 0;
       this._sessionWrong = 0;
       this._sessionTimes = [];
@@ -388,6 +408,11 @@ const Practice = {
       }
 
       passageHTML += '</div>'; // close .passage-box
+      passageHTML += `<button class="passage-toggle-btn" onclick="
+        const pw = this.closest('.passage-context');
+        const collapsed = pw.classList.toggle('passage-collapsed');
+        this.textContent = collapsed ? '📄 Show Full Passage' : '▲ Hide';
+      ">▲ Hide</button>`;
       passageWrap.innerHTML = passageHTML;
 
       // Run renderMath on passage after it's in the DOM
@@ -457,11 +482,20 @@ const Practice = {
     this._startTime = Date.now();
     const el = document.getElementById('q-timer');
     el.textContent = '0:00';
+    el.className = 'q-timer';
     this._timerInterval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - this._startTime) / 1000);
       const m = Math.floor(elapsed / 60);
       const s = elapsed % 60;
       el.textContent = `${m}:${String(s).padStart(2, '0')}`;
+      // Colour feedback: >90s = warn, >150s = urgent
+      if (elapsed >= 150) {
+        el.className = 'q-timer timer-urgent';
+      } else if (elapsed >= 90) {
+        el.className = 'q-timer timer-warn';
+      } else {
+        el.className = 'q-timer';
+      }
     }, 1000);
   },
 
@@ -633,6 +667,20 @@ const Practice = {
       <div class="ss-stat"><div class="ss-stat-val" style="color:var(--red)">${this._sessionWrong}</div><div class="ss-stat-label">Wrong</div></div>
       <div class="ss-stat"><div class="ss-stat-val" style="color:var(--text2)">${avgTime}s</div><div class="ss-stat-label">Avg Time</div></div>
     `;
+    // First session — clear flag and show onboarding nudge
+    if (this._isFirstSession) {
+      const userId = Auth.currentUser ? Auth.currentUser.id : null;
+      if (userId) localStorage.removeItem(`cat_first_session_${userId}`);
+      this._isFirstSession = false;
+      const diag = document.getElementById('ss-diagnostic');
+      if (diag) {
+        const nudge = document.createElement('div');
+        nudge.className = 'first-session-nudge';
+        nudge.innerHTML = `<strong>That was your intro session (10 questions).</strong><br>Full sessions are 25 questions by default — you can change it in the filter above. Keep going!`;
+        diag.parentNode.insertBefore(nudge, diag);
+      }
+    }
+
     document.getElementById('session-summary').classList.remove('hidden');
     document.getElementById('session-summary').scrollIntoView({ behavior: 'smooth' });
   },
@@ -828,7 +876,7 @@ const Practice = {
     this._isFixSession = true;
     this._fixPhase = 1;
     this._fixModeLabel = modeLabel;
-    if (!USE_DEMO && typeof Auth !== 'undefined' && Auth.currentUser) {
+    if (typeof Auth !== 'undefined' && Auth.currentUser) {
       DB.logEvent('fix_mode_started', Auth.currentUser.id);
     }
     this.questions = questions;
@@ -975,6 +1023,7 @@ const Practice = {
       subject:    document.getElementById('filter-subject').value,
       topic:      document.getElementById('filter-topic').value,
       difficulty: document.getElementById('filter-difficulty').value,
+      count:      document.getElementById('filter-count').value,
       subtopics:  [...this._selectedSubtopics],
       matchAll:   document.getElementById('filter-match-all')?.checked ?? false,
     };
@@ -989,6 +1038,7 @@ const Practice = {
         if (state.subject)    document.getElementById('filter-subject').value = state.subject;
         if (state.topic)      document.getElementById('filter-topic').dataset.pendingValue = state.topic;
         if (state.difficulty) document.getElementById('filter-difficulty').value = state.difficulty;
+        if (state.count)      document.getElementById('filter-count').value = state.count;
         if (state.subtopics?.length) this._selectedSubtopics = state.subtopics;
         const matchAllEl = document.getElementById('filter-match-all');
         if (matchAllEl && state.matchAll) matchAllEl.checked = true;
@@ -1015,6 +1065,7 @@ const Practice = {
     this._transitionTimer = null;
     this._hasAutoLoaded = false;
     this._selectedSubtopics = [];
+    this._isFirstSession = false;
 
     // Reset visible UI — use correct IDs from index.html
     const practiceArea = document.getElementById('practice-area');

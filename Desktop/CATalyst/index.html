@@ -53,25 +53,10 @@
           You repeat <span class="auth-headline-accent">mistakes.</span>
         </h2>
         <p class="auth-sub1">That's why your score isn't improving.</p>
-        <p class="auth-sub2">Start fixing your mistakes in 2 minutes.</p>
+        <p class="auth-sub2">Track every mistake. Fix it. Never repeat it.</p>
       </div>
 
-      <!-- V2: Primary CTAs -->
-      <div class="auth-ctas">
-        <button class="btn-fix-session" id="fix-session-btn"
-          onclick="localStorage.setItem('last_page_demo','practice'); Auth.demoMode();">
-          Try 2-min Fix Session ⚡
-        </button>
-        <p class="auth-login-link">
-          Already have an account?
-          <button class="auth-login-toggle"
-            onclick="document.getElementById('auth-card-collapsible').classList.toggle('auth-card--open')">
-            Login / Sign up
-          </button>
-        </p>
-      </div>
-
-      <!-- Login / Sign up form (collapsed by default, toggled by link above) -->
+      <!-- Login / Sign up form — always visible -->
       <div class="auth-card" id="auth-card-collapsible">
         <div class="auth-tabs">
           <button class="auth-tab active" data-tab="login">Login</button>
@@ -331,6 +316,11 @@
             <option value="Easy">Easy</option>
             <option value="Medium">Medium</option>
             <option value="Hard">Hard</option>
+          </select>
+          <select id="filter-count" class="filter-select">
+            <option value="10">10 Questions</option>
+            <option value="25" selected>25 Questions</option>
+            <option value="50">50 Questions</option>
           </select>
           <button class="btn-primary btn-sm" id="load-practice-btn">Load Questions</button>
           <!-- Subtopic pills row — shown below filters when a topic is selected -->

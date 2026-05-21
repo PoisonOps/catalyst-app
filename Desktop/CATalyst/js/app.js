@@ -267,43 +267,20 @@ document.addEventListener('DOMContentLoaded', () => {
       hideLoading();
       const session = result.data && result.data.session;
       if (session && session.user) {
-        // ✅ Session found — auto-login without showing auth screen
         Auth.currentUser = session.user;
         Auth.onLogin(session.user);
-      } else {
-        // Check if last session was demo mode
-        if (localStorage.getItem('cat_demo_active') === 'true') {
-          Auth.demoMode();
-        } else {
-          authEl.classList.add('active');
-          Auth.init();
-        }
-      }
-    }).catch(() => {
-      hideLoading();
-      if (localStorage.getItem('cat_demo_active') === 'true') {
-        Auth.demoMode();
       } else {
         authEl.classList.add('active');
         Auth.init();
       }
+    }).catch(() => {
+      hideLoading();
+      authEl.classList.add('active');
+      Auth.init();
     });
 
   } else {
-    // No Supabase — check for demo persistence
-    if (localStorage.getItem('cat_demo_active') === 'true') {
-      USE_DEMO = true;
-      Auth.currentUser = {
-        id: 'demo',
-        email: 'demo@catalyst.app',
-        user_metadata: { full_name: localStorage.getItem('cat_demo_name') || 'Demo User' }
-      };
-      Auth.onLogin(Auth.currentUser);
-      showToast('Welcome back (demo mode) 👋', 'success');
-    } else {
-      USE_DEMO = true;
-      authEl.classList.add('active');
-      Auth.init();
-    }
+    authEl.classList.add('active');
+    Auth.init();
   }
 });
