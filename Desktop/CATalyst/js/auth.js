@@ -18,6 +18,7 @@ const Auth = {
         demo: () => this.demoMode(),
         loginKey: (e) => { if (e.key === 'Enter') this.login(); },
         signupKey: (e) => { if (e.key === 'Enter') this.signup(); },
+        forgotKey: (e) => { if (e.key === 'Enter') this.forgotPassword(); },
         tabClick: (e) => {
           const tab = e.currentTarget;
           document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
@@ -48,6 +49,24 @@ const Auth = {
 
     const sPass = document.getElementById('signup-password');
     if (sPass) { sPass.removeEventListener('keydown', this._handlers.signupKey); sPass.addEventListener('keydown', this._handlers.signupKey); }
+
+    const forgotToggle = document.getElementById('forgot-pw-toggle');
+    if (forgotToggle) { forgotToggle.onclick = () => this.showForgotPassword(); }
+
+    const forgotBack = document.getElementById('forgot-back');
+    if (forgotBack) { forgotBack.onclick = () => this.hideForgotPassword(); }
+
+    const forgotBtn = document.getElementById('forgot-btn');
+    if (forgotBtn) { forgotBtn.onclick = () => this.forgotPassword(); }
+
+    const forgotEmail = document.getElementById('forgot-email');
+    if (forgotEmail) { forgotEmail.removeEventListener('keydown', this._handlers.forgotKey); forgotEmail.addEventListener('keydown', this._handlers.forgotKey); }
+
+    const gLoginBtn = document.getElementById('google-login-btn');
+    if (gLoginBtn) { gLoginBtn.onclick = () => this.loginWithGoogle(); }
+
+    const gSignupBtn = document.getElementById('google-signup-btn');
+    if (gSignupBtn) { gSignupBtn.onclick = () => this.loginWithGoogle(); }
   },
 
   async login() {
@@ -86,31 +105,46 @@ const Auth = {
       if (error) throw error;
 
       if (data.session) {
-        // Session returned — auto-login immediately
+        // Email confirmation off — auto-login immediately
         this.currentUser = data.user;
         DB.initTrial();
         DB.logEvent('signup', data.user.id);
         this.onLogin(data.user);
       } else {
-        // No session (email confirmation might be on in Supabase).
-        // Attempt immediate sign-in so the user isn't blocked.
-        const { data: loginData, error: loginErr } = await sbClient.auth.signInWithPassword({ email, password });
-        if (loginErr) throw loginErr;
-        this.currentUser = loginData.user;
-        DB.initTrial();
-        DB.logEvent('signup', loginData.user.id);
-        this.onLogin(loginData.user);
+        // Email confirmation is on — user must verify before logging in
+        this.showError('');
+        this.hideError();
+        this._showSignupPending();
       }
     } catch (err) {
       const msg = err.message || '';
       if (msg.includes('already registered') || msg.includes('already been registered')) {
         this.showError('This email is already registered. Try logging in instead.');
-      } else if (msg.includes('Email not confirmed')) {
-        this.showError('Account created but email confirmation is required in Supabase. Disable it in Auth → Settings.');
       } else {
         this.showError('Signup failed. Please try again.');
       }
     } finally { hideLoading(); }
+  },
+
+  _showSignupPending() {
+    // Replace the signup form content with a confirmation message
+    const form = document.getElementById('tab-signup');
+    form.innerHTML = `
+      <div style="text-align:center;padding:1rem 0;">
+        <div style="font-size:2rem;margin-bottom:0.75rem;">📧</div>
+        <p style="font-weight:600;color:var(--text);margin-bottom:0.5rem;">Check your email</p>
+        <p style="font-size:0.85rem;color:var(--text2);line-height:1.5;">
+          We sent a confirmation link to your inbox.<br>
+          Click it to activate your account, then log in here.
+        </p>
+        <button class="btn-primary" style="margin-top:1.25rem;" onclick="
+          document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('active'));
+          document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
+          document.getElementById('tab-login').classList.add('active');
+          document.querySelector('.auth-tab[data-tab=\\'login\\']').classList.add('active');
+        ">Go to Login</button>
+      </div>
+    `;
   },
 
   demoMode() {
@@ -159,6 +193,7 @@ const Auth = {
     const fab = document.getElementById('feedback-fab');
     if (fab) fab.style.display = 'flex';
 
+    if (!USE_DEMO) DB.initTrial();
     DB.startSession();
     DB.updateStreak();
 
@@ -222,6 +257,56 @@ const Auth = {
 
     Auth.init(); // Ensure event listeners exist if they were skipped on auto-login
     showToast('Logged out');
+  },
+
+  showForgotPassword() {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    document.getElementById('tab-forgot').classList.add('active');
+    document.getElementById('forgot-success').classList.add('hidden');
+    document.getElementById('forgot-email').value = '';
+    this.hideError();
+  },
+
+  hideForgotPassword() {
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    document.getElementById('tab-login').classList.add('active');
+    document.querySelector('.auth-tab[data-tab="login"]').classList.add('active');
+    this.hideError();
+  },
+
+  async forgotPassword() {
+    const email = document.getElementById('forgot-email').value.trim();
+    if (!email) { this.showError('Please enter your email'); return; }
+    if (!_EMAIL_RE.test(email)) { this.showError('Enter a valid email'); return; }
+    showLoading('Sending...');
+    try {
+      const { error } = await sbClient.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://catalyst-app-six.vercel.app/reset-password.html'
+      });
+      if (error) throw error;
+      this.hideError();
+      document.getElementById('forgot-success').classList.remove('hidden');
+    } catch (err) {
+      const msg = (err.message || '').toLowerCase();
+      if (msg.includes('rate limit') || msg.includes('too many') || msg.includes('over_email')) {
+        this.showError('A reset link was already sent to this email. Check your inbox and spam folder.');
+      } else {
+        this.showError('Could not send reset link. Try again.');
+      }
+    } finally { hideLoading(); }
+  },
+
+  async loginWithGoogle() {
+    try {
+      const { error } = await sbClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: 'https://catalyst-app-six.vercel.app' }
+      });
+      if (error) throw error;
+    } catch (err) {
+      this.showError('Google sign-in failed. Try again.');
+    }
   },
 
   showError(msg) {

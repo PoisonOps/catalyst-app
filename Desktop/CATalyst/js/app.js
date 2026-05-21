@@ -250,6 +250,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Listen for auth state changes (handles token refresh, sign-out from another tab)
     sbClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        // Redirect to reset page — don't auto-login with recovery token
+        window.location.href = '/reset-password.html';
+        return;
+      }
       if (event === 'SIGNED_OUT') {
         if (App.initialized) Auth.logout();
       } else if (event === 'TOKEN_REFRESHED' && session) {
