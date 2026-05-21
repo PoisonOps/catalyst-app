@@ -3713,18 +3713,36 @@ body {
   margin-bottom: 0.2rem;
 }
 
+.pay-upi-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.1rem;
+}
+
 .pay-upi {
   font-family: var(--font-mono);
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--accent);
   letter-spacing: 0.02em;
-  text-decoration: none;
 }
 
-.pay-upi:hover {
-  text-decoration: underline;
+.pay-copy-btn {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
 }
+
+.pay-copy-btn:hover { background: var(--accent); color: #fff; }
+.pay-copy-btn.copied { background: var(--green); border-color: var(--green); color: #fff; }
 
 .pay-whatsapp {
   font-size: 0.9rem;

@@ -820,9 +820,12 @@
       <div class="upgrade-pay">
         <div class="pay-step">
           <span class="pay-step-num">1</span>
-          <div>
-            <div class="pay-step-label" id="pay-label">Pay ₹489 via UPI</div>
-            <a href="upi://pay?pa=7080442040@pthdfc&pn=CATalyst&am=489&cu=INR&tn=CATalyst%20Pro" class="pay-upi" id="pay-upi-id">7080442040@pthdfc</a>
+          <div style="flex:1">
+            <div class="pay-step-label" id="pay-label">Pay ₹489 via any UPI app</div>
+            <div class="pay-upi-row">
+              <span class="pay-upi" id="pay-upi-id">7080442040@pthdfc</span>
+              <button class="pay-copy-btn" onclick="copyUPI()" id="pay-copy-btn">Copy</button>
+            </div>
           </div>
         </div>
         <div class="pay-step">
@@ -857,11 +860,16 @@
       const isMonthly = plan === 'monthly';
       document.getElementById('plan-monthly').classList.toggle('plan-selected', isMonthly);
       document.getElementById('plan-onetime').classList.toggle('plan-selected', !isMonthly);
-      const amount = isMonthly ? '99' : '489';
-      const label  = isMonthly ? 'Pay ₹99/month via UPI' : 'Pay ₹489 via UPI';
-      document.getElementById('pay-label').textContent = label;
-      document.getElementById('pay-upi-id').href =
-        `upi://pay?pa=7080442040@pthdfc&pn=CATalyst&am=${amount}&cu=INR&tn=CATalyst%20Pro`;
+      document.getElementById('pay-label').textContent = isMonthly ? 'Pay ₹99/month via any UPI app' : 'Pay ₹489 via any UPI app';
+    }
+
+    function copyUPI() {
+      navigator.clipboard.writeText('7080442040@pthdfc').then(() => {
+        const btn = document.getElementById('pay-copy-btn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
     }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
