@@ -26,13 +26,11 @@ Everything lives in `index.html` + `css/style.css` + `js/*.js`. Navigation is pu
 Script load order in `index.html` is critical — files depend on each other in this sequence:
 `config.js` → `auth.js` → `db.js` → `app.js` → `dashboard.js` → `practice.js` → `errorlog.js` → `test.js`
 
-### Dual-Mode Data Layer (`js/db.js`)
+### Data Layer (`js/db.js`)
 
-All data operations go through `DB.*`. The same methods work in two modes, switched by `FLAGS.SUPABASE_SYNC` in `config.js`:
-- **Demo / offline:** reads and writes to localStorage only
-- **Supabase:** syncs to the backend, with localStorage as a fallback cache
+All data operations go through `DB.*`. Demo mode has been removed — `USE_DEMO` is permanently `false`. All reads/writes go to Supabase, with localStorage as a fallback cache.
 
-Every user-specific localStorage key is namespaced as `cat_<key>_${userId}` to allow multi-user devices without conflicts. Global keys (theme, demo state) are not namespaced — the full list is in `DB._globalKeys`.
+Every user-specific localStorage key is namespaced as `cat_<key>_${userId}` to allow multi-user devices without conflicts. Global keys (theme) are not namespaced — the full list is in `DB._globalKeys`.
 
 Supabase tables: `questions`, `sets`, `attempt_logs`, `error_logs`, `reports`, `feedback`, `events`. The `questions` query always uses `sets!left` (LEFT JOIN) — without `!left`, PostgREST defaults to INNER JOIN and silently drops all standalone questions where `set_id IS NULL`.
 
@@ -50,7 +48,9 @@ Supabase tables: `questions`, `sets`, `attempt_logs`, `error_logs`, `reports`, `
 
 Fix session flow: `loadFixSession()` → Phase 1 questions → `_showFixTransition()` (2.5s auto-advance) → `_startPhase2()` → `_showFixSessionComplete()`.
 
-`onPageEnter()` auto-loads questions 120ms after navigating to Practice. This means `#practice-area` becomes visible almost immediately — any CSS rule hiding things based on `#practice-area:not(.hidden)` will fire before the user interacts.
+`onPageEnter()` auto-loads questions 120ms after navigating to Practice. Filter panel behaviour: **open when no questions are loaded** (so the user sees the Load Questions button), **collapsed after questions load** (`_collapseFilters()` / `_openFilters()` helpers manage this). The filter-count select (`#filter-count`) controls 10/25/50 questions.
+
+First-session flow: on signup, `cat_first_session_${userId}` is set in localStorage. `loadQuestions()` detects this and caps to 10 questions, shows a nudge card at session end, then clears the flag so subsequent sessions use the selected count.
 
 ### Error Log (`js/errorlog.js`)
 
@@ -112,7 +112,6 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 
 | Event | Where |
 |---|---|
-| `demo_started` | `auth.js → demoMode()` |
 | `signup` | `auth.js → signup()` after successful auth |
 | `trial_started` | `db.js → initTrial()` on first call |
 | `fix_mode_started` | `practice.js → loadFixSession()` |
@@ -121,7 +120,7 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 
 ### Auth System (`js/auth.js`)
 
-The auth card is **collapsed by default** on the landing page (`#auth-card-collapsible`) and toggled open by the "Login / Sign up" link. The card has three panels, only one visible at a time via `.auth-form.active`:
+The auth card (`#auth-card-collapsible`) is **always visible** on the landing page. The card has three panels, only one visible at a time via `.auth-form.active`:
 - `#tab-login` — email/password login + Google OAuth button
 - `#tab-signup` — email/password signup + Google OAuth button
 - `#tab-forgot` — forgot password email input (no `.auth-tab` highlights this one)
@@ -132,7 +131,7 @@ The auth card is **collapsed by default** on the landing page (`#auth-card-colla
 
 **PASSWORD_RECOVERY intercept:** `app.js → onAuthStateChange` catches the `PASSWORD_RECOVERY` event and immediately redirects to `/reset-password.html` before the main app can auto-login the user with the recovery token.
 
-**Google OAuth:** `Auth.loginWithGoogle()` calls `sbClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://catalyst-app-six.vercel.app' } })`. After redirect, the existing boot `getSession()` call picks up the session automatically. `DB.initTrial()` is called in `onLogin()` for all non-demo users (idempotent — safe to call on every login).
+**Google OAuth:** `Auth.loginWithGoogle()` calls `sbClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://catalyst-app-six.vercel.app' } })`. After redirect, the existing boot `getSession()` call picks up the session automatically. `DB.initTrial()` is called in `onLogin()` for all users (idempotent — safe to call on every login).
 
 **Supabase dashboard settings that affect auth behaviour:**
 - Site URL must be `https://catalyst-app-six.vercel.app` (not localhost) — controls OAuth redirect target
@@ -155,11 +154,13 @@ npx serve .   # serves on localhost:3000 → uses dev Supabase
 
 Only run `vercel --prod` after confirming the feature works locally. Deploying untested changes to prod pollutes real analytics and affects real users.
 
+**Cache busting:** JS files are loaded with `?v=N` query strings (e.g. `js/practice.js?v=2`). Increment `N` across all script tags in `index.html` whenever deploying a breaking JS change — this forces browsers to fetch fresh files instead of serving a stale cached version.
+
 ## Key Files
 
 - `Plan/Product.md` — Core product philosophy; read before making UX decisions
 - `Plan/Growth_Plan.md` — Screen-by-screen copy targets and psychology goals per screen
-- `js/config.js` — Feature flags, demo question bank (`DEMO_QUESTIONS`, `DEMO_SETS`), Supabase credentials, `CAT_TAXONOMY`
+- `js/config.js` — Feature flags, Supabase credentials (dev + prod), `CAT_TAXONOMY`
 - `js/db.js` — Single source of truth for all data shapes, storage keys, and `logEvent()`
 - `analytics.html` — Internal analytics dashboard (not linked from the app)
 - `analytics-setup.sql` — Run once in Supabase to create `events` table + RLS policies
@@ -169,7 +170,7 @@ Only run `vercel --prod` after confirming the feature works locally. Deploying u
 
 - Builder: Sahil Solankey, CAT 2026 aspirant, solo founder
 - Status: Live at `https://catalyst-app-six.vercel.app`, connected to prod Supabase
-- Pricing: ₹489 one-time (till CAT 2026), UPI `7080442040@pthdfc`, activation via WhatsApp `+91 70804 42040`
+- Pricing: two plans — **₹99/month** or **₹489 one-time** (till CAT 2026). Both are founder's pricing, locked for first 20 users. UPI `7080442040@pthdfc` (tap-to-pay link + copy button in upgrade modal), activation via WhatsApp `+91 70804 42040`
 - Question bank: 794 questions + 145 sets (Quant, LRDI, VARC) migrated from dev to prod Supabase
 - Trial: 3 days free for all new signups
 - Do NOT suggest new features until we have paying users
