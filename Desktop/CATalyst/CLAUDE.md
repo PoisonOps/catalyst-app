@@ -119,10 +119,41 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 | `fix_mode_completed` | `practice.js → _showFixSessionComplete()` |
 | `day7_return` | `auth.js → onLogin()` — fires once per user when elapsed ≥ 7 days; tracked by `cat_day7_fired_${userId}` in localStorage |
 
+### Auth System (`js/auth.js`)
+
+The auth card is **collapsed by default** on the landing page (`#auth-card-collapsible`) and toggled open by the "Login / Sign up" link. The card has three panels, only one visible at a time via `.auth-form.active`:
+- `#tab-login` — email/password login + Google OAuth button
+- `#tab-signup` — email/password signup + Google OAuth button
+- `#tab-forgot` — forgot password email input (no `.auth-tab` highlights this one)
+
+**Forgot password flow:** `Auth.showForgotPassword()` → user enters email → `Auth.forgotPassword()` calls `sbClient.auth.resetPasswordForEmail()` with `redirectTo: 'https://catalyst-app-six.vercel.app/reset-password.html'` → inline success message shown. The `redirectTo` URL must be in Supabase's allowed redirect URLs list.
+
+**Reset password page:** `reset-password.html` is a standalone page (not part of `index.html`). It initialises its own Supabase client using hardcoded prod credentials, detects the recovery token via `detectSessionInUrl: true`, and calls `sbClient.auth.updateUser({ password })` on submit.
+
+**PASSWORD_RECOVERY intercept:** `app.js → onAuthStateChange` catches the `PASSWORD_RECOVERY` event and immediately redirects to `/reset-password.html` before the main app can auto-login the user with the recovery token.
+
+**Google OAuth:** `Auth.loginWithGoogle()` calls `sbClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://catalyst-app-six.vercel.app' } })`. After redirect, the existing boot `getSession()` call picks up the session automatically. `DB.initTrial()` is called in `onLogin()` for all non-demo users (idempotent — safe to call on every login).
+
+**Supabase dashboard settings that affect auth behaviour:**
+- Site URL must be `https://catalyst-app-six.vercel.app` (not localhost) — controls OAuth redirect target
+- Redirect URLs allowlist must include `https://catalyst-app-six.vercel.app/reset-password.html`
+- Custom SMTP (Resend) requires a verified domain to send to arbitrary emails — currently disabled; falls back to Supabase's default (3 emails/hour limit)
+- Email confirmation is currently OFF — users get instant access after signup
+
 ### Social / OG
 
 - OG image: `og-image.png` in repo root, served at `/og-image.png` (1200×630px)
 - OG + Twitter Card meta tags in `index.html` `<head>` — absolute URLs pointing to `https://catalyst-app-six.vercel.app`
+
+## Deploy Discipline
+
+**Always test locally before deploying to prod.** The app has a dev/prod Supabase split — localhost automatically uses the dev database, so local testing never touches real user data or analytics.
+
+```bash
+npx serve .   # serves on localhost:3000 → uses dev Supabase
+```
+
+Only run `vercel --prod` after confirming the feature works locally. Deploying untested changes to prod pollutes real analytics and affects real users.
 
 ## Key Files
 
@@ -132,6 +163,7 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 - `js/db.js` — Single source of truth for all data shapes, storage keys, and `logEvent()`
 - `analytics.html` — Internal analytics dashboard (not linked from the app)
 - `analytics-setup.sql` — Run once in Supabase to create `events` table + RLS policies
+- `reset-password.html` — Standalone password reset page; has its own Supabase client init with hardcoded prod credentials
 
 ## Current Business Context
 
@@ -147,3 +179,4 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 1. Outreach to get first 10 users (CAT WhatsApp/Telegram groups, Reddit r/CATPrep)
 2. Fix any production bugs reported by users
 3. Set up proper UPI payment automation
+4. Custom domain + Resend SMTP (so password reset emails don't go to spam)

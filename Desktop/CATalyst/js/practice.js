@@ -189,27 +189,39 @@ const Practice = {
     document.getElementById('ss-view-errors').addEventListener('click', () => { App.navigate('errorlog'); });
     document.getElementById('ss-practice-more').addEventListener('click', () => {
       this._isFixSession = false;
-      this._hasAutoLoaded = false;  // allow auto-load on next visit
+      this._hasAutoLoaded = false;
       document.getElementById('session-summary').classList.add('hidden');
       document.getElementById('practice-area').classList.add('hidden');
       this.questions = [];
+      this._openFilters();
     });
   },
 
   // Called by App.navigate('practice') — auto-loads on first visit
   async onPageEnter() {
-    // Auto-collapse filters on mobile to save space
-    if (window.innerWidth <= 768) {
-      const panel = document.getElementById('practice-filters');
-      const btn   = document.getElementById('filter-toggle-btn');
-      if (panel && !panel.classList.contains('collapsed')) {
-        panel.classList.add('collapsed');
-        if (btn) btn.classList.remove('is-open');
-      }
+    // If questions are already loaded, collapse filters to save space
+    if (this.questions.length > 0) {
+      this._collapseFilters();
+    } else {
+      this._openFilters();
     }
     if (this._hasAutoLoaded || this.questions.length > 0 || this._isFixSession) return;
     this._hasAutoLoaded = true;
     setTimeout(() => this.loadQuestions(), 120);
+  },
+
+  _collapseFilters() {
+    const panel = document.getElementById('practice-filters');
+    const btn   = document.getElementById('filter-toggle-btn');
+    if (panel) panel.classList.add('collapsed');
+    if (btn)   btn.classList.remove('is-open');
+  },
+
+  _openFilters() {
+    const panel = document.getElementById('practice-filters');
+    const btn   = document.getElementById('filter-toggle-btn');
+    if (panel) panel.classList.remove('collapsed');
+    if (btn)   btn.classList.add('is-open');
   },
 
   _populateTopics() {
@@ -313,6 +325,7 @@ const Practice = {
       document.getElementById('practice-empty').classList.add('hidden');
       document.getElementById('session-summary').classList.add('hidden');
       document.getElementById('practice-area').classList.remove('hidden');
+      this._collapseFilters();
       this.currentIdx = 0;
       this.renderQuestion();
     } catch (err) {
