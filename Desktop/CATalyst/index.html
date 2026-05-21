@@ -790,17 +790,7 @@
       <div class="upgrade-hero">
         <div class="upgrade-icon">⚡</div>
         <h3>CATalyst Pro</h3>
-        <p class="upgrade-founders">Built for CAT 2026. One tool. One goal.</p>
-      </div>
-
-      <div class="upgrade-price-block">
-        <div class="upb-amount">₹489</div>
-        <div class="upb-period">till CAT 2026</div>
-        <div class="upb-tags">
-          <span class="upb-tag">One time</span>
-          <span class="upb-tag">No renewals</span>
-          <span class="upb-tag">Locked forever</span>
-        </div>
+        <p class="upgrade-founders">Everything you need to fix your mistakes before CAT 2026.</p>
       </div>
 
       <div class="upgrade-features">
@@ -810,11 +800,24 @@
         <div class="upgrade-feat">✅ Sync across devices</div>
       </div>
 
+      <div class="upgrade-plans">
+        <div class="upgrade-plan" id="plan-monthly" onclick="selectPlan('monthly')">
+          <div class="plan-badge plan-badge-amber">Early Bird</div>
+          <div class="plan-amount">₹99<span>/mo</span></div>
+          <div class="plan-desc">First 20 users only<br>Price locked forever</div>
+        </div>
+        <div class="upgrade-plan plan-selected" id="plan-onetime" onclick="selectPlan('onetime')">
+          <div class="plan-badge plan-badge-blue">Best Value</div>
+          <div class="plan-amount">₹489</div>
+          <div class="plan-desc">Till CAT 2026<br>One time · No renewals</div>
+        </div>
+      </div>
+
       <div class="upgrade-pay">
         <div class="pay-step">
           <span class="pay-step-num">1</span>
           <div>
-            <div class="pay-step-label">Pay ₹489 via UPI</div>
+            <div class="pay-step-label" id="pay-label">Pay ₹489 via UPI</div>
             <a href="upi://pay?pa=7080442040@pthdfc&pn=CATalyst&am=489&cu=INR&tn=CATalyst%20Pro" class="pay-upi" id="pay-upi-id">7080442040@pthdfc</a>
           </div>
         </div>
@@ -845,6 +848,18 @@
   </div>
   <div id="toast" class="toast hidden"></div>
 
+  <script>
+    function selectPlan(plan) {
+      const isMonthly = plan === 'monthly';
+      document.getElementById('plan-monthly').classList.toggle('plan-selected', isMonthly);
+      document.getElementById('plan-onetime').classList.toggle('plan-selected', !isMonthly);
+      const amount = isMonthly ? '99' : '489';
+      const label  = isMonthly ? 'Pay ₹99/month via UPI' : 'Pay ₹489 via UPI';
+      document.getElementById('pay-label').textContent = label;
+      document.getElementById('pay-upi-id').href =
+        `upi://pay?pa=7080442040@pthdfc&pn=CATalyst&am=${amount}&cu=INR&tn=CATalyst%20Pro`;
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=2"></script>
   <script src="js/db.js?v=2"></script>
