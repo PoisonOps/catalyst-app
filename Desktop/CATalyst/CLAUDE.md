@@ -99,7 +99,7 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 - Trial state stored in localStorage as `cat_trial` → `{ started_at, is_paid }`
 - `DB.initTrial()` — called on signup; creates the trial record and fires `trial_started` event
 - `DB.isPaid()` / `DB.markAsPaid()` — reads/writes `is_paid` flag locally only
-- Payment is **manual**: user pays ₹99 via UPI, sends WhatsApp screenshot, Sahil activates
+- Payment is **manual**: user pays ₹489 via UPI, sends WhatsApp screenshot, Sahil activates
 - To activate a paid user: run two SQL lines in Supabase — find UUID via `auth.users`, then insert a `payment_completed` event row (see `analytics-setup.sql`)
 
 ### Analytics System
@@ -169,7 +169,7 @@ Only run `vercel --prod` after confirming the feature works locally. Deploying u
 
 - Builder: Sahil Solankey, CAT 2026 aspirant, solo founder
 - Status: Live at `https://catalyst-app-six.vercel.app`, connected to prod Supabase
-- Pricing: ₹99/month, UPI `7080442040@pthdfc`, activation via WhatsApp `+91 70804 42040`
+- Pricing: ₹489 one-time (till CAT 2026), UPI `7080442040@pthdfc`, activation via WhatsApp `+91 70804 42040`
 - Question bank: 794 questions + 145 sets (Quant, LRDI, VARC) migrated from dev to prod Supabase
 - Trial: 3 days free for all new signups
 - Do NOT suggest new features until we have paying users

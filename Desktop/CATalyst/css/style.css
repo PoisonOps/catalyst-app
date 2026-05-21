@@ -3577,6 +3577,58 @@ body {
   margin-top: 0.25rem;
 }
 
+.upgrade-price-block {
+  background: linear-gradient(135deg, rgba(91, 122, 245, 0.13), rgba(91, 122, 245, 0.05));
+  border: 1.5px solid rgba(91, 122, 245, 0.35);
+  border-radius: var(--radius);
+  padding: 1.1rem 1rem 1rem;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.upb-amount {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.upb-period {
+  font-size: 0.9rem;
+  color: var(--text2);
+  margin-top: 0.2rem;
+  font-weight: 500;
+}
+
+.upb-tags {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 0.7rem;
+}
+
+.upb-tag {
+  background: rgba(91, 122, 245, 0.1);
+  border: 1px solid rgba(91, 122, 245, 0.25);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+  letter-spacing: 0.01em;
+}
+
+.upgrade-trust {
+  font-size: 0.75rem;
+  color: var(--text3);
+  text-align: center;
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
 .upgrade-pay {
   display: flex;
   flex-direction: column;
