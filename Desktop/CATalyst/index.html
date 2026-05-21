@@ -821,9 +821,9 @@
         <div class="pay-step">
           <span class="pay-step-num">1</span>
           <div style="flex:1">
-            <div class="pay-step-label" id="pay-label">Pay ₹489 via any UPI app</div>
+            <div class="pay-step-label" id="pay-label">Pay ₹489 — tap to open UPI app</div>
             <div class="pay-upi-row">
-              <span class="pay-upi" id="pay-upi-id">7080442040@pthdfc</span>
+              <a class="pay-upi" id="pay-upi-link" href="upi://pay?pa=7080442040@pthdfc&pn=CATalyst&am=489&cu=INR&tn=CATalyst%20Pro">7080442040@pthdfc</a>
               <button class="pay-copy-btn" onclick="copyUPI()" id="pay-copy-btn">Copy</button>
             </div>
           </div>
@@ -860,7 +860,9 @@
       const isMonthly = plan === 'monthly';
       document.getElementById('plan-monthly').classList.toggle('plan-selected', isMonthly);
       document.getElementById('plan-onetime').classList.toggle('plan-selected', !isMonthly);
-      document.getElementById('pay-label').textContent = isMonthly ? 'Pay ₹99/month via any UPI app' : 'Pay ₹489 via any UPI app';
+      const amount = isMonthly ? '99' : '489';
+      document.getElementById('pay-label').textContent = isMonthly ? 'Pay ₹99/month — tap to open UPI app' : 'Pay ₹489 — tap to open UPI app';
+      document.getElementById('pay-upi-link').href = `upi://pay?pa=7080442040@pthdfc&pn=CATalyst&am=${amount}&cu=INR&tn=CATalyst%20Pro`;
     }
 
     function copyUPI() {

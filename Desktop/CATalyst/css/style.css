@@ -3726,6 +3726,9 @@ body {
   font-weight: 700;
   color: var(--accent);
   letter-spacing: 0.02em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
 
 .pay-copy-btn {
