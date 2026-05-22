@@ -77,6 +77,11 @@ body {
   transition: background 0.3s, color 0.3s;
 }
 
+body:has(#auth-screen.active) {
+  overflow: hidden;
+  height: 100%;
+}
+
 /* ===== SCREENS ===== */
 .screen {
   display: none;
