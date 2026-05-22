@@ -167,16 +167,21 @@ body {
 }
 
 .auth-brand {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   text-align: center;
 }
 
 .brand-icon {
-  font-size: 2.5rem;
+  font-size: clamp(1.4rem, 6vw, 2.5rem);
 }
 
 .auth-brand h1 {
   font-family: var(--font-display);
-  font-size: 2.5rem;
+  font-size: clamp(1.4rem, 6vw, 2.5rem);
   font-weight: 800;
   letter-spacing: -1px;
   background: linear-gradient(135deg, var(--accent2), var(--blue));
@@ -3987,7 +3992,7 @@ body {
 .auth-headline {
   font-family: 'Syne', sans-serif;
   font-family: var(--font-display);
-  font-size: 2.6rem;
+  font-size: clamp(1.5rem, 7.5vw, 2.6rem);
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -1px;
@@ -4002,7 +4007,7 @@ body {
 }
 
 .auth-sub1 {
-  font-size: 1rem;
+  font-size: clamp(0.82rem, 3vw, 1rem);
   color: #f0f0f5;
   color: var(--text);
   font-weight: 400;
@@ -4010,7 +4015,7 @@ body {
 }
 
 .auth-sub2 {
-  font-size: 0.9rem;
+  font-size: clamp(0.78rem, 2.8vw, 0.9rem);
   color: #9090a8;
   color: var(--text2);
 }

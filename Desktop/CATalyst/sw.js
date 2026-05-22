@@ -6,7 +6,7 @@ const CACHE_NAME    = `catalyst-${CACHE_VERSION}`;
 // Static assets to pre-cache on install
 const PRECACHE = [
   '/',
-  '/css/style.css',
+  '/css/style.css?v=2',
   '/js/config.js',
   '/js/auth.js',
   '/js/db.js',
