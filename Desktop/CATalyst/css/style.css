@@ -167,16 +167,21 @@ body {
 }
 
 .auth-brand {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   text-align: center;
 }
 
 .brand-icon {
-  font-size: 2.5rem;
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
 }
 
 .auth-brand h1 {
   font-family: var(--font-display);
-  font-size: 2.5rem;
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
   font-weight: 800;
   letter-spacing: -1px;
   background: linear-gradient(135deg, var(--accent2), var(--blue));
