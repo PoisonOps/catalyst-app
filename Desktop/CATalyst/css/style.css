@@ -3983,7 +3983,7 @@ body:has(#auth-screen.active) {
    (brand + hero + ctas) so 2rem gap was too spread */
 #auth-screen .auth-container {
   gap: 1.25rem;
-  padding: 1.25rem 1.5rem 2.5rem;
+  padding: 0.6rem 1.5rem 2.5rem;
   justify-content: center;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
