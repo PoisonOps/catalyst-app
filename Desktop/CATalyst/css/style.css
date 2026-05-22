@@ -4732,3 +4732,48 @@ body {
   }
 }
 }
+
+/* ── Auth screen: compact layout for mobile phones ───────────── */
+@media (max-width: 600px) {
+  #auth-screen .auth-container {
+    gap: 0.6rem;
+    padding: 1.1rem 1rem 1.4rem;
+  }
+
+  /* Brand: one line, much smaller */
+  .auth-brand {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+  }
+  .auth-brand .brand-icon { font-size: 1.35rem; }
+  .auth-brand h1 { font-size: 1.45rem; }
+
+  /* Hero text: compact */
+  .auth-headline {
+    font-size: 1.45rem;
+    margin-bottom: 0.2rem;
+    letter-spacing: -0.4px;
+  }
+  .auth-sub1 { font-size: 0.82rem; margin-bottom: 0.1rem; }
+  .auth-sub2 { font-size: 0.78rem; }
+
+  /* Card: tighter padding */
+  .auth-card { padding: 1.1rem 1rem; }
+  .auth-tabs { margin-bottom: 0.75rem; }
+
+  /* Form: smaller gaps and inputs */
+  .auth-form { gap: 0.6rem; }
+  #auth-screen .form-group input {
+    padding: 0.55rem 0.85rem;
+    font-size: 0.88rem;
+  }
+
+  /* Buttons: slightly shorter */
+  #auth-screen .btn-primary {
+    padding: 0.65rem 1rem;
+    font-size: 0.88rem;
+  }
+}
