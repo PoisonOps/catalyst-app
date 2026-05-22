@@ -3978,10 +3978,14 @@ body {
   justify-content: center;
 }
 
-/* Hero message block */
+/* Hero message block — hidden on mobile, shown only on large screens */
 .auth-hero {
+  display: none;
   text-align: center;
   width: 100%;
+}
+@media (min-width: 901px) {
+  .auth-hero { display: block; }
 }
 
 .auth-headline {
