@@ -199,7 +199,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: clamp(1rem, 4vw, 2rem);
+  padding: 2rem;
   width: 100%;
   box-shadow: var(--shadow);
 }
@@ -207,12 +207,12 @@ body {
 .auth-tabs {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: clamp(0.75rem, 3vw, 1.5rem);
+  margin-bottom: 1.5rem;
 }
 
 .auth-tab {
   flex: 1;
-  padding: clamp(0.45rem, 1.5vw, 0.6rem);
+  padding: 0.6rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: transparent;
@@ -232,7 +232,7 @@ body {
 .auth-form {
   display: none;
   flex-direction: column;
-  gap: clamp(0.55rem, 2.5vw, 1rem);
+  gap: 1rem;
 }
 
 .auth-form.active {
@@ -3977,25 +3977,10 @@ body {
 /* Tighten the container gap — now has 3 visible children
    (brand + hero + ctas) so 2rem gap was too spread */
 #auth-screen .auth-container {
-  gap: clamp(0.75rem, 2.5vw, 1.25rem);
-  padding: clamp(1.5rem, 5vw, 2.5rem) clamp(1rem, 4vw, 1.5rem);
+  gap: 1.25rem;
+  padding: 2.5rem 1.5rem;
   min-height: 100vh;
   justify-content: center;
-}
-
-#auth-screen .form-group input {
-  padding: clamp(0.5rem, 2vw, 0.7rem) clamp(0.7rem, 3vw, 1rem);
-  font-size: clamp(0.85rem, 3.5vw, 0.95rem);
-}
-
-#auth-screen .btn-primary {
-  padding: clamp(0.6rem, 2.5vw, 0.8rem) 1.5rem;
-  font-size: clamp(0.85rem, 3.5vw, 0.95rem);
-}
-
-#auth-screen .btn-google {
-  padding: clamp(0.55rem, 2vw, 0.72rem) 1rem;
-  font-size: clamp(0.82rem, 3vw, 0.9rem);
 }
 
 /* Hero message block */
