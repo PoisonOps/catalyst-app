@@ -328,6 +328,7 @@ const Practice = {
       this._collapseFilters();
       this.currentIdx = 0;
       this.renderQuestion();
+      if (typeof Onboarding !== 'undefined') Onboarding.notify('questions-loaded');
     } catch (err) {
       showToast('Error: ' + err.message, 'error');
     } finally { hideLoading(); }
@@ -424,9 +425,11 @@ const Practice = {
       passageHTML += `<button class="passage-toggle-btn" onclick="
         const pw = this.closest('.passage-context');
         const collapsed = pw.classList.toggle('passage-collapsed');
-        this.textContent = collapsed ? '📄 Show Full Passage' : '▲ Hide';
-      ">▲ Hide</button>`;
+        this.textContent = collapsed ? '📄 Show full passage' : '▲ Collapse';
+      ">📄 Show full passage</button>`;
       passageWrap.innerHTML = passageHTML;
+      // Start collapsed — user expands when ready
+      passageWrap.classList.add('passage-collapsed');
 
       // Run renderMath on passage after it's in the DOM
       if (q._passage) {
@@ -469,7 +472,7 @@ const Practice = {
     document.getElementById('btn-hint-toggle').textContent = '💡 Show Hint';
     document.getElementById('hint-toggle-pre').classList.remove('hidden');
     document.getElementById('note-area').classList.add('hidden');
-    document.getElementById('question-card').classList.remove('wrong-state');
+    document.getElementById('question-card').classList.remove('wrong-state', 'correct-state');
     const wrongBanner = document.getElementById('wrong-banner');
     if (wrongBanner) wrongBanner.classList.add('hidden');
     document.getElementById('btn-bookmark').classList.toggle('active', DB.isBookmarked(q.id));
@@ -533,12 +536,17 @@ const Practice = {
 
     await this._recordAttempt(q, { selected_option: letter }, isCorrect, timeTaken);
     await this._showSolution(q, isCorrect, q.correct_option);
+    if (typeof Onboarding !== 'undefined') {
+      Onboarding._lastAnswerCorrect = isCorrect;
+      Onboarding.notify('answer-selected');
+    }
 
     if (isCorrect) {
       this._sessionCorrect++;
       if (this._isFixSession) await DB.markErrorFixedByQuestionId(q.id);
     } else {
       this._sessionWrong++;
+      if (typeof Onboarding !== 'undefined') Onboarding.notify('wrong-answer');
       this._showInlineErrorTag(q);
     }
   },
@@ -559,12 +567,17 @@ const Practice = {
 
     await this._recordAttempt(q, { selected_value: val }, isCorrect, timeTaken);
     await this._showSolution(q, isCorrect, q.correct_value);
+    if (typeof Onboarding !== 'undefined') {
+      Onboarding._lastAnswerCorrect = isCorrect;
+      Onboarding.notify('answer-selected');
+    }
 
     if (isCorrect) {
       this._sessionCorrect++;
       if (this._isFixSession) await DB.markErrorFixedByQuestionId(q.id);
     } else {
       this._sessionWrong++;
+      if (typeof Onboarding !== 'undefined') Onboarding.notify('wrong-answer');
       this._showInlineErrorTag(q);
     }
   },
@@ -578,6 +591,7 @@ const Practice = {
     badge.className = 'correct-badge' + (isCorrect ? '' : ' wrong-badge');
 
     document.getElementById('question-card').classList.toggle('wrong-state', !isCorrect);
+    document.getElementById('question-card').classList.toggle('correct-state', isCorrect);
     const wrongBanner = document.getElementById('wrong-banner');
     if (wrongBanner) wrongBanner.classList.toggle('hidden', isCorrect);
     document.getElementById('correct-ans-display').textContent = correctAnswer;
@@ -696,6 +710,7 @@ const Practice = {
 
     document.getElementById('session-summary').classList.remove('hidden');
     document.getElementById('session-summary').scrollIntoView({ behavior: 'smooth' });
+    if (typeof Onboarding !== 'undefined') Onboarding.notify('session-summary-shown');
   },
 
   async _showFixTransition() {
@@ -739,6 +754,7 @@ const Practice = {
         document.getElementById('session-summary').classList.add('hidden');
         document.getElementById('practice-area').classList.remove('hidden');
         this.renderQuestion();
+        if (typeof Onboarding !== 'undefined') Onboarding.notify('fix-phase2-started');
       } else {
         this._showFixSessionComplete();
       }
@@ -831,6 +847,8 @@ const Practice = {
       if (b.dataset.type === type) b.classList.add('selected');
     });
 
+    if (typeof Onboarding !== 'undefined') Onboarding.notify('mistake-tagged');
+
     const noteEl = document.getElementById('etag-note-input');
     const userNote = noteEl ? noteEl.value.trim() : '';
 
@@ -902,6 +920,7 @@ const Practice = {
     document.getElementById('practice-area').classList.add('hidden');
     App.navigate('practice');
     this._showFixModeEntry();
+    if (typeof Onboarding !== 'undefined') Onboarding.notify('fix-mode-started');
     showToast('Fix session loaded! Let\'s go 💪', 'success');
   },
 
@@ -920,6 +939,7 @@ const Practice = {
     if (el) el.classList.add('hidden');
     document.getElementById('practice-area').classList.remove('hidden');
     this.renderQuestion();
+    if (typeof Onboarding !== 'undefined') Onboarding.notify('fix-questions-loaded');
   },
 
   // ── LEGACY ERROR MODAL (preserved, not triggered by default) ─

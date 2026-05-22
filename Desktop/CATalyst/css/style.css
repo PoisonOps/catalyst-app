@@ -1473,7 +1473,7 @@ body {
 }
 
 .passage-toggle-btn {
-  display: none;
+  display: block;
   background: none;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -1487,6 +1487,14 @@ body {
   transition: color 0.15s, border-color 0.15s;
 }
 .passage-toggle-btn:hover { color: var(--text); border-color: var(--text2); }
+
+/* Collapsed passage — show only 3 lines with a fade-out gradient */
+.passage-context.passage-collapsed .passage-box {
+  max-height: 4.5rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+}
 
 .first-session-nudge {
   background: rgba(91, 122, 245, 0.08);
@@ -3197,15 +3205,7 @@ body {
     max-height: none;
   }
 
-  .passage-toggle-btn {
-    display: block;
-  }
-
-  /* Collapsed = scrollable box, same as old sticky behavior */
-  .passage-context.passage-collapsed .passage-box {
-    max-height: 150px;
-    overflow-y: auto;
-  }
+  /* passage-toggle-btn is always block (set globally above) */
 
   .option-btn {
     padding: 1.15rem 1rem;
@@ -3804,6 +3804,18 @@ body {
   border-color: var(--fix-p1-border);
   background: var(--fix-p1-bg);
   transition: border-color 0.2s, background 0.2s;
+}
+.question-card.wrong-state .passage-context {
+  background: rgba(244, 76, 96, 0.06);
+  border-color: rgba(244, 76, 96, 0.25);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+/* ── Correct state: applied to #question-card on correct answer ── */
+.question-card.correct-state .passage-context {
+  background: rgba(62, 207, 122, 0.05);
+  border-color: rgba(62, 207, 122, 0.22);
+  transition: background 0.2s, border-color 0.2s;
 }
 
 /* ── Fix Mode Phase 1 (red accent) ─────────────────────────── */
@@ -4510,4 +4522,213 @@ body {
     padding: 2rem 1.25rem;
   }
   .fme-title { font-size: 1.6rem; }
+}
+
+/* ===== ONBOARDING TOUR ===== */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: transparent;
+  transition: background 0.3s ease;
+  pointer-events: none;
+}
+.tour-overlay.is-blocking {
+  background: rgba(0, 0, 0, 0.82);
+  pointer-events: all;
+}
+.tour-spotlight {
+  position: fixed;
+  z-index: 9999;
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72);
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  opacity: 0;
+  transition:
+    top 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    left 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease;
+}
+.tour-tooltip {
+  position: fixed;
+  z-index: 10000;
+  width: 280px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  opacity: 0;
+  transition:
+    top 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    left 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease;
+}
+.tt-progress {
+  font-size: 0.7rem;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.tt-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+.tt-body {
+  font-size: 0.875rem;
+  color: var(--text2);
+  line-height: 1.55;
+  margin-bottom: 1rem;
+}
+.tt-btn {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: opacity 0.15s;
+}
+.tt-btn:hover { opacity: 0.88; }
+.tt-actions {
+  margin-top: 0.75rem;
+}
+
+/* ── Tooltip inline formatting helpers ─────────── */
+.tt-chip {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+.tt-chip.p1 { background: var(--fix-p1-bg); color: var(--fix-p1-color); border: 1px solid var(--fix-p1-border); }
+.tt-chip.p2 { background: var(--fix-p2-bg); color: var(--fix-p2-color); border: 1px solid var(--fix-p2-border); }
+.tt-body .tt-list {
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
+  line-height: 1.6;
+}
+.tt-body .tt-list li { margin-bottom: 0.15rem; }
+.tt-body .tt-list li:last-child { margin-bottom: 0; }
+
+/* ── Desktop drag ───────────────────────────────── */
+@media (min-width: 769px) {
+  .tour-tooltip { cursor: grab; }
+  .tour-tooltip button { cursor: pointer; }
+  .tour-tooltip.is-dragging {
+    transition: opacity 0.3s ease; /* suppress position transition during drag */
+    cursor: grabbing !important;
+    user-select: none;
+  }
+}
+
+/* ── Tour minimize button ───────────────────────── */
+.tt-minimize-btn {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text3);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 1;
+  font-family: var(--font-mono);
+}
+.tt-minimize-btn:hover { color: var(--text2); border-color: var(--text3); }
+
+/* Minimised pill — collapses to progress chip */
+.tour-tooltip.is-minimized {
+  padding: 0.45rem 2rem 0.45rem 0.75rem;
+  cursor: pointer;
+  width: auto !important;
+  min-width: 0;
+}
+.tour-tooltip.is-minimized .tt-title,
+.tour-tooltip.is-minimized .tt-body,
+.tour-tooltip.is-minimized .tt-actions { display: none; }
+.tour-tooltip.is-minimized .tt-progress { margin-bottom: 0; font-size: 0.75rem; }
+
+/* ── Docked tabs (mobile swipe-to-edge) ─────────── */
+.tour-tooltip.is-docked-top,
+.tour-tooltip.is-docked-bottom,
+.tour-tooltip.is-docked-left,
+.tour-tooltip.is-docked-right {
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+}
+.tour-tooltip.is-docked-top    { border-radius: 0 0 var(--radius-sm) var(--radius-sm); }
+.tour-tooltip.is-docked-bottom { border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.tour-tooltip.is-docked-left   { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; writing-mode: vertical-rl; text-orientation: mixed; }
+.tour-tooltip.is-docked-right  { border-radius: var(--radius-sm) 0 0 var(--radius-sm); writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); }
+.tour-tooltip[class*="is-docked-"] .tt-title,
+.tour-tooltip[class*="is-docked-"] .tt-body,
+.tour-tooltip[class*="is-docked-"] .tt-actions,
+.tour-tooltip[class*="is-docked-"] .tt-minimize-btn { display: none; }
+.tour-tooltip[class*="is-docked-"] .tt-progress { margin-bottom: 0; font-size: 0.72rem; }
+.tour-dismiss-bar {
+  position: fixed;
+  top: 0.85rem;
+  right: 1rem;
+  z-index: 10001;
+  display: flex;
+  gap: 0.4rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+@media (max-width: 768px) {
+  .tour-dismiss-bar {
+    top: 60px; /* below the mobile top bar */
+    right: 0.75rem;
+  }
+}
+.tour-dismiss-bar.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.tour-dismiss-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text3);
+  font-size: 0.72rem;
+  font-family: var(--font-body);
+  padding: 0.38rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.tour-dismiss-btn:hover { color: var(--text2); border-color: var(--text3); }
+@media (max-width: 768px) {
+  .tour-tooltip {
+    max-width: calc(100vw - 2rem);
+  }
+}
 }
