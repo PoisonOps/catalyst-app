@@ -4735,10 +4735,13 @@ body {
 
 /* ── Auth screen: compact layout for mobile phones ───────────── */
 @media (max-width: 600px) {
-  /* Critical: stop vertical centering — start from top so Google button
-     is reachable. overflow-y: auto already set on #auth-screen.active. */
+  /* Switch from position:fixed (clips overflow on mobile) to
+     position:relative so the browser's normal scroll handles overflow. */
   #auth-screen.active {
+    position: relative;
+    min-height: 100svh;
     align-items: flex-start;
+    overflow-y: visible;
   }
 
   #auth-screen .auth-container {
@@ -4759,7 +4762,7 @@ body {
   .auth-brand .brand-icon { font-size: 1.25rem; }
   .auth-brand h1 { font-size: 1.3rem; }
 
-  /* Hero: shrink headline to 2 lines max, hide second tagline */
+  /* Hero: shrink, hide second tagline */
   .auth-headline {
     font-size: 1.35rem;
     margin-bottom: 0.15rem;
