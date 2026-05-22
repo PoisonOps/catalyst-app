@@ -1,12 +1,12 @@
 // CATalyst Service Worker
 // Increment CACHE_VERSION on every deploy to bust stale caches.
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v1';
 const CACHE_NAME    = `catalyst-${CACHE_VERSION}`;
 
 // Static assets to pre-cache on install
 const PRECACHE = [
   '/',
-  '/css/style.css?v=2',
+  '/css/style.css',
   '/js/config.js',
   '/js/auth.js',
   '/js/db.js',

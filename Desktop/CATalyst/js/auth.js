@@ -198,8 +198,6 @@ const Auth = {
       const lastPage = localStorage.getItem(`last_page_${uid}`) || 'dashboard';
       App.navigate(lastPage);
     }
-
-    if (typeof Onboarding !== 'undefined') Onboarding.maybeStart(user.id);
   },
 
   async logout() {
