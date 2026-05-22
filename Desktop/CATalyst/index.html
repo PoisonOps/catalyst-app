@@ -19,6 +19,9 @@
   <meta name="twitter:description" content="CATalyst tracks every CAT mistake you make, shows you the mark cost, and forces you to fix it before moving on. Built for serious CAT 2026 aspirants." />
   <meta name="twitter:image"       content="https://catalyst-app-six.vercel.app/og-image.png" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <meta name="theme-color" content="#0d0d0f" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link
     href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap"
@@ -884,6 +887,13 @@
   <script src="js/errorlog.js?v=2"></script>
   <script src="js/onboarding.js?v=9"></script>
   <script src="js/app.js?v=2"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 
 </html>
