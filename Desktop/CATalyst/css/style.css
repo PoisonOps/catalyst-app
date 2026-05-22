@@ -93,9 +93,7 @@ body {
 }
 
 #auth-screen.active {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   position: fixed;
   inset: 0;
   z-index: 9000;
