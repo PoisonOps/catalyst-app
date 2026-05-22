@@ -1,12 +1,9 @@
 // CATalyst Service Worker
-// Increment CACHE_VERSION on every deploy to bust stale caches.
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME    = `catalyst-${CACHE_VERSION}`;
 
-// Static assets to pre-cache on install
 const PRECACHE = [
   '/',
-  '/css/style.css?v=2',
   '/js/config.js',
   '/js/auth.js',
   '/js/db.js',
@@ -22,7 +19,7 @@ const PRECACHE = [
   '/manifest.json',
 ];
 
-// ── Install: pre-cache all static assets ──────────────────────
+// ── Install: pre-cache JS and static assets ────────────────────
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME)
@@ -42,25 +39,37 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// ── Fetch: cache-first for same-origin, network-only for external ──
+// ── Fetch ──────────────────────────────────────────────────────
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
-  // Always go to network for: Supabase, KaTeX CDN, external APIs
+  // Always network for external (Supabase, CDN, fonts)
   if (url.origin !== self.location.origin) {
     e.respondWith(fetch(e.request));
     return;
   }
 
-  // Cache-first for same-origin static assets
+  // Network-first for HTML and CSS — always get fresh styles/markup
+  // Falls back to cache only when offline
+  if (url.pathname.endsWith('.css') || url.pathname === '/' || url.pathname.endsWith('.html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Cache-first for JS and other static assets
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
-      // Not in cache — fetch and cache it
       return fetch(e.request).then(response => {
-        if (!response || response.status !== 200 || response.type === 'opaque') {
-          return response;
-        }
+        if (!response || response.status !== 200 || response.type === 'opaque') return response;
         const clone = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
         return response;
