@@ -1,23 +1,21 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="128" fill="#141417"/>
-  
-  <!-- The 'C' Arc -->
-  <path d="M352 176A144 144 0 1 0 352 336" stroke="url(#grad_c)" stroke-width="64" stroke-linecap="round" />
-  
-  <!-- The Classic Chunky Lightning Bolt ⚡️ -->
-  <path d="M 301 101 L 151 281 H 251 L 211 411 L 361 231 H 261 Z" fill="url(#grad_bolt)" stroke="url(#grad_bolt)" stroke-width="16" stroke-linejoin="round" />
-  
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Purple Gradient for C -->
-    <linearGradient id="grad_c" x1="160" y1="112" x2="352" y2="400" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#9D8FFF"/>
-      <stop offset="1" stop-color="#7C6AF7"/>
-    </linearGradient>
-    
-    <!-- Golden Gradient for Lightning Bolt -->
-    <linearGradient id="grad_bolt" x1="151" y1="101" x2="361" y2="411" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFE259"/>
-      <stop offset="1" stop-color="#F5A623"/>
+    <linearGradient id="bgG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#141830"/>
+      <stop offset="100%" style="stop-color:#0D0F1C"/>
     </linearGradient>
   </defs>
+  <rect width="512" height="512" rx="114" fill="url(#bgG)"/>
+  <g transform="translate(256, 256)">
+    <text x="0" y="95"
+      text-anchor="middle"
+      font-family="Arial Black, Impact, sans-serif"
+      font-weight="900"
+      font-style="italic"
+      font-size="420"
+      fill="#FFFFFF">C</text>
+    <polygon
+      points="20,-213  -12,-37  16,-37  -2,213  58,-52  28,-52  50,-213"
+      fill="#F5C100"/>
+  </g>
 </svg>
