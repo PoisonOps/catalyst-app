@@ -77,10 +77,6 @@ body {
   transition: background 0.3s, color 0.3s;
 }
 
-body:has(#auth-screen.active) {
-  overflow: hidden;
-  height: 100%;
-}
 
 /* ===== SCREENS ===== */
 .screen {
@@ -98,13 +94,12 @@ body:has(#auth-screen.active) {
 }
 
 #auth-screen.active {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: block;
   position: fixed;
   inset: 0;
   z-index: 9000;
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .auth-bg {
@@ -3984,14 +3979,8 @@ body:has(#auth-screen.active) {
 #auth-screen .auth-container {
   gap: 1.25rem;
   padding: 0.6rem 1.5rem 2.5rem;
+  min-height: 100vh;
   justify-content: center;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  width: 100%;
-  max-width: 420px;
-  box-sizing: border-box;
-  flex: 1;
-  min-height: 0;
 }
 
 /* Hero message block */
