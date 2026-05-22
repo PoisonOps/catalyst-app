@@ -24,7 +24,9 @@ There are no lint, test, or compile steps.
 Everything lives in `index.html` + `css/style.css` + `js/*.js`. Navigation is purely class-based: `App.navigate(page)` hides all `.page` divs and shows `#page-<name>`. There is no router library.
 
 Script load order in `index.html` is critical — files depend on each other in this sequence:
-`config.js` → `auth.js` → `db.js` → `app.js` → `dashboard.js` → `practice.js` → `errorlog.js` → `test.js`
+`config.js` → `db.js` → `auth.js` → `dashboard.js` → `practice.js` → `test.js` → `errorlog.js` → `onboarding.js` → `app.js`
+
+`app.js` is always last — it boots the app after all other modules are defined.
 
 ### Data Layer (`js/db.js`)
 
@@ -52,6 +54,15 @@ Fix session flow: `loadFixSession()` → Phase 1 questions → `_showFixTransiti
 
 First-session flow: on signup, `cat_first_session_${userId}` is set in localStorage. `loadQuestions()` detects this and caps to 10 questions, shows a nudge card at session end, then clears the flag so subsequent sessions use the selected count.
 
+### Onboarding Tour (`js/onboarding.js`)
+
+`Onboarding.maybeStart(userId)` is called from `auth.js → onLogin()`. It runs once per user (tracked by `cat_tour_done_${userId}` in localStorage) and walks through the full CATalyst loop: Practice → tag wrong answer → Error Log → Fix Mode P1 → P2.
+
+- Snooze for a session: `sessionStorage.tour_snoozed = 'true'`
+- Reset tour: `localStorage.removeItem('cat_tour_done_${userId}')`
+- Spotlight + tooltip UI managed entirely within `onboarding.js` — no HTML markup needed
+- Steps fire via `waitFor` events dispatched with `document.dispatchEvent(new CustomEvent('onboarding:signal', { detail: 'event-name' }))` from `practice.js` and `errorlog.js`
+
 ### Error Log (`js/errorlog.js`)
 
 State: `_activeTypeFilter` tracks card-click filtering separately from the dropdown value. Both must stay in sync. `saveState()`/`loadState()` depend on the hidden `<select>` element IDs (`el-subject-filter`, `el-type-filter`, `el-status-filter`) — do not remove those elements even though they're `display:none`.
@@ -78,6 +89,17 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 - The `.hidden` class is the standard show/hide toggle throughout
 - `position: fixed` elements (footer bar, FAB) use `left: var(--sidebar-w)` on desktop and `left: 0` at ≤768px breakpoint
 
+**Mobile CSS gotcha:** `@media (max-width: N)` queries may silently fail on some Android Chrome installs (device/browser display-zoom quirk). For auth screen and other critical mobile styles, prefer base CSS rules with `clamp()` for fluid sizing, and use `@media (min-width: N)` for desktop-only overrides.
+
+**Auth screen scroll:** `#auth-screen.active` uses `position: fixed; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch`. Do not add `align-items: center` or `display: flex` to this rule — it breaks touch scrolling on Chrome mobile.
+
+### Service Worker (`sw.js`)
+
+- Cache name is `catalyst-v3` — bump `CACHE_VERSION` when making breaking changes that need all clients to re-fetch
+- **Network-first** for CSS and HTML (always fetches fresh, falls back to cache offline)
+- **Cache-first** for JS and other static assets
+- CSS does not need `?v=N` cache-busting since it's always network-first; JS files do need it
+
 ### Pages & Their Entry Points
 
 | Page | JS entry | Notes |
@@ -86,6 +108,7 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 | Practice | `Practice.onPageEnter()` | Auto-loads questions after 120ms |
 | Error Log | `ErrorLog.init()` / `ErrorLog.render()` | `init()` once, `render()` on filter change |
 | Test | `Test.*` | Hidden in current MVP |
+| Onboarding | `Onboarding.maybeStart(userId)` | Called in `onLogin()`, runs once per user |
 
 ### Modal & Toast Patterns
 
