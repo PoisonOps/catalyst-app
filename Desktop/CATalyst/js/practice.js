@@ -115,8 +115,18 @@ const Practice = {
   _hasAutoLoaded: false,      // auto-load once per session
   _selectedSubtopics: [],     // tracks active subtopic pill selections
   _isFirstSession: false,     // true for first-ever practice session
+  _lastSetId: null,           // set_id of the last rendered question (for passage state carry-over)
+  _passageExpanded: false,    // whether passage is in expanded (55vh) mode
+  _passageFontSizes: [13, 15, 17], // small / default / large
+  _passageFontIdx: 1,         // index into _passageFontSizes (default = 15px)
 
   async init() {
+    // Restore passage font preference
+    const savedFont = parseInt(localStorage.getItem('cat_passage_font') || '15');
+    const fontIdx = this._passageFontSizes.indexOf(savedFont);
+    this._passageFontIdx = fontIdx >= 0 ? fontIdx : 1;
+    document.documentElement.style.setProperty('--passage-font-size', this._passageFontSizes[this._passageFontIdx] + 'px');
+
     this.loadState();
     this._populateTopics();
     document.getElementById('filter-subject').addEventListener('change', () => {
@@ -393,7 +403,6 @@ const Practice = {
     if (q._passage || q._instruction || (q.has_image && q.image_url)) {
       passageWrap.classList.remove('hidden');
 
-      // Make passage-context sticky for sets
       const isSticky = !!q.set_id;
       if (isSticky) {
         passageWrap.classList.add('is-sticky');
@@ -401,21 +410,26 @@ const Practice = {
         passageWrap.classList.remove('is-sticky');
       }
 
-      // Rebuild inner content cleanly each render
-      let passageHTML = '<div class="passage-context-label">📄 Passage / Data</div>';
-      passageHTML += `<div class="passage-box${isSticky ? ' has-scroll' : ''}">`;
+      // Carry over expanded state only when navigating within the same set
+      const keepExpanded = isSticky && q.set_id === this._lastSetId && this._passageExpanded;
+      this._lastSetId = q.set_id || null;
+      if (!isSticky) this._passageExpanded = false;
 
-      // 1. Instruction
+      let passageHTML = `<div class="passage-header-row">
+        <div class="passage-context-label">📄 Passage / Data</div>
+        <div class="passage-font-controls">
+          <button class="passage-font-btn" id="passage-font-minus" title="Smaller text" onclick="Practice._adjustFontSize(-1)">−</button>
+          <button class="passage-font-btn" id="passage-font-plus"  title="Larger text"  onclick="Practice._adjustFontSize(1)">+</button>
+        </div>
+      </div>`;
+      passageHTML += `<div class="passage-box has-scroll${keepExpanded ? ' expanded' : ''}">`;
+
       if (q._instruction) {
         passageHTML += `<div class="passage-instruction">${formatText(q._instruction)}</div>`;
       }
-
-      // 2. Passage text — empty div; filled by renderMath after DOM insert
       if (q._passage) {
         passageHTML += `<div class="passage-body" id="passage-context-text"></div>`;
       }
-
-      // 3. Passage image
       if (q.has_image && q.image_url) {
         const imgSrc = q.image_url.startsWith('http') ? q.image_url : BASE_URL + q.image_url;
         passageHTML += `<div class="passage-image-wrap"><img class="passage-img" src="${imgSrc}" alt="Passage image" loading="lazy" /></div>`;
@@ -423,20 +437,23 @@ const Practice = {
 
       passageHTML += '</div>'; // close .passage-box
       passageHTML += `<button class="passage-toggle-btn" onclick="
-        const pw = this.closest('.passage-context');
-        const collapsed = pw.classList.toggle('passage-collapsed');
-        this.textContent = collapsed ? '📄 Show full passage' : '▲ Collapse';
-      ">📄 Show full passage</button>`;
+        const box = this.previousElementSibling;
+        const expanded = box.classList.toggle('expanded');
+        this.textContent = expanded ? '▲ Collapse' : '📄 Show full passage';
+        Practice._passageExpanded = expanded;
+      ">${keepExpanded ? '▲ Collapse' : '📄 Show full passage'}</button>`;
       passageWrap.innerHTML = passageHTML;
-      // Start collapsed — user expands when ready
-      passageWrap.classList.add('passage-collapsed');
 
-      // Run renderMath on passage after it's in the DOM
+      // Set font button disabled states
+      Practice._updateFontButtons();
+
       if (q._passage) {
         renderMath(document.getElementById('passage-context-text'), q._passage, q.subject === 'VARC');
       }
     } else {
       passageWrap.classList.add('hidden');
+      this._lastSetId = null;
+      this._passageExpanded = false;
     }
 
     // MCQ vs TITA
@@ -592,6 +609,15 @@ const Practice = {
 
     document.getElementById('question-card').classList.toggle('wrong-state', !isCorrect);
     document.getElementById('question-card').classList.toggle('correct-state', isCorrect);
+
+    // Auto-collapse expanded passage so feedback is not hidden behind it
+    const passageBox = document.querySelector('#passage-context .passage-box');
+    if (passageBox && passageBox.classList.contains('expanded')) {
+      passageBox.classList.remove('expanded');
+      this._passageExpanded = false;
+      const toggleBtn = document.querySelector('.passage-toggle-btn');
+      if (toggleBtn) toggleBtn.textContent = '📄 Show full passage';
+    }
     const wrongBanner = document.getElementById('wrong-banner');
     if (wrongBanner) wrongBanner.classList.toggle('hidden', isCorrect);
     document.getElementById('correct-ans-display').textContent = correctAnswer;
@@ -665,10 +691,13 @@ const Practice = {
       }
       return;
     }
+    const prevQ = this.questions[this.currentIdx];
+    const nextQ = this.questions[newIdx];
+    const sameSet = prevQ && nextQ && prevQ.set_id && prevQ.set_id === nextQ.set_id;
     this.currentIdx = newIdx;
     this.renderQuestion();
-    // Task 3 — scroll to top smoothly on navigation
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Don't scroll to top when moving within the same set — only the question changes
+    if (!sameSet) window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 
   _showSessionSummary() {
@@ -1077,6 +1106,23 @@ const Practice = {
         if (matchAllEl && state.matchAll) matchAllEl.checked = true;
       }
     } catch (e) { }
+  },
+
+  // ── Passage font size controls ──────────────────────────────
+
+  _adjustFontSize(delta) {
+    this._passageFontIdx = Math.max(0, Math.min(this._passageFontSizes.length - 1, this._passageFontIdx + delta));
+    const sz = this._passageFontSizes[this._passageFontIdx];
+    document.documentElement.style.setProperty('--passage-font-size', sz + 'px');
+    localStorage.setItem('cat_passage_font', sz);
+    this._updateFontButtons();
+  },
+
+  _updateFontButtons() {
+    const minus = document.getElementById('passage-font-minus');
+    const plus  = document.getElementById('passage-font-plus');
+    if (minus) minus.disabled = this._passageFontIdx === 0;
+    if (plus)  plus.disabled  = this._passageFontIdx === this._passageFontSizes.length - 1;
   },
 
   clearMemory() {

@@ -22,6 +22,7 @@
   --radius: 14px;
   --radius-sm: 8px;
   --sidebar-w: 240px;
+  --passage-font-size: 15px;
   --font-display: 'Syne', sans-serif;
   --font-body: 'DM Sans', sans-serif;
   --font-mono: 'DM Mono', monospace;
@@ -1427,23 +1428,37 @@ body {
 .passage-context.is-sticky {
   position: sticky;
   top: 65px;
-  z-index: 10;
+  z-index: 2;
   background: #111827;
-  /* Solid background to hide text scrolling underneath */
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-  /* Subtle shadow for sticky separation */
 }
 
-/* Inner wrapper for structured passage content */
+/* Inner wrapper for structured passage content — always a bounded scroll box */
 .passage-box {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .passage-box.has-scroll {
-  max-height: 220px;
+  max-height: 200px;
   overflow-y: auto;
+}
+
+/* "Show full passage" state — taller but still bounded so it never covers options */
+.passage-box.expanded {
+  max-height: 55vh;
+}
+
+/* Row: label on left, font-size controls on right */
+.passage-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
 }
 
 .passage-context-label {
@@ -1452,12 +1467,37 @@ body {
   color: var(--blue);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
 }
+
+.passage-font-controls {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.passage-font-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, border-color 0.15s;
+  font-family: var(--font-body);
+}
+.passage-font-btn:hover:not(:disabled) { color: var(--text); border-color: var(--text2); }
+.passage-font-btn:disabled { opacity: 0.3; cursor: default; }
 
 .passage-context-text,
 .passage-body {
-  font-size: 15px;
+  font-size: var(--passage-font-size, 15px);
   line-height: 1.75;
   color: var(--text2);
 }
@@ -1493,13 +1533,7 @@ body {
 }
 .passage-toggle-btn:hover { color: var(--text); border-color: var(--text2); }
 
-/* Collapsed passage — show only 3 lines with a fade-out gradient */
-.passage-context.passage-collapsed .passage-box {
-  max-height: 4.5rem;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
-}
+/* passage-collapsed class is no longer used — passage is always a scroll box */
 
 .first-session-nudge {
   background: rgba(91, 122, 245, 0.08);
@@ -2628,6 +2662,8 @@ body {
     align-items: flex-start;
   }
   .el-footer-cta { width: 100%; text-align: center; }
+  /* Footer is now ~2 rows tall — give the list more clearance */
+  .error-log-list { padding-bottom: 8rem; }
 }
 
 .el-cta-banner {
@@ -2839,6 +2875,10 @@ body {
   font-size: 0.9rem;
   margin-bottom: 0.4rem;
   line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .el-meta {
@@ -2885,11 +2925,14 @@ body {
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 7000;
-  padding: 1rem;
+  padding: 1.5rem 1rem;
   backdrop-filter: blur(4px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .modal-box {
@@ -3206,8 +3249,10 @@ body {
 }
 
 @media (max-width: 768px) {
-  .passage-box.has-scroll {
-    max-height: none;
+  /* Remove sticky on mobile — avoids z-index overlap with answer feedback */
+  .passage-context.is-sticky {
+    position: static;
+    box-shadow: none;
   }
 
   /* passage-toggle-btn is always block (set globally above) */
@@ -3231,10 +3276,15 @@ body {
     width: 100% !important;
   }
 
-  .question-text,
+  .question-text {
+    font-size: 15px;
+    line-height: 1.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
   .passage-body,
   .passage-context-text {
-    font-size: 15px;
+    font-size: var(--passage-font-size, 15px);
     line-height: 1.6;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -3981,6 +4031,7 @@ body {
   padding: 0.6rem 1.5rem 2.5rem;
   min-height: 100vh;
   justify-content: center;
+  margin: 0 auto;
 }
 
 /* Hero message block */
@@ -4736,7 +4787,6 @@ body {
     max-width: calc(100vw - 2rem);
   }
 }
-}
 
 /* ── Auth screen: mobile layout ──────────────────────────────── */
 @media (max-width: 900px) {
@@ -4781,4 +4831,308 @@ body {
     padding: 0.65rem 1rem;
     font-size: 0.88rem;
   }
+}
+
+/* ── PWA install prompt ──────────────────────────────────────── */
+#pwa-prompt {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9100;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+#pwa-prompt.visible {
+  transform: translateY(0);
+}
+.pwa-inner {
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  padding: 1.5rem 1.5rem 2.5rem;
+  position: relative;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.pwa-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+}
+.pwa-icon {
+  font-size: 2rem;
+  margin-bottom: 0.6rem;
+}
+.pwa-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+  font-family: var(--font-display);
+}
+.pwa-sub {
+  font-size: 0.85rem;
+  color: var(--text2);
+  margin-bottom: 1.25rem;
+}
+.pwa-ios-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.pwa-ios-step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+.pwa-num {
+  width: 24px;
+  height: 24px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.pwa-add-btn {
+  width: 100%;
+  padding: 0.85rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer;
+  margin-bottom: 0.75rem;
+}
+.pwa-later {
+  width: 100%;
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 0.83rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+/* ── Push notification permission banner ─────────────────────── */
+#push-banner {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  z-index: 8500;
+  width: min(400px, calc(100vw - 2rem));
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+#push-banner.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.push-banner-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.push-banner-text strong {
+  font-size: 0.88rem;
+  color: var(--text);
+}
+.push-banner-text span {
+  font-size: 0.76rem;
+  color: var(--text2);
+}
+.push-banner-btns {
+  display: flex;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+.push-banner-btns button {
+  padding: 0.38rem 0.85rem;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  font-size: 0.78rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.push-banner-btns button:hover { opacity: 0.85; }
+#push-yes {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ===== PAYWALL ===== */
+.paywall-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 1.5rem 1rem 3rem;
+}
+.paywall-overlay.hidden { display: none; }
+
+.paywall-box {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  animation: slideUp 0.25s ease;
+}
+
+.paywall-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.paywall-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.paywall-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 0.35rem;
+  letter-spacing: -0.02em;
+}
+
+.paywall-desc {
+  font-size: 0.88rem;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+.paywall-stat-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  background: linear-gradient(135deg, rgba(244, 76, 96, 0.08), rgba(91, 122, 245, 0.06));
+  border: 1px solid rgba(244, 76, 96, 0.25);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.paywall-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.paywall-stat-num {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--red);
+  line-height: 1;
+}
+
+.paywall-stat-label {
+  font-size: 0.7rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.paywall-stat-divider {
+  width: 1px;
+  height: 44px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.paywall-locked {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.paywall-locked-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.5rem;
+}
+
+.paywall-locked-row {
+  font-size: 0.85rem;
+  color: var(--text2);
+  padding: 0.22rem 0;
+}
+
+.paywall-already-paid {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text3);
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
+.paywall-back-btn {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.55rem;
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 0.8rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+  text-align: center;
+  transition: color 0.15s;
+}
+.paywall-back-btn:hover { color: var(--text2); }
+#push-no {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text2);
 }
