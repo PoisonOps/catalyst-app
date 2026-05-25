@@ -739,14 +739,87 @@ const DB = {
 
   // ── TRIAL + PAID SYSTEM ────────────────────────────────────
 
+  _syncedUserId: null,   // userId whose trial has been synced from Supabase this session
+  _syncResolvers: [],    // queued resolve fns waiting for syncTrialFromSupabase to finish
+
+  // Resolve all waiting callers and mark sync as done for this userId
+  _resolveSync(userId) {
+    this._syncedUserId = userId;
+    this._syncResolvers.splice(0).forEach(r => r());
+  },
+
+  // Returns a Promise that resolves immediately if already synced, else waits.
+  // Used by App.navigate() to avoid a race where fresh-device initTrial() creates
+  // an "active" trial locally before Supabase confirms it has actually expired.
+  waitForSync(userId) {
+    if (this._syncedUserId === userId) return Promise.resolve();
+    return new Promise(resolve => this._syncResolvers.push(resolve));
+  },
+
   initTrial() {
     const existing = this._getLocal('cat_trial', null);
     if (!existing) {
-      this._setLocal('cat_trial', { started_at: Date.now(), is_paid: false });
+      const now = Date.now();
+      this._setLocal('cat_trial', { started_at: now, is_paid: false });
       if (!USE_DEMO && typeof Auth !== 'undefined' && Auth.currentUser && Auth.currentUser.id !== 'demo') {
-        this.logEvent('trial_started', Auth.currentUser.id);
+        this.logEvent('trial_started', Auth.currentUser.id, { started_at: now });
       }
     }
+  },
+
+  // Sync trial start time and paid status from Supabase.
+  // Called on every login so all browsers/devices/PWA see the same trial clock.
+  async syncTrialFromSupabase(userId) {
+    if (!sbClient || !userId) { this._resolveSync(userId); return; }
+    try {
+      const [startRes, paidRes] = await Promise.all([
+        // Earliest trial_started → canonical trial start time
+        sbClient
+          .from('events')
+          .select('created_at, metadata')
+          .eq('event', 'trial_started')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: true })
+          .limit(1),
+        // Latest payment_completed → current plan + expiry
+        sbClient
+          .from('events')
+          .select('created_at, metadata')
+          .eq('event', 'payment_completed')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1),
+      ]);
+
+      const trial = this._getLocal('cat_trial', { started_at: Date.now(), is_paid: false });
+      let changed = false;
+
+      if (startRes.data && startRes.data.length > 0) {
+        const row = startRes.data[0];
+        const canonical = (row.metadata && row.metadata.started_at)
+          ? row.metadata.started_at
+          : new Date(row.created_at).getTime();
+        if (trial.started_at !== canonical) { trial.started_at = canonical; changed = true; }
+      }
+
+      if (paidRes.data && paidRes.data.length > 0) {
+        const row = paidRes.data[0];
+        const plan = (row.metadata && row.metadata.plan) || 'onetime';
+        const expiresAt = row.metadata && row.metadata.expires_at ? row.metadata.expires_at : null;
+
+        trial.is_paid = true;
+        trial.plan = plan;
+        if (plan === 'monthly' && expiresAt) {
+          trial.paid_expires_at = expiresAt;
+        } else {
+          delete trial.paid_expires_at; // onetime — never expires
+        }
+        changed = true;
+      }
+
+      if (changed) this._setLocal('cat_trial', trial);
+    } catch (_) { /* non-blocking — local cache is the fallback */ }
+    finally { this._resolveSync(userId); }
   },
 
   getTrialStatus() {
@@ -764,7 +837,18 @@ const DB = {
 
   isPaid() {
     const trial = this._getLocal('cat_trial', null);
-    return trial && trial.is_paid === true;
+    if (!trial || !trial.is_paid) return false;
+    // Monthly plan: check if the payment period has expired
+    if (trial.plan === 'monthly' && trial.paid_expires_at) {
+      return Date.now() < trial.paid_expires_at;
+    }
+    return true; // onetime or legacy rows without a plan field
+  },
+
+  isTrialExpired() {
+    if (this.isPaid()) return false;
+    const status = this.getTrialStatus();
+    return status.started && !status.active;
   },
 
   // Call this manually after confirming payment
@@ -785,6 +869,28 @@ const DB = {
         metadata: Object.keys(metadata).length ? metadata : null,
       });
     } catch (_) { /* fire and forget — never block the UI */ }
+  },
+
+  // ── PUSH SUBSCRIPTIONS ──────────────────────────────────────
+
+  async savePushSubscription(subscription) {
+    if (!sbClient || !Auth.currentUser) return;
+    const sub = subscription.toJSON();
+    const { error } = await sbClient.from('push_subscriptions').upsert({
+      user_id: Auth.currentUser.id,
+      endpoint: sub.endpoint,
+      p256dh:   sub.keys.p256dh,
+      auth:     sub.keys.auth,
+    }, { onConflict: 'user_id,endpoint' });
+    if (error) console.warn('[DB] Failed to save push subscription:', error.message);
+  },
+
+  async removePushSubscription(endpoint) {
+    if (!sbClient || !Auth.currentUser) return;
+    await sbClient.from('push_subscriptions')
+      .delete()
+      .eq('user_id', Auth.currentUser.id)
+      .eq('endpoint', endpoint);
   },
 
   // ── USER DATA ISOLATION (Namespaced Storage) ─────────────

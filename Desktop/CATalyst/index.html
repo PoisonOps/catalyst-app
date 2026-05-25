@@ -851,6 +851,82 @@
     </div>
   </div>
 
+  <!-- PAYWALL — shown when trial expires, no close button -->
+  <div id="paywall-overlay" class="paywall-overlay hidden">
+    <div class="paywall-box">
+
+      <div class="paywall-header">
+        <div class="paywall-icon">⏰</div>
+        <h2 class="paywall-title">Your free trial has ended</h2>
+        <p class="paywall-desc">Your mistakes are saved. Upgrade to keep fixing them.</p>
+      </div>
+
+      <div class="paywall-stat-block">
+        <div class="paywall-stat">
+          <span class="paywall-stat-num" id="pw-mistake-count">—</span>
+          <span class="paywall-stat-label">mistakes tracked</span>
+        </div>
+        <div class="paywall-stat-divider"></div>
+        <div class="paywall-stat">
+          <span class="paywall-stat-num">3</span>
+          <span class="paywall-stat-label">days of data saved</span>
+        </div>
+      </div>
+
+      <div class="paywall-locked">
+        <div class="paywall-locked-title">Now locked</div>
+        <div class="paywall-locked-row">🔒 Practice Questions</div>
+        <div class="paywall-locked-row">🔒 My Error Log</div>
+        <div class="paywall-locked-row">🔒 Fix My Mistakes loop</div>
+      </div>
+
+      <div class="upgrade-founder-note" style="margin-bottom:1rem">
+        🔒 Founder's pricing — first 20 users only. Price increases after.
+      </div>
+
+      <div class="upgrade-plans" style="margin-bottom:1rem">
+        <div class="upgrade-plan" id="pw-plan-monthly" onclick="pwSelectPlan('monthly')">
+          <div class="plan-badge plan-badge-amber">Monthly</div>
+          <div class="plan-amount">₹99<span>/mo</span></div>
+          <div class="plan-desc">Locked forever<br>Pay month by month</div>
+        </div>
+        <div class="upgrade-plan plan-selected" id="pw-plan-onetime" onclick="pwSelectPlan('onetime')">
+          <div class="plan-badge plan-badge-blue">Best Value</div>
+          <div class="plan-amount">₹489</div>
+          <div class="plan-desc">Till CAT 2026<br>One time · No renewals</div>
+        </div>
+      </div>
+
+      <div class="upgrade-pay">
+        <div class="pay-step">
+          <span class="pay-step-num">1</span>
+          <div style="flex:1">
+            <div class="pay-step-label" id="pw-pay-label">Pay ₹489 — tap to open UPI app</div>
+            <div class="pay-upi-row">
+              <a class="pay-upi" id="pw-upi-link" href="upi://pay?pa=7080442040@pthdfc&pn=CATalyst&am=489&cu=INR&tn=CATalyst%20Pro">7080442040@pthdfc</a>
+              <button class="pay-copy-btn" id="pw-copy-btn" onclick="pwCopyUPI()">Copy</button>
+            </div>
+          </div>
+        </div>
+        <div class="pay-step">
+          <span class="pay-step-num">2</span>
+          <div>
+            <div class="pay-step-label">Send screenshot to WhatsApp</div>
+            <a href="https://wa.me/917080442040" target="_blank" class="pay-whatsapp">📱 +91 70804 42040</a>
+          </div>
+        </div>
+        <div class="pay-step">
+          <span class="pay-step-num">3</span>
+          <div><div class="pay-step-label">Account activated within 1 hour</div></div>
+        </div>
+      </div>
+
+      <p class="upgrade-trust">🔒 No auto-billing · No hidden fees · Manual activation</p>
+      <p class="paywall-already-paid">Already paid? <a href="https://wa.me/917080442040" target="_blank" class="pay-whatsapp" style="font-size:0.8rem">Message us on WhatsApp ↗</a></p>
+      <button class="paywall-back-btn" onclick="document.getElementById('paywall-overlay').classList.add('hidden'); document.body.style.overflow=''; App.navigate('dashboard');">← Back to Dashboard</button>
+    </div>
+  </div>
+
   <!-- LOADING + TOAST -->
   <div id="loading-overlay" class="loading-overlay hidden">
     <div class="loader-spinner"></div>
@@ -876,17 +952,35 @@
         setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
       });
     }
+
+    function pwSelectPlan(plan) {
+      const isMonthly = plan === 'monthly';
+      document.getElementById('pw-plan-monthly').classList.toggle('plan-selected', isMonthly);
+      document.getElementById('pw-plan-onetime').classList.toggle('plan-selected', !isMonthly);
+      const amount = isMonthly ? '99' : '489';
+      document.getElementById('pw-pay-label').textContent = isMonthly ? 'Pay ₹99/month — tap to open UPI app' : 'Pay ₹489 — tap to open UPI app';
+      document.getElementById('pw-upi-link').href = `upi://pay?pa=7080442040@pthdfc&pn=CATalyst&am=${amount}&cu=INR&tn=CATalyst%20Pro`;
+    }
+
+    function pwCopyUPI() {
+      navigator.clipboard.writeText('7080442040@pthdfc').then(() => {
+        const btn = document.getElementById('pw-copy-btn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=2"></script>
-  <script src="js/db.js?v=2"></script>
-  <script src="js/auth.js?v=2"></script>
-  <script src="js/dashboard.js?v=2"></script>
+  <script src="js/config.js?v=3"></script>
+  <script src="js/db.js?v=7"></script>
+  <script src="js/auth.js?v=7"></script>
+  <script src="js/dashboard.js?v=3"></script>
   <script src="js/practice.js?v=3"></script>
   <script src="js/test.js?v=2"></script>
   <script src="js/errorlog.js?v=2"></script>
-  <script src="js/onboarding.js?v=9"></script>
-  <script src="js/app.js?v=2"></script>
+  <script src="js/onboarding.js?v=12"></script>
+  <script src="js/app.js?v=8"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

@@ -174,6 +174,10 @@ const Auth = {
     if (fab) fab.style.display = 'flex';
 
     DB.initTrial();
+    // Sync trial from Supabase so all browsers/devices/PWA show the same days-left
+    DB.syncTrialFromSupabase(user.id).then(() => {
+      if (typeof App !== 'undefined') App._renderTrialBanner();
+    });
     DB.startSession();
     DB.updateStreak();
 
@@ -197,10 +201,55 @@ const Auth = {
       const uid = Auth.currentUser ? Auth.currentUser.id : 'anon';
       const lastPage = localStorage.getItem(`last_page_${uid}`) || 'dashboard';
       App.navigate(lastPage);
+      App._handleDeepLink();
+      if (typeof Onboarding !== 'undefined') Onboarding.maybeStart(user.id);
     }
+
+    // Push notification setup — runs 5s after login so it doesn't interrupt UX
+    setTimeout(() => Push.setup(), 5000);
+
+    // PWA install prompt — 3-day cooldown, skips if tour is running
+    setTimeout(() => { if (typeof PWAPrompt !== 'undefined') PWAPrompt.maybeShow(); }, 12000);
+
+    // Foreground re-sync: when user tabs back in, re-check paid status from Supabase.
+    // This means Sahil activating a user in Supabase takes effect without logout/login.
+    Auth._setupVisibilitySync(user.id);
+  },
+
+  _visibilityHandler: null,
+
+  _setupVisibilitySync(userId) {
+    if (this._visibilityHandler) {
+      document.removeEventListener('visibilitychange', this._visibilityHandler);
+    }
+    let lastSync = 0;
+    this._visibilityHandler = async () => {
+      if (document.hidden) return;
+      if (Date.now() - lastSync < 60000) return; // throttle — at most once per minute
+      lastSync = Date.now();
+      // Reset sync flag so waitForSync works correctly after a foreground re-sync
+      if (typeof DB !== 'undefined') DB._syncedUserId = null;
+      await DB.syncTrialFromSupabase(userId);
+      if (typeof App !== 'undefined') App._renderTrialBanner();
+      // Auto-dismiss paywall if the user has just been activated
+      const paywall = document.getElementById('paywall-overlay');
+      if (paywall && !paywall.classList.contains('hidden') && DB.isPaid()) {
+        paywall.classList.add('hidden');
+        document.body.style.overflow = '';
+        App.navigate('dashboard');
+        showToast('Access granted! Welcome to CATalyst.', 'success');
+      }
+    };
+    document.addEventListener('visibilitychange', this._visibilityHandler);
   },
 
   async logout() {
+    // Remove foreground sync listener so it doesn't fire on the auth screen
+    if (this._visibilityHandler) {
+      document.removeEventListener('visibilitychange', this._visibilityHandler);
+      this._visibilityHandler = null;
+    }
+    DB._syncedUserId = null;
     DB.endSession();
 
     if (typeof Dashboard !== 'undefined' && Dashboard.clearMemory) Dashboard.clearMemory();
@@ -290,4 +339,71 @@ const Auth = {
   hideError() {
     document.getElementById('auth-error').classList.add('hidden');
   }
+};
+
+// ── PUSH NOTIFICATIONS ────────────────────────────────────────
+const Push = {
+  async setup() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (Notification.permission === 'denied') return;
+    if (sessionStorage.getItem('push_banner_snoozed')) return;
+
+    if (Notification.permission === 'granted') {
+      // Permission already granted — silently refresh the subscription
+      await this._subscribe();
+      return;
+    }
+
+    // Not yet asked — show a soft banner first so the native prompt isn't cold
+    this._showBanner();
+  },
+
+  _showBanner() {
+    if (document.getElementById('push-banner')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'push-banner';
+    banner.innerHTML = `
+      <div class="push-banner-text">
+        <strong>Get daily reminders</strong>
+        <span>We'll nudge you when mistakes are pending 🧠</span>
+      </div>
+      <div class="push-banner-btns">
+        <button id="push-yes">Sure</button>
+        <button id="push-no">Later</button>
+      </div>`;
+    document.body.appendChild(banner);
+    requestAnimationFrame(() => banner.classList.add('visible'));
+
+    document.getElementById('push-yes').onclick = async () => {
+      banner.remove();
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') await Push._subscribe();
+    };
+    document.getElementById('push-no').onclick = () => {
+      banner.remove();
+      sessionStorage.setItem('push_banner_snoozed', '1');
+    };
+  },
+
+  async _subscribe() {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const existing = await reg.pushManager.getSubscription();
+      const sub = existing || await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: this._urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+      await DB.savePushSubscription(sub);
+    } catch (err) {
+      console.warn('[Push] Subscription failed:', err.message);
+    }
+  },
+
+  _urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  },
 };

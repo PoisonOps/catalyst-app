@@ -40,7 +40,21 @@ const App = {
     const uid = Auth.currentUser ? Auth.currentUser.id : 'anon';
     const lastPage = localStorage.getItem(`last_page_${uid}`) || 'dashboard';
     this.navigate(lastPage);
+    this._handleDeepLink();
     window.addEventListener('beforeunload', () => DB.endSession());
+
+    if (typeof Onboarding !== 'undefined' && Auth.currentUser) {
+      Onboarding.maybeStart(Auth.currentUser.id);
+    }
+  },
+
+  // Handle #fix hash from push notification click — opens Fix Mode directly
+  _handleDeepLink() {
+    if (window.location.hash !== '#fix') return;
+    history.replaceState(null, '', window.location.pathname);
+    setTimeout(() => {
+      if (typeof Practice !== 'undefined') Practice.loadFixSession();
+    }, 400);
   },
 
   _handlers: null,
@@ -58,6 +72,7 @@ const App = {
       };
       this._handlers.upgradeBtnClick = () => {
         document.getElementById('upgrade-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
       };
       this._handlers.overlayClick = () => {
         document.getElementById('sidebar').classList.remove('open');
@@ -89,6 +104,28 @@ const App = {
   },
 
   navigate(page) {
+    // Always clear any modal scroll lock when navigating away
+    document.body.style.overflow = '';
+    // Hide paywall — will re-show below if the gate catches this page
+    const paywallEl = document.getElementById('paywall-overlay');
+    if (paywallEl) paywallEl.classList.add('hidden');
+
+    // Paywall gate: block Practice and Error Log when trial has expired
+    const GATED_PAGES = ['practice', 'errorlog'];
+    if (GATED_PAGES.includes(page) && typeof DB !== 'undefined') {
+      // Race condition guard: on fresh devices initTrial() creates a local "active" trial
+      // before syncTrialFromSupabase has finished. Wait for sync then re-enter navigate().
+      const uid = Auth.currentUser ? Auth.currentUser.id : null;
+      if (uid && DB._syncedUserId !== uid) {
+        DB.waitForSync(uid).then(() => this.navigate(page));
+        return;
+      }
+      if (DB.isTrialExpired() && !DB.isPaid()) {
+        this.showPaywall();
+        return;
+      }
+    }
+
     // Bug B fix: always reset auto-load guard when leaving practice so re-entry works
     if (page !== 'practice' && typeof Practice !== 'undefined') Practice._hasAutoLoaded = false;
     this.currentPage = page;
@@ -184,9 +221,11 @@ const App = {
 
     if (!this._handlers) this._handlers = {};
     if (!this._handlers.upgradeClick) {
-      this._handlers.upgradeClick = () => modal.classList.remove('hidden');
-      this._handlers.closeUpgradeClick = () => modal.classList.add('hidden');
-      this._handlers.upgradeModalClick = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
+      const lockScroll = () => { document.body.style.overflow = 'hidden'; };
+      const unlockScroll = () => { document.body.style.overflow = ''; };
+      this._handlers.upgradeClick = () => { modal.classList.remove('hidden'); lockScroll(); };
+      this._handlers.closeUpgradeClick = () => { modal.classList.add('hidden'); unlockScroll(); };
+      this._handlers.upgradeModalClick = (e) => { if (e.target === modal) { modal.classList.add('hidden'); unlockScroll(); } };
     }
 
     btn.removeEventListener('click', this._handlers.upgradeClick);
@@ -225,7 +264,21 @@ const App = {
       const daysLeft = document.getElementById('trial-days-left');
       if (daysLeft) daysLeft.textContent = '0';
     }
-  }
+  },
+
+  // ── PAYWALL ────────────────────────────────────────────────────
+  _pendingCount: 0,
+
+  showPaywall() {
+    const overlay = document.getElementById('paywall-overlay');
+    if (!overlay) return;
+    const numEl = document.getElementById('pw-mistake-count');
+    if (numEl) numEl.textContent = this._pendingCount > 0 ? this._pendingCount : '—';
+    overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    if (typeof DB !== 'undefined' && typeof Auth !== 'undefined')
+      DB.logEvent('paywall_shown', Auth.currentUser ? Auth.currentUser.id : null);
+  },
 };
 
 // ── BOOT ──────────────────────────────────────────────────────
@@ -284,3 +337,99 @@ document.addEventListener('DOMContentLoaded', () => {
     Auth.init();
   }
 });
+
+// ── PWA Install Prompt ────────────────────────────────────────
+const PWAPrompt = {
+  _deferred: null,      // Android: captured beforeinstallprompt event
+  _KEY:      'cat_pwa_prompt_last',
+  _COOLDOWN: 3 * 86400000, // 3 days in ms
+
+  init() {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this._deferred = e;
+    });
+  },
+
+  _isInstalled() {
+    return window.navigator.standalone === true ||
+           window.matchMedia('(display-mode: standalone)').matches;
+  },
+  _isMobile() {
+    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  },
+  _isIOS() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.MSStream;
+  },
+
+  // Called right after onboarding tour completes
+  showAfterTour() {
+    if (this._isInstalled() || !this._isMobile()) return;
+    setTimeout(() => this._show(), 1000);
+  },
+
+  // Called on login — respects 3-day cooldown, skips if tour is running
+  maybeShow() {
+    if (this._isInstalled() || !this._isMobile()) return;
+    if (typeof Onboarding !== 'undefined' && Onboarding._active) return;
+    const last = parseInt(localStorage.getItem(this._KEY) || '0');
+    if (Date.now() - last < this._COOLDOWN) return;
+    setTimeout(() => this._show(), 12000); // 12s delay — well after login settles
+  },
+
+  _show() {
+    if (this._isInstalled() || document.getElementById('pwa-prompt')) return;
+    localStorage.setItem(this._KEY, Date.now().toString());
+
+    const isIOS = this._isIOS();
+    const el = document.createElement('div');
+    el.id = 'pwa-prompt';
+
+    const iosShareIcon = `<svg width="15" height="17" viewBox="0 0 15 17" fill="currentColor" style="vertical-align:-3px;margin:0 2px"><path d="M7.5 0L4 3.5h2.25V11h2.5V3.5H11L7.5 0zM1 13.5V15.5h13V13.5H1z"/></svg>`;
+
+    el.innerHTML = isIOS ? `
+      <div class="pwa-inner">
+        <button class="pwa-close" id="pwa-close">✕</button>
+        <div class="pwa-icon">⚡</div>
+        <div class="pwa-title">Better on your home screen</div>
+        <div class="pwa-sub">Opens instantly. Works offline. No App Store.</div>
+        <div class="pwa-ios-steps">
+          <div class="pwa-ios-step"><span class="pwa-num">1</span>Tap ${iosShareIcon} <strong>Share</strong> in Safari's toolbar</div>
+          <div class="pwa-ios-step"><span class="pwa-num">2</span>Tap <strong>Add to Home Screen</strong></div>
+        </div>
+        <button class="pwa-later" id="pwa-later">Maybe later</button>
+      </div>` : `
+      <div class="pwa-inner">
+        <button class="pwa-close" id="pwa-close">✕</button>
+        <div class="pwa-icon">⚡</div>
+        <div class="pwa-title">Better on your home screen</div>
+        <div class="pwa-sub">Opens instantly. Works offline. No App Store.</div>
+        <button class="pwa-add-btn" id="pwa-add">Add to Home Screen</button>
+        <button class="pwa-later" id="pwa-later">Maybe later</button>
+      </div>`;
+
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('visible'));
+
+    const dismiss = () => {
+      el.classList.remove('visible');
+      setTimeout(() => el.remove(), 350);
+    };
+
+    document.getElementById('pwa-close').onclick = dismiss;
+    document.getElementById('pwa-later').onclick  = dismiss;
+
+    if (!isIOS) {
+      document.getElementById('pwa-add').onclick = async () => {
+        dismiss();
+        if (this._deferred) {
+          this._deferred.prompt();
+          await this._deferred.userChoice;
+          this._deferred = null;
+        }
+      };
+    }
+  },
+};
+
+PWAPrompt.init();
