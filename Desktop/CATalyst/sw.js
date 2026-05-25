@@ -1,5 +1,5 @@
 // CATalyst Service Worker
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME    = `catalyst-${CACHE_VERSION}`;
 
 const PRECACHE = [
@@ -74,6 +74,43 @@ self.addEventListener('fetch', (e) => {
         caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
         return response;
       });
+    })
+  );
+});
+
+// ── Push: show notification ────────────────────────────────
+self.addEventListener('push', (e) => {
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; } catch (_) {}
+
+  const title   = data.title || 'CATalyst ⚡';
+  const options = {
+    body:    data.body  || 'Your mistakes are waiting.',
+    icon:    '/icon-192.png',
+    badge:   '/icon-192.png',
+    data:    { url: data.url || 'https://catalyst-app-six.vercel.app/' },
+    vibrate: [100, 50, 100],
+  };
+
+  e.waitUntil(self.registration.showNotification(title, options));
+});
+
+// ── Notification click: open / focus the app ──────────────
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const target = e.notification.data?.url || 'https://catalyst-app-six.vercel.app/';
+
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      // If app is already open, focus it and navigate to the target URL
+      for (const client of windowClients) {
+        if (client.url.startsWith('https://catalyst-app-six.vercel.app') && 'focus' in client) {
+          client.navigate(target);
+          return client.focus();
+        }
+      }
+      // Otherwise open a new window
+      return clients.openWindow(target);
     })
   );
 });

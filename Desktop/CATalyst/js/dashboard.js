@@ -108,6 +108,7 @@ const Dashboard = {
       await this._renderWeakTopics(stats);
 
       const pending = await DB.getPendingErrorCount();
+      App._pendingCount = pending; // cache for paywall personalisation
       const fixSub = document.getElementById('dash-fix-sub');
       if (fixSub) {
         fixSub.textContent = pending > 0

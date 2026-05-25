@@ -30,6 +30,11 @@ const _CONFIGS = {
 const SUPABASE_URL = _CONFIGS[ENV].SUPABASE_URL;
 const SUPABASE_KEY = _CONFIGS[ENV].SUPABASE_KEY;
 
+// ── PUSH NOTIFICATIONS ───────────────────────────────────────
+// Public VAPID key — safe to expose in frontend code.
+// Private key lives only in Vercel env var VAPID_PRIVATE_KEY.
+const VAPID_PUBLIC_KEY = 'BMAjpyLMtJ5L3sCFOYL28gekrgVIBUSha-Vd2tPVZXjGVvMK3zLjVXsxH3tnZGYDEk3OhCmBi3AstDDLisWxQA0';
+
 // ── FEATURE FLAGS ────────────────────────────────────────────
 // Toggle features without code changes. To disable a feature: set to false, save, deploy.
 // To re-enable: set to true. No git revert needed.

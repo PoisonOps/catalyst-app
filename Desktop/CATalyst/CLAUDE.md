@@ -32,7 +32,7 @@ Script load order in `index.html` is critical — files depend on each other in 
 
 All data operations go through `DB.*`. Demo mode has been removed — `USE_DEMO` is permanently `false`. All reads/writes go to Supabase, with localStorage as a fallback cache.
 
-Every user-specific localStorage key is namespaced as `cat_<key>_${userId}` to allow multi-user devices without conflicts. Global keys (theme) are not namespaced — the full list is in `DB._globalKeys`.
+Every user-specific localStorage key is namespaced as `cat_<key>_${userId}` to allow multi-user devices without conflicts. Global keys (theme) are not namespaced — the full list is in `DB._globalKeys`. `DB.clearUserData(uid)` wipes all namespaced keys for a specific user (useful for admin resets or testing).
 
 Supabase tables: `questions`, `sets`, `attempt_logs`, `error_logs`, `reports`, `feedback`, `events`. The `questions` query always uses `sets!left` (LEFT JOIN) — without `!left`, PostgREST defaults to INNER JOIN and silently drops all standalone questions where `set_id IS NULL`.
 
@@ -56,12 +56,14 @@ First-session flow: on signup, `cat_first_session_${userId}` is set in localStor
 
 ### Onboarding Tour (`js/onboarding.js`)
 
-`Onboarding.maybeStart(userId)` is called from `auth.js → onLogin()`. It runs once per user (tracked by `cat_tour_done_${userId}` in localStorage) and walks through the full CATalyst loop: Practice → tag wrong answer → Error Log → Fix Mode P1 → P2.
+`Onboarding.maybeStart(userId)` is called from `App.init()` (first login) and the `else` branch of `onLogin()` (returning users). It runs once per user and walks through the full CATalyst loop: Practice → tag wrong answer → Error Log → Fix Mode P1 → P2.
 
 - Snooze for a session: `sessionStorage.tour_snoozed = 'true'`
 - Reset tour: `localStorage.removeItem('cat_tour_done_${userId}')`
 - Spotlight + tooltip UI managed entirely within `onboarding.js` — no HTML markup needed
 - Steps fire via `waitFor` events dispatched with `document.dispatchEvent(new CustomEvent('onboarding:signal', { detail: 'event-name' }))` from `practice.js` and `errorlog.js`
+
+**iOS PWA storage split:** Safari and the home screen PWA have separate `localStorage` on iOS. Tour completion is therefore written to both localStorage (`cat_tour_done_${userId}`) AND Supabase (`events` table, `tour_completed` event). `maybeStart()` checks Supabase first if localStorage is empty — this prevents the tour from restarting when a user switches from Safari to the installed PWA.
 
 ### Error Log (`js/errorlog.js`)
 
@@ -93,12 +95,18 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 
 **Auth screen scroll:** `#auth-screen.active` uses `position: fixed; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch`. Do not add `align-items: center` or `display: flex` to this rule — it breaks touch scrolling on Chrome mobile.
 
+**Auth container centering:** `#auth-screen .auth-container` must have `margin: 0 auto` to center the 420px form on desktop. Without it the form left-aligns because the parent is `display: block`, not flex.
+
+**Error log card truncation:** `.el-question` uses `-webkit-line-clamp: 3` to cap card height on mobile. The full question text is always available in `el.dataset.raw` (base64-encoded) — never truncate the data-raw attribute.
+
 ### Service Worker (`sw.js`)
 
-- Cache name is `catalyst-v3` — bump `CACHE_VERSION` when making breaking changes that need all clients to re-fetch
+- Cache name is `catalyst-v4` — bump `CACHE_VERSION` when making breaking changes that need all clients to re-fetch
 - **Network-first** for CSS and HTML (always fetches fresh, falls back to cache offline)
 - **Cache-first** for JS and other static assets
 - CSS does not need `?v=N` cache-busting since it's always network-first; JS files do need it
+- Push handler: `push` event parses JSON payload `{ title, body, icon, url }` and calls `showNotification()`
+- Click handler: `notificationclick` focuses an existing open window or opens a new one at `notification.data.url`
 
 ### Pages & Their Entry Points
 
@@ -140,6 +148,7 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 | `fix_mode_started` | `practice.js → loadFixSession()` |
 | `fix_mode_completed` | `practice.js → _showFixSessionComplete()` |
 | `day7_return` | `auth.js → onLogin()` — fires once per user when elapsed ≥ 7 days; tracked by `cat_day7_fired_${userId}` in localStorage |
+| `tour_completed` | `onboarding.js → complete()` — used to detect tour completion across Safari/PWA storage contexts on iOS |
 
 ### Auth System (`js/auth.js`)
 
@@ -161,6 +170,29 @@ The auth card (`#auth-card-collapsible`) is **always visible** on the landing pa
 - Redirect URLs allowlist must include `https://catalyst-app-six.vercel.app/reset-password.html`
 - Custom SMTP (Resend) requires a verified domain to send to arbitrary emails — currently disabled; falls back to Supabase's default (3 emails/hour limit)
 - Email confirmation is currently OFF — users get instant access after signup
+
+### Push Notification System
+
+Supabase table: `push_subscriptions` — created by running `push-notifications-setup.sql` once in prod SQL Editor. Columns: `user_id, endpoint, p256dh, auth, last_notification_sent, last_notification_type, last_notification_index`.
+
+**Frontend flow:** `Push.setup()` in `auth.js` runs 5s after login. Shows a soft banner (`#push-banner`) before the native browser prompt. On permission grant, calls `reg.pushManager.subscribe()` with the VAPID public key from `config.js` (`VAPID_PUBLIC_KEY`), then saves the subscription via `DB.savePushSubscription()`.
+
+**Sender:** `api/send-push.js` — Vercel serverless function (CommonJS). Reads all subscriptions, fetches each user's pending mistake count, picks from 3 notification pools (static, dynamic with `{mistakes}/{days}/{day}` placeholders, zero-mistakes), enforces a minimum gap of `(24h / NOTIFICATIONS_PER_DAY) * 0.75` between sends, deletes expired subscriptions (410/404 responses).
+
+**Scheduling:** Vercel Cron triggers once at 13:30 UTC (7pm IST) as a fallback. Primary schedule (4x/day) runs via cron-job.org hitting the same endpoint with `Authorization: Bearer $CRON_SECRET`. To change frequency: update `NOTIFICATIONS_PER_DAY` in `api/send-push.js` and add/remove cron-job.org jobs.
+
+**Deep link:** Notifications with pending mistakes set `url` to `https://catalyst-app-six.vercel.app/#fix`. `App._handleDeepLink()` in `app.js` detects this hash on boot and calls `Practice.loadFixSession()` after a 400ms delay.
+
+**Env vars required (Vercel Production):** `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`. Values stored in `.env` locally (gitignored). Run `bash push-env-to-vercel.sh` to push all vars to Vercel at once.
+
+### PWA Install Prompt
+
+`PWAPrompt` object in `app.js`. Captures `beforeinstallprompt` (Android) on page load via `PWAPrompt.init()`. Never shows if already installed (`window.navigator.standalone` / `display-mode: standalone`) or on desktop.
+
+- **After tour:** `Onboarding.complete()` calls `PWAPrompt.showAfterTour()` — fires 1s after tour ends
+- **3-day fallback:** `Auth.onLogin()` calls `PWAPrompt.maybeShow()` 12s after login — checks `cat_pwa_prompt_last` in localStorage, skips if tour is active or last shown < 3 days ago
+- **iOS:** Shows numbered steps (tap Share → Add to Home Screen). No native install API on iOS
+- **Android:** Calls `deferredPrompt.prompt()` to trigger Chrome's native install sheet
 
 ### Social / OG
 
@@ -188,6 +220,8 @@ Only run `vercel --prod` after confirming the feature works locally. Deploying u
 - `analytics.html` — Internal analytics dashboard (not linked from the app)
 - `analytics-setup.sql` — Run once in Supabase to create `events` table + RLS policies
 - `reset-password.html` — Standalone password reset page; has its own Supabase client init with hardcoded prod credentials
+- `vercel.json` — Single catch-all rewrite (`"/(.*)" → "/index.html"`) so Vercel serves the SPA for all routes
+- `migrate-to-prod.js` — Copies questions + sets from dev Supabase → prod via UPSERT (safe to re-run). Requires service-role keys passed as env vars: `DEV_SERVICE_KEY=xxx PROD_SERVICE_KEY=yyy node migrate-to-prod.js`
 
 ## Current Business Context
 

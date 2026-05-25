@@ -26,11 +26,30 @@ CREATE POLICY "events_select" ON events
   FOR SELECT USING (true);
 
 -- ─────────────────────────────────────────────────────────────
--- HOW TO MARK A USER AS PAID (after WhatsApp payment confirmation)
+-- HOW TO ACTIVATE A PAYING USER (after WhatsApp payment confirmation)
 -- ─────────────────────────────────────────────────────────────
 -- Step 1: find the user's UUID
 --   SELECT id, email FROM auth.users WHERE email = 'user@example.com';
 --
--- Step 2: insert the payment event
---   INSERT INTO events (event, user_id)
---   VALUES ('payment_completed', '<paste-uuid-here>');
+-- Step 2a: ONE-TIME plan (₹489 till CAT 2026) — never expires
+--   INSERT INTO events (event, user_id, metadata)
+--   VALUES ('payment_completed', '<uuid>', '{"plan": "onetime"}');
+--
+-- Step 2b: MONTHLY plan (₹99/month) — expires after 32 days (2-day buffer)
+--   INSERT INTO events (event, user_id, metadata)
+--   VALUES (
+--     'payment_completed',
+--     '<uuid>',
+--     json_build_object(
+--       'plan', 'monthly',
+--       'expires_at', (EXTRACT(EPOCH FROM (NOW() + INTERVAL '32 days')) * 1000)::bigint
+--     )
+--   );
+--
+-- TO RENEW a monthly user (they pay again next month) — just insert another row:
+--   Same query as Step 2b. The app always reads the LATEST payment_completed event.
+--
+-- TO CHECK a user's current plan:
+--   SELECT user_id, metadata, created_at FROM events
+--   WHERE event = 'payment_completed' AND user_id = '<uuid>'
+--   ORDER BY created_at DESC LIMIT 1;

@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>CATalyst — Stop Practicing. Start Fixing.</title>
+<meta name="description" content="The only CAT 2026 prep tool built around your mistakes. Tag every error, fix it in Fix Mode, stop losing the same marks twice."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet"/>
+<style>
+/* ── TOKENS ─────────────────────────────── */
+:root{
+  --bg:#08080E;--bg2:#0F0F18;--s:#111120;--s2:#171726;
+  --b:rgba(255,255,255,.07);--b2:rgba(255,255,255,.13);
+  --t:#F2F2FA;--t2:#8080A0;--t3:#45455A;
+  --p:#5B3BF5;--p2:#7C5CF8;--p3:#A78BFA;
+  --r:#FF4D4D;--g:#22C55E;--y:#F5A623;
+  --font:'Inter',system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--t);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}
+button{font-family:var(--font);cursor:pointer;border:none;background:none}
+img{display:block;max-width:100%}
+
+/* Grid overlay */
+body::before{content:'';position:fixed;inset:0;
+  background:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px),
+             linear-gradient(90deg,rgba(255,255,255,.016) 1px,transparent 1px);
+  background-size:54px 54px;pointer-events:none;z-index:0}
+
+/* ── SCROLL LINE ─── */
+#sline{position:fixed;top:0;left:0;height:2px;width:100%;
+  background:linear-gradient(90deg,var(--p),var(--p3));
+  transform-origin:left;transform:scaleX(0);z-index:9999}
+
+/* ── UTILS ─── */
+.z1{position:relative;z-index:1}
+.container{width:100%;max-width:1160px;margin:0 auto;padding:0 20px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--p3);margin-bottom:14px}
+
+/* Word/char split helpers */
+.split-wrap{overflow:hidden;display:inline-block}
+.split-inner{display:inline-block}
+
+/* ── NAV ─────────────────────────────────── */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;
+  height:58px;display:flex;align-items:center;padding:0 20px;
+  background:rgba(8,8,14,.8);
+  backdrop-filter:blur(24px) saturate(160%);
+  -webkit-backdrop-filter:blur(24px) saturate(160%);
+  border-bottom:1px solid var(--b)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;
+  width:100%;max-width:1160px;margin:0 auto}
+.nav-logo{font-size:17px;font-weight:800;letter-spacing:-.03em;
+  background:linear-gradient(135deg,#fff 0%,var(--p3) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-cta{display:inline-flex;align-items:center;gap:8px;
+  padding:9px 20px;background:var(--p);color:#fff;border-radius:10px;
+  font-size:13px;font-weight:700;
+  box-shadow:0 0 20px rgba(91,59,245,.4);
+  transition:all .2s}
+.nav-cta:hover{background:var(--p2);box-shadow:0 0 36px rgba(91,59,245,.55);transform:translateY(-1px)}
+
+/* ── HERO ────────────────────────────────── */
+.hero{min-height:100svh;padding:90px 0 60px;
+  display:flex;align-items:center;position:relative;overflow:hidden}
+#ptx{position:absolute;inset:0;pointer-events:none}
+.orb{position:absolute;border-radius:50%;pointer-events:none;will-change:transform}
+.o1{width:min(700px,120vw);height:min(700px,120vw);
+  background:radial-gradient(circle,rgba(91,59,245,.18) 0%,transparent 65%);
+  top:-200px;left:-150px;animation:od 10s ease-in-out infinite}
+.o2{width:min(500px,100vw);height:min(500px,100vw);
+  background:radial-gradient(circle,rgba(255,77,77,.1) 0%,transparent 65%);
+  bottom:-100px;right:-100px;animation:od 14s ease-in-out infinite reverse 3s}
+@keyframes od{0%,100%{transform:translate(0,0)}33%{transform:translate(28px,-22px)}66%{transform:translate(-18px,32px)}}
+
+.hero-grid{display:flex;flex-direction:column;gap:48px;position:relative;z-index:2}
+
+/* left */
+.hero-tag{display:inline-flex;align-items:center;gap:8px;
+  padding:5px 13px;border-radius:100px;
+  background:rgba(91,59,245,.1);border:1px solid rgba(91,59,245,.28);
+  font-size:11px;font-weight:700;color:var(--p3);letter-spacing:.06em;
+  text-transform:uppercase;margin-bottom:22px}
+.hero-tag-dot{width:6px;height:6px;border-radius:50%;background:var(--p);
+  animation:bk 2s ease-in-out infinite}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.35}}
+
+.hero-hl{font-size:clamp(44px,11vw,88px);font-weight:900;
+  line-height:1.02;letter-spacing:-.04em;margin-bottom:22px}
+.hl-white{color:var(--t)}
+.hl-grad{background:linear-gradient(135deg,var(--p2) 0%,var(--p3) 55%,#c4b5fd 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hl-red-grad{background:linear-gradient(135deg,var(--r) 0%,#ff8080 60%,#ffb3b3 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.hero-sub{font-size:clamp(15px,2.8vw,18px);color:var(--t2);line-height:1.75;
+  max-width:500px;margin-bottom:34px}
+.hero-sub strong{color:var(--t)}
+
+.hero-ctas{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.btn-main{padding:16px 28px;background:var(--p);color:#fff;
+  border-radius:12px;font-size:15px;font-weight:700;
+  box-shadow:0 0 28px rgba(91,59,245,.45);
+  transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+.btn-main:hover{background:var(--p2);transform:translateY(-2px);box-shadow:0 0 48px rgba(91,59,245,.6)}
+.btn-ghost{padding:15px 24px;background:transparent;color:var(--t);
+  border:1px solid var(--b2);border-radius:12px;font-size:15px;font-weight:600;
+  transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+.btn-ghost:hover{border-color:var(--p);color:var(--p3);background:rgba(91,59,245,.08)}
+.trust-pills{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--t3)}
+.trust-pill::before{content:'✓';color:var(--g);margin-right:5px}
+
+/* ── HERO DEMO CARD ─────────────────────── */
+.hero-right{display:flex;justify-content:center;align-items:center}
+.demo-float{animation:fly 5s ease-in-out infinite;position:relative}
+@keyframes fly{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+
+.demo-card{width:min(400px,92vw);background:#0e0e1c;
+  border:1px solid rgba(255,255,255,.1);border-radius:20px;
+  box-shadow:0 0 80px rgba(91,59,245,.3),0 40px 80px rgba(0,0,0,.7),
+             inset 0 1px 0 rgba(255,255,255,.08);
+  overflow:hidden;font-size:13px;position:relative;z-index:2}
+
+.dc-top{background:#090915;padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,.06)}
+.dc-dots{display:flex;gap:6px}
+.dc-dot{width:11px;height:11px;border-radius:50%}
+.dc-label{font-size:10px;color:var(--t3);font-weight:600;letter-spacing:.04em}
+
+.dc-body{padding:16px}
+
+/* Concept gap badge — animates */
+.dc-gap-badge{display:inline-flex;align-items:center;gap:7px;
+  padding:5px 12px;border-radius:100px;
+  background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.28);
+  font-size:10px;font-weight:800;color:var(--r);
+  letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px;
+  transition:all .5s}
+
+.dc-meta{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px}
+.dc-meta-left{display:flex;gap:6px;align-items:center}
+.dc-chip{padding:2px 8px;border-radius:100px;font-size:9px;font-weight:800;
+  letter-spacing:.05em;text-transform:uppercase}
+.dc-chip.varc{background:rgba(74,158,255,.15);color:#4a9eff}
+.dc-chip.va{background:rgba(74,158,255,.1);color:#69bfff}
+.dc-chip.med{background:rgba(245,166,35,.12);color:var(--y)}
+.dc-time{font-size:11px;color:var(--t3);font-feature-settings:'tnum'}
+
+.dc-q{font-size:12.5px;line-height:1.62;color:#d8d8f0;
+  padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:12px}
+
+.dc-opts{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.dc-opt{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;border-radius:9px;
+  border:1px solid rgba(255,255,255,.07);
+  font-size:11.5px;color:rgba(255,255,255,.38);
+  transition:all .4s}
+.dc-opt .lo{font-weight:800;font-size:11px;width:18px;flex-shrink:0;color:rgba(255,255,255,.25)}
+.dc-opt .ans-lbl{font-size:10px;font-weight:700;letter-spacing:.04em}
+.dc-opt.wrong-sel{border-color:rgba(255,77,77,.45);
+  background:rgba(255,77,77,.09);color:#ff8080}
+.dc-opt.wrong-sel .lo{color:var(--r)}
+.dc-opt.wrong-sel .ans-lbl{color:var(--r)}
+.dc-opt.correct-row{border-color:rgba(34,197,94,.35);
+  background:rgba(34,197,94,.07);color:#6ee7a0}
+.dc-opt.correct-row .lo{color:var(--g)}
+.dc-opt.correct-row .ans-lbl{color:var(--g)}
+
+/* result row */
+.dc-result{border-radius:9px;padding:9px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:11.5px;font-weight:700;margin-bottom:8px;
+  transition:all .4s;
+  background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.22);color:var(--r)}
+.dc-result .fix-val{color:var(--g);font-size:10px;font-weight:700}
+.dc-boost{display:flex;align-items:center;gap:6px;
+  font-size:10.5px;font-weight:700;color:var(--p3);
+  padding:7px 12px;border-radius:8px;
+  background:rgba(91,59,245,.1);border:1px solid rgba(91,59,245,.22)}
+
+/* demo secondary floating badges */
+.demo-badge{position:absolute;background:var(--s);
+  border:1px solid var(--b2);border-radius:12px;padding:10px 14px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.db1{top:16px;right:-20px;animation:fly 7s ease-in-out infinite 1.2s}
+.db2{bottom:40px;left:-20px;animation:fly 6s ease-in-out infinite .5s}
+@media(max-width:600px){.db1,.db2{display:none}}
+.dblab{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--t3);margin-bottom:4px}
+.dbval{font-size:22px;font-weight:900;line-height:1}
+
+@media(min-width:900px){
+  .hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+  .hero-right{justify-content:flex-end;padding-right:20px}
+  .db1{right:-28px}
+  .db2{left:-28px}
+}
+
+/* ── MARQUEE ─────────────────────────────── */
+.mbar{border-top:1px solid var(--b);border-bottom:1px solid var(--b);
+  background:var(--s);padding:11px 0;overflow:hidden;position:relative;z-index:1}
+.mtrack{display:flex;width:max-content;animation:mq 30s linear infinite}
+.mitem{display:flex;align-items:center;gap:12px;padding:0 28px;
+  font-size:12px;font-weight:600;color:var(--t2);
+  letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.mdot{width:4px;height:4px;border-radius:50%;background:var(--p);flex-shrink:0}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── STATS COUNTER ───────────────────────── */
+.stats-bar{padding:64px 0;position:relative;z-index:1}
+.stats-inner{display:grid;grid-template-columns:1fr 1fr;gap:0;
+  background:var(--s);border:1px solid var(--b2);border-radius:20px;overflow:hidden}
+@media(min-width:700px){.stats-inner{grid-template-columns:repeat(4,1fr)}}
+.stat-item{padding:32px 24px;text-align:center;border-right:1px solid var(--b);
+  border-bottom:1px solid var(--b);position:relative}
+.stat-item:nth-child(even){border-right:none}
+@media(min-width:700px){
+  .stat-item{border-right:1px solid var(--b);border-bottom:none}
+  .stat-item:last-child{border-right:none}
+}
+.stat-num{font-size:clamp(36px,6vw,52px);font-weight:900;letter-spacing:-.04em;
+  background:linear-gradient(135deg,#fff 0%,var(--p3) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1;margin-bottom:8px}
+.stat-label{font-size:13px;color:var(--t2);line-height:1.5}
+
+/* ── PROBLEM ─────────────────────────────── */
+.problem{padding:96px 0;text-align:center;position:relative;z-index:1}
+.prob-hl{font-size:clamp(34px,7vw,72px);font-weight:900;letter-spacing:-.04em;line-height:1.1;
+  margin-bottom:24px}
+.prob-hl .ln1{display:block;color:var(--t)}
+.prob-hl .ln2{display:block;
+  background:linear-gradient(135deg,var(--p2) 0%,var(--p3) 40%,#c084fc 80%,#f472b6 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.prob-sub{font-size:clamp(15px,2.5vw,18px);color:var(--t2);
+  max-width:640px;margin:0 auto 56px;line-height:1.75}
+.prob-cards{display:grid;gap:16px}
+@media(min-width:700px){.prob-cards{grid-template-columns:repeat(3,1fr)}}
+.pcard{background:var(--s);border:1px solid var(--b);border-radius:16px;
+  padding:28px;text-align:left;transition:all .3s;position:relative;overflow:hidden}
+.pcard::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--r),transparent);opacity:0;transition:opacity .3s}
+.pcard:hover::after{opacity:1}
+.pcard:hover{border-color:rgba(255,77,77,.2);transform:translateY(-4px);
+  box-shadow:0 0 48px rgba(255,77,77,.07)}
+.pcard-icon{width:44px;height:44px;border-radius:10px;
+  background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.2);
+  display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px}
+.pcard-title{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:8px}
+.pcard-desc{font-size:14px;color:var(--t2);line-height:1.65}
+
+/* ── LOOP / HOW IT WORKS ─────────────────── */
+.loop{padding:96px 0;
+  background:linear-gradient(180deg,transparent,rgba(91,59,245,.04) 40%,rgba(91,59,245,.06) 60%,transparent)}
+.loop-header{text-align:center;margin-bottom:64px}
+.loop-hl{font-size:clamp(32px,6.5vw,68px);font-weight:900;letter-spacing:-.04em;line-height:1.1;margin-bottom:16px}
+.loop-sub{font-size:clamp(15px,2.5vw,18px);color:var(--t2);max-width:540px;margin:0 auto;line-height:1.7}
+
+.steps{display:flex;flex-direction:column;gap:20px;position:relative}
+.step{display:grid;gap:24px;background:var(--s);border:1px solid var(--b2);
+  border-radius:18px;padding:28px;transition:all .3s}
+.step:hover{border-color:rgba(91,59,245,.28);box-shadow:0 0 60px rgba(91,59,245,.1)}
+.step-num-wrap{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.step-n{width:44px;height:44px;border-radius:50%;background:var(--p);color:#fff;
+  font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 28px rgba(91,59,245,.45);flex-shrink:0}
+.step-title{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.step-desc{font-size:14px;color:var(--t2);line-height:1.68;margin-bottom:20px}
+
+/* mini UIs inside steps */
+.mini{background:#0a0a14;border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:14px}
+.mini-tag-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.mtag{padding:4px 11px;border-radius:100px;font-size:10.5px;font-weight:700;
+  border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.3)}
+.mtag.sel{background:rgba(91,59,245,.2);border-color:rgba(91,59,245,.45);color:var(--p3)}
+.mini-row{display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
+.mini-row:last-child{border:none}
+.mini-row .k{color:var(--t2)}
+.mini-row .v{font-weight:700;color:var(--t)}
+.mini-row .vg{font-weight:700;color:var(--g)}
+.mini-progress{display:flex;gap:5px;margin-top:10px}
+.mp{flex:1;height:5px;border-radius:3px}
+.mini-badge{display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:100px;font-size:10px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.06em}
+.mini-badge.fix1{background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.25);color:var(--r)}
+.mini-badge.fix2{background:rgba(91,59,245,.12);border:1px solid rgba(91,59,245,.3);color:var(--p3)}
+.mini-q{font-size:11.5px;color:#c8c8e8;line-height:1.55;margin:8px 0 10px}
+.mini-opt{display:flex;align-items:center;gap:8px;
+  padding:6px 9px;border-radius:7px;font-size:11px;margin-bottom:5px;
+  border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.36)}
+.mini-opt .ml{font-weight:800;font-size:10px}
+.mini-opt.w{border-color:rgba(255,77,77,.35);background:rgba(255,77,77,.07);color:#ff7070}
+.mini-opt.c{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.07);color:#5eeba0}
+.mini-err-row{display:flex;justify-content:space-between;align-items:center;
+  padding:6px 8px;border-radius:7px;margin-bottom:5px;font-size:11px;
+  border:1px solid rgba(255,255,255,.06)}
+.err-type{display:flex;gap:6px;align-items:center}
+.err-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.err-num{font-weight:800}
+
+@media(min-width:900px){
+  .steps{display:grid;grid-template-columns:repeat(3,1fr)}
+  .step{padding:32px}
+}
+
+/* ── LENSES / TRAP CARD ───────────────────── */
+.lenses{padding:96px 0}
+.lenses-header{text-align:center;margin-bottom:56px}
+.lenses-hl{font-size:clamp(30px,6vw,64px);font-weight:900;letter-spacing:-.04em;line-height:1.1;margin-bottom:16px}
+.lenses-sub{font-size:clamp(15px,2.5vw,17px);color:var(--t2);max-width:600px;margin:0 auto;line-height:1.75}
+
+.trap-wrap{max-width:720px;margin:0 auto}
+.trap-header-row{background:var(--s2);border:1px solid var(--b2);
+  border-radius:16px 16px 0 0;padding:16px 24px;
+  display:flex;align-items:center;gap:12px;border-bottom:none}
+.trap-q-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.tq-chip{padding:2px 9px;border-radius:100px;font-size:9.5px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.05em}
+.tq-chip.qa{background:rgba(91,59,245,.15);color:var(--p3)}
+.tq-chip.ar{background:rgba(74,158,255,.12);color:#60b0ff}
+.tq-chip.med{background:rgba(245,166,35,.1);color:var(--y)}
+.trap-q-text{font-size:14px;color:#d0d0ee;line-height:1.6;padding:16px 24px;
+  background:var(--s2);border-left:1px solid var(--b2);border-right:1px solid var(--b2)}
+
+.trap-rows{border:1px solid var(--b2);border-radius:0 0 16px 16px;overflow:hidden;
+  box-shadow:0 0 80px rgba(91,59,245,.12),0 40px 80px rgba(0,0,0,.5)}
+.trap-row{padding:22px 24px;border-bottom:1px solid var(--b)}
+.trap-row:last-child{border:none}
+.trap-lbl{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.trap-lbl.red{color:var(--r)}
+.trap-lbl.yel{color:var(--y)}
+.trap-lbl.grn{color:var(--g)}
+.trap-lbl-bg{padding:3px 10px;border-radius:100px;font-size:10px;font-weight:800}
+.trap-lbl-bg.red{background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.25);color:var(--r)}
+.trap-lbl-bg.yel{background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.25);color:var(--y)}
+.trap-lbl-bg.grn{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:var(--g)}
+.trap-text{font-size:14px;color:var(--t2);line-height:1.72}
+.trap-text strong{color:var(--t);font-weight:600}
+.trap-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ttag{padding:4px 12px;border-radius:100px;font-size:12px;font-weight:600}
+.ttag.c{background:rgba(91,59,245,.12);border:1px solid rgba(91,59,245,.28);color:var(--p3)}
+.ttag.t{background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.25);color:#6bb4ff}
+.ttag.m{background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.25);color:#ff7070}
+
+/* ── FEATURES ────────────────────────────── */
+.feats{padding:96px 0}
+.feats-header{text-align:center;margin-bottom:56px}
+.feats-hl{font-size:clamp(30px,6vw,64px);font-weight:900;letter-spacing:-.04em;line-height:1.1;margin-bottom:14px}
+.feats-sub{font-size:clamp(15px,2.5vw,17px);color:var(--t2);max-width:520px;margin:0 auto;line-height:1.7}
+.feat-grid{display:grid;gap:14px}
+@media(min-width:540px){.feat-grid{grid-template-columns:1fr 1fr}}
+@media(min-width:900px){.feat-grid{grid-template-columns:repeat(3,1fr)}}
+.fcard{background:var(--s);border:1px solid var(--b);border-radius:16px;
+  padding:24px;transition:all .3s;overflow:hidden;position:relative}
+.fcard::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 0 0,rgba(91,59,245,.09),transparent 55%);
+  opacity:0;transition:opacity .3s;border-radius:16px}
+.fcard:hover{border-color:rgba(91,59,245,.25);transform:translateY(-4px);
+  box-shadow:0 0 50px rgba(91,59,245,.1)}
+.fcard:hover::before{opacity:1}
+.fcard-icon{width:42px;height:42px;border-radius:10px;
+  background:rgba(91,59,245,.1);border:1px solid rgba(91,59,245,.22);
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  margin-bottom:14px;position:relative;z-index:1}
+.fcard-title{font-size:15px;font-weight:700;letter-spacing:-.01em;
+  margin-bottom:6px;position:relative;z-index:1}
+.fcard-desc{font-size:13px;color:var(--t2);line-height:1.65;position:relative;z-index:1}
+
+/* ── TESTIMONIALS ────────────────────────── */
+.testi{padding:96px 0}
+.testi-header{text-align:center;margin-bottom:56px}
+.testi-hl{font-size:clamp(28px,6vw,64px);font-weight:900;letter-spacing:-.04em;line-height:1.1;margin-bottom:14px}
+
+/* WhatsApp-style cards */
+.wa-grid{display:grid;gap:16px}
+@media(min-width:700px){.wa-grid{grid-template-columns:repeat(2,1fr);gap:20px}}
+@media(min-width:1000px){.wa-grid{grid-template-columns:repeat(3,1fr)}}
+
+.wa-card{background:var(--s);border:1px solid var(--b);border-radius:16px;
+  padding:0;overflow:hidden;transition:all .4s cubic-bezier(.34,1.56,.64,1)}
+.wa-card:hover{transform:translateY(-8px) scale(1.01) rotate(0deg) !important;
+  box-shadow:0 0 48px rgba(91,59,245,.15),0 20px 48px rgba(0,0,0,.32);
+  border-color:rgba(91,59,245,.28);z-index:5}
+@media(min-width:700px){
+  .wa-card:nth-child(1){transform:rotate(-1.5deg)}
+  .wa-card:nth-child(2){transform:rotate(1deg) translateY(-10px)}
+  .wa-card:nth-child(3){transform:rotate(-1deg)}
+  .wa-card:nth-child(4){transform:rotate(1.2deg) translateY(8px)}
+  .wa-card:nth-child(5){transform:rotate(-.7deg) translateY(-5px)}
+}
+
+/* WhatsApp chrome */
+.wa-chrome{background:#0f1a14;padding:10px 14px;
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid rgba(34,197,94,.12)}
+.wa-avatar{width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,#128C7E,#25D366);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
+.wa-name{font-size:12px;font-weight:700;color:#e8f8e8}
+.wa-status{font-size:10px;color:#4CAF50}
+.wa-header-right{margin-left:auto;font-size:16px;opacity:.5}
+
+/* Chat bubble */
+.wa-body{padding:14px}
+.wa-bubble{background:#1a2e1e;border-radius:0 12px 12px 12px;
+  padding:12px 14px;position:relative;margin-bottom:8px}
+.wa-bubble::before{content:'';position:absolute;top:0;left:-8px;
+  border-right:8px solid #1a2e1e;border-top:8px solid transparent}
+.wa-text{font-size:13.5px;color:#e8f8e8;line-height:1.6;margin-bottom:4px}
+.wa-text strong{color:#ffffff}
+.wa-time{font-size:10px;color:rgba(255,255,255,.35);text-align:right;
+  display:flex;align-items:center;justify-content:flex-end;gap:4px}
+.wa-checks{color:#53BDEB}
+.wa-author{font-size:11px;color:var(--t3);padding:0 4px}
+
+/* ── FINAL CTA ───────────────────────────── */
+.fcta{padding:96px 0;text-align:center}
+.fcta-inner{background:linear-gradient(135deg,rgba(91,59,245,.12),rgba(91,59,245,.05));
+  border:1px solid rgba(91,59,245,.25);border-radius:28px;padding:72px 32px;
+  position:relative;overflow:hidden}
+.fcta-inner::before{content:'';position:absolute;top:-80px;left:50%;
+  transform:translateX(-50%);width:500px;height:400px;
+  background:radial-gradient(circle,rgba(91,59,245,.22),transparent 65%);pointer-events:none}
+.fcta-hl{font-size:clamp(32px,6.5vw,72px);font-weight:900;letter-spacing:-.04em;
+  line-height:1.08;margin-bottom:18px;position:relative}
+.fcta-sub{font-size:clamp(15px,2.5vw,18px);color:var(--t2);
+  max-width:500px;margin:0 auto 36px;line-height:1.7;position:relative}
+.fcta-pills{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;
+  font-size:12px;color:var(--t3);margin-top:20px;position:relative}
+.fcta-pills span::before{content:'✓';color:var(--g);margin-right:5px}
+
+/* ── FAQ ─────────────────────────────────── */
+.faq{padding:96px 0}
+.faq-header{text-align:center;margin-bottom:48px}
+.faq-hl{font-size:clamp(32px,6vw,68px);font-weight:900;letter-spacing:-.04em;line-height:1.1;margin-bottom:14px}
+.faq-list{max-width:700px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.fi{background:var(--s);border:1px solid var(--b);border-radius:12px;overflow:hidden;transition:border-color .2s}
+.fi.open{border-color:rgba(91,59,245,.32)}
+.fiq{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:18px 20px;cursor:pointer;font-size:14px;font-weight:600;
+  -webkit-tap-highlight-color:transparent}
+.fiq:hover{color:var(--p3)}
+.fi-ico{width:26px;height:26px;border-radius:50%;background:var(--s2);
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  flex-shrink:0;transition:transform .3s,background .2s}
+.fi.open .fi-ico{transform:rotate(45deg);background:var(--p)}
+.fia{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.fia-t{padding:0 20px 18px;font-size:14px;color:var(--t2);line-height:1.75}
+
+/* ── FOOTER ──────────────────────────────── */
+footer{border-top:1px solid var(--b);padding:28px 0}
+.foot-in{display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center}
+.foot-logo{font-size:16px;font-weight:800;letter-spacing:-.03em;
+  background:linear-gradient(135deg,#fff 0%,var(--p3) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.foot-links{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+.foot-links a{font-size:13px;color:var(--t3);transition:color .2s}
+.foot-links a:hover{color:var(--p3)}
+.foot-copy{font-size:12px;color:var(--t3)}
+@media(min-width:700px){
+  .foot-in{flex-direction:row;justify-content:space-between;text-align:left}
+}
+
+/* ── ANIMATION UTILITIES ─────────────────── */
+.reveal{opacity:0;transform:translateY(32px)}
+.reveal-left{opacity:0;transform:translateX(-32px)}
+.reveal-right{opacity:0;transform:translateX(32px)}
+.reveal-scale{opacity:0;transform:scale(.94)}
+
+@media(prefers-reduced-motion:reduce){
+  .reveal,.reveal-left,.reveal-right,.reveal-scale{opacity:1;transform:none}
+  *{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+</style>
+</head>
+<body>
+
+<div id="sline"></div>
+
+<!-- ═══════ NAV ═══════ -->
+<nav class="z1">
+  <div class="nav-in">
+    <div class="nav-logo">⚡ CATalyst</div>
+    <a href="https://catalyst-app-six.vercel.app/" class="nav-cta">Start Free Trial →</a>
+  </div>
+</nav>
+
+<!-- ═══════ HERO ═══════ -->
+<section class="hero">
+  <canvas id="ptx"></canvas>
+  <div class="orb o1"></div>
+  <div class="orb o2"></div>
+  <div class="container">
+    <div class="hero-grid z1">
+
+      <!-- LEFT -->
+      <div>
+        <div class="hero-tag">
+          <div class="hero-tag-dot"></div>
+          CAT 2026 · Live &amp; 3-Day Free Trial
+        </div>
+        <h1 class="hero-hl">
+          <span class="split-wrap"><span class="split-inner hl-white">Stop</span></span><br>
+          <span class="split-wrap"><span class="split-inner hl-red-grad">Practicing.</span></span><br>
+          <span class="split-wrap"><span class="split-inner hl-white">Start</span></span><br>
+          <span class="split-wrap"><span class="split-inner hl-grad">Fixing.</span></span>
+        </h1>
+        <p class="hero-sub">Every other prep app shows what you got <em>right</em>. CATalyst confronts what you got <strong>wrong</strong>, classifies it, and forces you to fix the gap — before the exam does.</p>
+        <div class="hero-ctas">
+          <a href="https://catalyst-app-six.vercel.app/" class="btn-main">Start 3-day free trial →</a>
+          <a href="#loop" class="btn-ghost">See how it works</a>
+        </div>
+        <div class="trust-pills">
+          <span class="trust-pill">No card required</span>
+          <span class="trust-pill">3-day full access</span>
+          <span class="trust-pill">Mobile + Desktop</span>
+        </div>
+      </div>
+
+      <!-- RIGHT — Animated Demo -->
+      <div class="hero-right">
+        <div class="demo-float">
+
+          <!-- Top badge: marks lost -->
+          <div class="demo-badge db1">
+            <div class="dblab">marks lost today</div>
+            <div class="dbval" style="color:var(--r)" id="dbLost">−2</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:3px">from this session</div>
+          </div>
+
+          <!-- App card -->
+          <div class="demo-card" id="demoCard">
+            <div class="dc-top">
+              <div class="dc-dots">
+                <div class="dc-dot" style="background:#ff5f57"></div>
+                <div class="dc-dot" style="background:#ffbd2e"></div>
+                <div class="dc-dot" style="background:#28c840"></div>
+              </div>
+              <div class="dc-label">CATalyst · Practice</div>
+              <div style="width:40px"></div>
+            </div>
+            <div class="dc-body">
+              <div class="dc-gap-badge" id="gapBadge">
+                <span>●</span> Concept gap detected
+              </div>
+              <div class="dc-meta">
+                <div class="dc-meta-left">
+                  <span class="dc-chip varc">VARC</span>
+                  <span class="dc-chip va">VA</span>
+                  <span class="dc-chip med">MEDIUM</span>
+                </div>
+                <span class="dc-time" id="dcTimer">0:29</span>
+              </div>
+              <div class="dc-q">Arrange B, C, D and E in the logical order to form a coherent paragraph. Choose the most appropriate option.</div>
+              <div class="dc-opts">
+                <div class="dc-opt wrong-sel" id="opt-a">
+                  <div style="display:flex;align-items:center;gap:8px"><span class="lo">A</span><span>CBDE</span></div>
+                  <span class="ans-lbl" id="opt-a-lbl">your answer</span>
+                </div>
+                <div class="dc-opt" id="opt-b"><span class="lo">B</span><span>BCDE</span></div>
+                <div class="dc-opt correct-row" id="opt-c">
+                  <div style="display:flex;align-items:center;gap:8px"><span class="lo">C</span><span>CBED</span></div>
+                  <span class="ans-lbl" id="opt-c-lbl">correct</span>
+                </div>
+                <div class="dc-opt" id="opt-d"><span class="lo">D</span><span>DBCE</span></div>
+              </div>
+              <div class="dc-result" id="dcResult">
+                <span>✗ You got this wrong</span>
+                <span class="fix-val">−3 marks · fix this = +8</span>
+              </div>
+              <div class="dc-boost">⚡ +12 marks once fixed</div>
+            </div>
+          </div>
+
+          <!-- Bottom badge: fixed -->
+          <div class="demo-badge db2">
+            <div class="dblab">mistakes fixed</div>
+            <div class="dbval" style="color:var(--g)">7 <span style="font-size:13px;font-weight:500;color:var(--t3)">this week</span></div>
+            <div style="display:flex;gap:3px;margin-top:6px">
+              <div style="height:4px;width:30px;background:var(--g);border-radius:2px;opacity:.85"></div>
+              <div style="height:4px;width:20px;background:var(--g);border-radius:2px;opacity:.5"></div>
+              <div style="height:4px;width:12px;background:var(--g);border-radius:2px;opacity:.3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ MARQUEE ═══════ -->
+<div class="mbar" aria-hidden="true">
+  <div class="mtrack">
+    <div class="mitem"><span class="mdot"></span>794 Questions</div>
+    <div class="mitem"><span class="mdot"></span>Fix Mode</div>
+    <div class="mitem"><span class="mdot"></span>3 Error Types</div>
+    <div class="mitem"><span class="mdot"></span>3-Day Free Trial</div>
+    <div class="mitem"><span class="mdot"></span>No Excel Sheet</div>
+    <div class="mitem"><span class="mdot"></span>Works Offline</div>
+    <div class="mitem"><span class="mdot"></span>Quant · LRDI · VARC</div>
+    <div class="mitem"><span class="mdot"></span>Made by an Aspirant</div>
+    <div class="mitem"><span class="mdot"></span>794 Questions</div>
+    <div class="mitem"><span class="mdot"></span>Fix Mode</div>
+    <div class="mitem"><span class="mdot"></span>3 Error Types</div>
+    <div class="mitem"><span class="mdot"></span>3-Day Free Trial</div>
+    <div class="mitem"><span class="mdot"></span>No Excel Sheet</div>
+    <div class="mitem"><span class="mdot"></span>Works Offline</div>
+    <div class="mitem"><span class="mdot"></span>Quant · LRDI · VARC</div>
+    <div class="mitem"><span class="mdot"></span>Made by an Aspirant</div>
+  </div>
+</div>
+
+<!-- ═══════ STATS ═══════ -->
+<section class="stats-bar z1">
+  <div class="container">
+    <div class="stats-inner">
+      <div class="stat-item">
+        <div class="stat-num"><span class="count" data-to="30">0</span>+</div>
+        <div class="stat-label">marks lost per mock<br>to repeated mistakes</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span class="count" data-to="794">0</span></div>
+        <div class="stat-label">real CAT-style<br>questions</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span class="count" data-to="3">0</span></div>
+        <div class="stat-label">min per mistake<br>to diagnose &amp; fix</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num"><span class="count" data-to="3">0</span></div>
+        <div class="stat-label">days free trial<br>no card required</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ PROBLEM ═══════ -->
+<section class="problem z1">
+  <div class="container">
+    <div class="eyebrow">The Problem</div>
+    <h2 class="prob-hl">
+      <span class="ln1 reveal">You practice for hours.</span>
+      <span class="ln2 reveal">You still make the same mistakes.</span>
+    </h2>
+    <p class="prob-sub reveal">Practice apps keep score. They don't fix anything. The gap between your mock and your dream score isn't more questions — it's the same five errors, on repeat.</p>
+    <div class="prob-cards">
+      <div class="pcard reveal">
+        <div class="pcard-icon">👁️</div>
+        <div class="pcard-title">You see what you got right.</div>
+        <p class="pcard-desc">The dashboard celebrates accuracy. You walk away feeling productive — and the mistakes wait patiently for the next mock.</p>
+      </div>
+      <div class="pcard reveal">
+        <div class="pcard-icon">❌</div>
+        <div class="pcard-title">Errors disappear into the void.</div>
+        <p class="pcard-desc">Your wrong answers vanish into an "attempt history" you'll never open again. No tagging. No tracking. No retrieval.</p>
+      </div>
+      <div class="pcard reveal">
+        <div class="pcard-icon">🔁</div>
+        <div class="pcard-title">The same gaps repeat.</div>
+        <p class="pcard-desc">Misread the question? Calculation slip? Concept hole? They show up again next week, costing you the same marks.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ LOOP / HOW IT WORKS ═══════ -->
+<section class="loop z1" id="loop">
+  <div class="container">
+    <div class="loop-header">
+      <div class="eyebrow">How It Works</div>
+      <h2 class="loop-hl reveal">A loop that closes<br>the gap.</h2>
+      <p class="loop-sub reveal">Solve. Get wrong. Tag it. Fix it. Strengthen the underlying skill. Five steps, three minutes per mistake, compounding for months.</p>
+    </div>
+
+    <div class="steps">
+      <!-- Step 1 -->
+      <div class="step reveal">
+        <div>
+          <div class="step-num-wrap">
+            <div class="step-n">01</div>
+            <div class="step-title">Tag the mistake.</div>
+          </div>
+          <p class="step-desc">The instant you get a question wrong, classify it: Concept, Calculation, Misread, or Guess. One tap, saved forever.</p>
+          <div class="mini">
+            <div style="font-size:11px;color:var(--t2);margin-bottom:10px">Why did you get it wrong?</div>
+            <div class="mini-tag-row">
+              <span class="mtag">Concept</span>
+              <span class="mtag sel">Calculation</span>
+              <span class="mtag">Misread</span>
+              <span class="mtag">Guess</span>
+            </div>
+            <div style="margin-top:10px;padding:7px 10px;border-radius:7px;
+              background:rgba(91,59,245,.07);border:1px solid rgba(91,59,245,.15);
+              font-size:11px;color:var(--t2)">
+              Topic: Percentages &nbsp;·&nbsp; Cost: <span style="color:var(--r)">−3 marks</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step reveal">
+        <div>
+          <div class="step-num-wrap">
+            <div class="step-n">02</div>
+            <div class="step-title">Enter Fix Mode.</div>
+          </div>
+          <p class="step-desc">A focused session of <em>only</em> your past mistakes. You re-solve each one — no hints, no distractions — until it sticks.</p>
+          <div class="mini">
+            <div class="mini-badge fix1" style="margin-bottom:10px">⚡ Fix Mode &nbsp; 1 / 25</div>
+            <div style="width:100%;height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-bottom:12px;overflow:hidden">
+              <div style="width:40%;height:100%;background:var(--p);border-radius:2px"></div>
+            </div>
+            <div style="font-size:11.5px;color:var(--t2);padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)">Q 16 · You got this wrong before</div>
+            <div class="mini-opt w" style="margin-top:8px"><span class="ml">A</span><span>Incorrect option (your last answer)</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step reveal">
+        <div>
+          <div class="step-num-wrap">
+            <div class="step-n">03</div>
+            <div class="step-title">Track the pattern.</div>
+          </div>
+          <p class="step-desc">Your error log shows what's repeating — by topic, type, and severity. Weak areas surface. You attack them, not the noise.</p>
+          <div class="mini">
+            <div class="mini-err-row" style="background:rgba(91,59,245,.06);border-color:rgba(91,59,245,.15)">
+              <div class="err-type"><div class="err-dot" style="background:var(--r)"></div><span style="font-size:11px;color:var(--t2)">PENDING &nbsp; VA · Para-jumbles</span></div>
+              <span class="err-num" style="font-size:11px;color:var(--r)">7</span>
+            </div>
+            <div class="mini-err-row" style="background:rgba(245,166,35,.05);border-color:rgba(245,166,35,.15)">
+              <div class="err-type"><div class="err-dot" style="background:var(--y)"></div><span style="font-size:11px;color:var(--t2)">RECURRING &nbsp; QA · Geometry</span></div>
+              <span class="err-num" style="font-size:11px;color:var(--y)">5</span>
+            </div>
+            <div class="mini-err-row" style="background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.15)">
+              <div class="err-type"><div class="err-dot" style="background:var(--g)"></div><span style="font-size:11px;color:var(--t2)">FIXED &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LR · Tables</span></div>
+              <span class="err-num" style="font-size:11px;color:var(--g)">12</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ LENSES / TRAP ═══════ -->
+<section class="lenses z1">
+  <div class="container">
+    <div class="lenses-header">
+      <div class="eyebrow">Why Solutions Stick</div>
+      <h2 class="lenses-hl reveal">Every solution,<br>the same three lenses.</h2>
+      <p class="lenses-sub reveal">A solution that says "the answer is C" teaches nothing. CATalyst breaks every question into the trap you fell into, the insight you missed, and the exact method to use next time.</p>
+    </div>
+
+    <div class="trap-wrap z1">
+      <div class="trap-header-row reveal">
+        <div class="trap-q-meta">
+          <span class="tq-chip qa">Q 14 · QA</span>
+          <span class="tq-chip ar">ARITHMETIC</span>
+          <span class="tq-chip med">MEDIUM</span>
+        </div>
+      </div>
+      <div class="trap-q-text reveal">A shopkeeper marks his goods 40% above cost price, then gives a 20% discount. What is his net profit percentage?</div>
+
+      <div class="trap-rows">
+        <div class="trap-row reveal">
+          <div class="trap-lbl red">
+            <span class="trap-lbl-bg red">⚠ TRAP</span>
+          </div>
+          <div class="trap-text">You subtracted <strong>20% from 40%</strong> to get a 20% profit. The discount is applied on the <em>marked price</em>, not the cost price — that's the entire game.</div>
+        </div>
+        <div class="trap-row reveal">
+          <div class="trap-lbl yel">
+            <span class="trap-lbl-bg yel">💡 KEY INSIGHT</span>
+          </div>
+          <div class="trap-text">Successive percentages don't add or subtract. They <strong>compound</strong>. Marked = 1.4 × CP, Selling = 0.8 × Marked = <strong>1.12 × CP</strong>. Profit = 12%.</div>
+        </div>
+        <div class="trap-row reveal">
+          <div class="trap-lbl grn">
+            <span class="trap-lbl-bg grn">✓ HOW TO FIX</span>
+          </div>
+          <div class="trap-text">Whenever you see "marked up X%, discount Y%", write <strong>(1+x)(1−y)</strong> immediately. Don't reason in words — reason in multipliers.</div>
+          <div class="trap-tags">
+            <span class="ttag c">Concept Gap: Successive %</span>
+            <span class="ttag t">QA · Arithmetic</span>
+            <span class="ttag m">−3 marks</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ FEATURES ═══════ -->
+<section class="feats z1">
+  <div class="container">
+    <div class="feats-header">
+      <div class="eyebrow">What's Inside</div>
+      <h2 class="feats-hl reveal">Built around one job:<br>don't repeat.</h2>
+      <p class="feats-sub reveal">Six features. No fluff, no leaderboards, no streaks-for-streaks-sake.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="fcard reveal">
+        <div class="fcard-icon">🎯</div>
+        <div class="fcard-title">Mistake Log</div>
+        <p class="fcard-desc">Every wrong answer tagged by type, topic, and difficulty. Never lose a mistake to forgetfulness.</p>
+      </div>
+      <div class="fcard reveal">
+        <div class="fcard-icon">⚡</div>
+        <div class="fcard-title">Fix Mode</div>
+        <p class="fcard-desc">A focused, distraction-free session of <em>only</em> your past mistakes. Re-solve under pressure until it locks in.</p>
+      </div>
+      <div class="fcard reveal">
+        <div class="fcard-icon">📡</div>
+        <div class="fcard-title">Pattern Detection</div>
+        <p class="fcard-desc">Your repeated mistakes surface automatically. Find the three errors costing you 30 marks.</p>
+      </div>
+      <div class="fcard reveal">
+        <div class="fcard-icon">🗺️</div>
+        <div class="fcard-title">Weak Topic Heatmap</div>
+        <p class="fcard-desc">Visual map of your section-wise gaps. Stop guessing what to study next — see it in color.</p>
+      </div>
+      <div class="fcard reveal">
+        <div class="fcard-icon">🔬</div>
+        <div class="fcard-title">TRAP / INSIGHT / FIX</div>
+        <p class="fcard-desc">Every solution structured around the three lenses that actually move the needle. No more wall-of-text explanations.</p>
+      </div>
+      <div class="fcard reveal">
+        <div class="fcard-icon">📱</div>
+        <div class="fcard-title">Section Strategy</div>
+        <p class="fcard-desc">VARC · LRDI · QA — separate flows tuned to each section's failure modes. Not one-size-fits-all.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ TESTIMONIALS ═══════ -->
+<section class="testi z1">
+  <div class="container">
+    <div class="testi-header">
+      <div class="eyebrow">Aspirants Speak</div>
+      <h2 class="testi-hl reveal">Built with — and for —<br>the people taking CAT.</h2>
+    </div>
+
+    <div class="wa-grid">
+
+      <!-- Card 1 -->
+      <div class="wa-card reveal">
+        <div class="wa-chrome">
+          <div class="wa-avatar">H</div>
+          <div>
+            <div class="wa-name">Hitarth J.</div>
+            <div class="wa-status">online</div>
+          </div>
+          <div class="wa-header-right">⋮</div>
+        </div>
+        <div class="wa-body">
+          <div class="wa-bubble">
+            <div class="wa-text">You've made a solution to the problem. <strong>Genuinely loved it.</strong></div>
+            <div class="wa-time">3:42 PM <span class="wa-checks">✓✓</span></div>
+          </div>
+          <div class="wa-author">CAT 2026 Aspirant</div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="wa-card reveal">
+        <div class="wa-chrome">
+          <div class="wa-avatar">M</div>
+          <div>
+            <div class="wa-name">Manjari S.</div>
+            <div class="wa-status">online</div>
+          </div>
+          <div class="wa-header-right">⋮</div>
+        </div>
+        <div class="wa-body">
+          <div class="wa-bubble">
+            <div class="wa-text"><strong>Something very different.</strong> Will highly recommend to friends.</div>
+            <div class="wa-time">11:18 AM <span class="wa-checks">✓✓</span></div>
+          </div>
+          <div class="wa-author">CAT 2026 Aspirant</div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="wa-card reveal">
+        <div class="wa-chrome">
+          <div class="wa-avatar">S</div>
+          <div>
+            <div class="wa-name">Srishti</div>
+            <div class="wa-status">online</div>
+          </div>
+          <div class="wa-header-right">⋮</div>
+        </div>
+        <div class="wa-body">
+          <div class="wa-bubble">
+            <div class="wa-text">Ya it's worth it. <strong>Keeps all errors so students won't need Excel.</strong></div>
+            <div class="wa-time">6:05 PM <span class="wa-checks">✓✓</span></div>
+          </div>
+          <div class="wa-author">CAT 2026 Aspirant</div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="wa-card reveal">
+        <div class="wa-chrome">
+          <div class="wa-avatar">S</div>
+          <div>
+            <div class="wa-name">Sasanth</div>
+            <div class="wa-status">online</div>
+          </div>
+          <div class="wa-header-right">⋮</div>
+        </div>
+        <div class="wa-body">
+          <div class="wa-bubble">
+            <div class="wa-text">The application was <strong>extraordinary and user friendly.</strong></div>
+            <div class="wa-time">9:31 AM <span class="wa-checks">✓✓</span></div>
+          </div>
+          <div class="wa-author">CAT 2026 Aspirant</div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="wa-card reveal">
+        <div class="wa-chrome">
+          <div class="wa-avatar">H</div>
+          <div>
+            <div class="wa-name">Hafiz</div>
+            <div class="wa-status">online</div>
+          </div>
+          <div class="wa-header-right">⋮</div>
+        </div>
+        <div class="wa-body">
+          <div class="wa-bubble">
+            <div class="wa-text">It's amazing. <strong>This will actually help.</strong></div>
+            <div class="wa-time">2:17 PM <span class="wa-checks">✓✓</span></div>
+          </div>
+          <div class="wa-author">CAT 2026 Aspirant</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ FINAL CTA ═══════ -->
+<section class="fcta z1">
+  <div class="container">
+    <div class="fcta-inner reveal">
+      <h2 class="fcta-hl">Stop losing marks<br>you already know.</h2>
+      <p class="fcta-sub">You've already made the mistakes. Now fix them — before the exam does.</p>
+      <a href="https://catalyst-app-six.vercel.app/" class="btn-main" style="font-size:17px;padding:18px 36px;position:relative">Start Free Trial — 3 days free →</a>
+      <div class="fcta-pills">
+        <span>No credit card</span>
+        <span>Cancel anytime</span>
+        <span>Works on any device</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ FAQ ═══════ -->
+<section class="faq z1">
+  <div class="container">
+    <div class="faq-header">
+      <div class="eyebrow">FAQ</div>
+      <h2 class="faq-hl reveal">Honest answers.</h2>
+    </div>
+    <div class="faq-list">
+      <div class="fi open">
+        <div class="fiq">Is this just another practice app?<div class="fi-ico">+</div></div>
+        <div class="fia" style="max-height:200px">
+          <div class="fia-t">No. CATalyst doesn't compete with the question banks you already use — bring your own questions or use ours. The product starts the moment you get one wrong, and lives in your mistake log, not your "attempted" count.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fiq">Do I have to pay upfront?<div class="fi-ico">+</div></div>
+        <div class="fia">
+          <div class="fia-t">No. You get 3 days completely free, no card required. After the trial, Practice and Error Log lock until you upgrade. Pay ₹99/month or ₹489 one-time via UPI — activated within minutes via WhatsApp.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fiq">What happens after the trial?<div class="fi-ico">+</div></div>
+        <div class="fia">
+          <div class="fia-t">Your data is always safe. Practice mode and your error log lock until you upgrade. Send a UPI screenshot to WhatsApp +91 70804 42040 and you're activated within the hour.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fiq" style="color:var(--p3)">Why is it so cheap?<div class="fi-ico">+</div></div>
+        <div class="fia">
+          <div class="fia-t">Because I'm a CAT 2026 aspirant who built this for myself first. The ₹489 one-time price is founder pricing — locked for the first 20 users. Once the product proves itself at scale, pricing will reflect the value. This is your window.</div>
+        </div>
+      </div>
+      <div class="fi">
+        <div class="fiq">How exactly do I pay?<div class="fi-ico">+</div></div>
+        <div class="fia">
+          <div class="fia-t">UPI: <strong>7080442040@pthdfc</strong> → screenshot → WhatsApp <strong>+91 70804 42040</strong> → activated. That's it. No payment gateway, no subscription management hell.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ FOOTER ═══════ -->
+<footer class="z1">
+  <div class="container">
+    <div class="foot-in">
+      <div>
+        <div class="foot-logo">⚡ CATalyst</div>
+        <div class="foot-copy" style="margin-top:4px">Stop practicing. Start fixing.</div>
+      </div>
+      <div class="foot-links">
+        <a href="https://catalyst-app-six.vercel.app/">Open App</a>
+        <a href="https://wa.me/917080442040">WhatsApp</a>
+        <a href="#loop">How it works</a>
+      </div>
+      <div class="foot-copy">Made for CAT 2026 by Sahil</div>
+    </div>
+  </div>
+</footer>
+
+<!-- GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+/* ═══ SCROLL LINE ═══ */
+const sline=document.getElementById('sline');
+window.addEventListener('scroll',()=>{
+  sline.style.transform=`scaleX(${scrollY/(document.documentElement.scrollHeight-innerHeight)})`;
+},{passive:true});
+
+/* ═══ PARTICLES ═══ */
+(()=>{
+  const c=document.getElementById('ptx'),ctx=c.getContext('2d');
+  let W,H;
+  const resize=()=>{W=c.width=c.offsetWidth;H=c.height=c.offsetHeight};
+  resize();new ResizeObserver(resize).observe(c.parentElement);
+  const pts=Array.from({length:60},()=>({
+    x:Math.random()*3000,y:Math.random()*1400,
+    r:Math.random()*1.3+.4,
+    vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22,
+    a:Math.random()*.3+.07
+  }));
+  (function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.x=(p.x+p.vx+W)%W;p.y=(p.y+p.vy+H)%H;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(160,140,255,${p.a})`;ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  })();
+})();
+
+/* ═══ GSAP ═══ */
+gsap.registerPlugin(ScrollTrigger);
+
+/* Hero headline — each line clips up */
+gsap.from('.split-inner',{
+  yPercent:120,opacity:0,
+  stagger:.1,duration:1,ease:'power4.out',delay:.1
+});
+gsap.from('.hero-tag',{y:16,opacity:0,duration:.6,delay:.05});
+gsap.from('.hero-sub',{y:18,opacity:0,duration:.7,delay:.55});
+gsap.from('.hero-ctas',{y:16,opacity:0,duration:.7,delay:.7});
+gsap.from('.trust-pills',{y:12,opacity:0,duration:.6,delay:.85});
+gsap.from('.demo-float',{x:60,opacity:0,duration:1.1,delay:.3,ease:'power3.out'});
+gsap.from('.demo-badge',{scale:.8,opacity:0,stagger:.18,duration:.8,delay:.9,ease:'back.out(1.7)'});
+
+/* Generic reveals */
+ScrollTrigger.batch('.reveal',{
+  start:'top 88%',
+  onEnter:els=>gsap.to(els,{opacity:1,y:0,duration:.75,stagger:.1,ease:'power3.out'}),
+  onEnterBack:els=>gsap.to(els,{opacity:1,y:0,duration:.4}),
+});
+
+/* Stats — count up */
+gsap.utils.toArray('.count').forEach(el=>{
+  const to=+el.dataset.to;
+  ScrollTrigger.create({
+    trigger:el,start:'top 85%',once:true,
+    onEnter:()=>gsap.to({v:0},{v:to,duration:to>100?2.5:1.5,ease:'power2.out',
+      onUpdate:function(){el.textContent=Math.round(this.targets()[0].v)}})
+  });
+});
+
+/* Problem text mega-reveal */
+gsap.from('.prob-hl .ln1',{
+  scrollTrigger:{trigger:'.prob-hl',start:'top 85%'},
+  xPercent:-3,opacity:0,duration:.8,ease:'power3.out'
+});
+gsap.from('.prob-hl .ln2',{
+  scrollTrigger:{trigger:'.prob-hl',start:'top 85%'},
+  xPercent:3,opacity:0,duration:.9,delay:.15,ease:'power3.out'
+});
+
+/* Stagger cards */
+['pain-cards','steps','feat-grid','wa-grid'].forEach(cls=>{
+  gsap.from(`.${cls}>*`,{
+    scrollTrigger:{trigger:`.${cls}`,start:'top 82%'},
+    y:40,opacity:0,stagger:.12,duration:.7,ease:'power3.out'
+  });
+});
+
+/* TRAP rows slide in */
+gsap.from('.trap-row',{
+  scrollTrigger:{trigger:'.trap-rows',start:'top 80%'},
+  y:24,opacity:0,stagger:.18,duration:.65,ease:'power3.out'
+});
+
+/* Testimonials bounce */
+gsap.from('.wa-card',{
+  scrollTrigger:{trigger:'.wa-grid',start:'top 82%'},
+  y:48,opacity:0,scale:.95,stagger:.1,duration:.75,ease:'back.out(1.3)'
+});
+
+/* Orb parallax */
+gsap.to('.o1',{scrollTrigger:{trigger:'body',scrub:1,start:'top top',end:'50% top'},y:-80,x:24});
+gsap.to('.o2',{scrollTrigger:{trigger:'body',scrub:1.5,start:'top top',end:'60% top'},y:-50,x:-18});
+
+/* CTA pulsing glow */
+gsap.to('.fcta-inner',{
+  scrollTrigger:{trigger:'.fcta-inner',start:'top 70%'},
+  '--glow':1,duration:.01,
+  onStart(){
+    gsap.to('.fcta-inner',{
+      boxShadow:'0 0 100px rgba(91,59,245,.25)',
+      duration:1.5,yoyo:true,repeat:-1,ease:'sine.inOut'
+    });
+  }
+});
+
+/* ═══ FAQ ACCORDION ═══ */
+document.querySelectorAll('.fiq').forEach(q=>{
+  q.addEventListener('click',()=>{
+    const item=q.closest('.fi'),ans=item.querySelector('.fia'),open=item.classList.contains('open');
+    document.querySelectorAll('.fi').forEach(i=>{i.classList.remove('open');i.querySelector('.fia').style.maxHeight='0'});
+    if(!open){item.classList.add('open');ans.style.maxHeight=ans.scrollHeight+'px'}
+  });
+});
+
+/* ═══ HERO DEMO LOOP ANIMATION ═══ */
+/* Sequence: show answered state → flash result → highlight fix → reset to "selecting" */
+(()=>{
+  const card=document.getElementById('demoCard');
+  const optA=document.getElementById('opt-a');
+  const optAlbl=document.getElementById('opt-a-lbl');
+  const optC=document.getElementById('opt-c');
+  const optClbl=document.getElementById('opt-c-lbl');
+  const result=document.getElementById('dcResult');
+  const badge=document.getElementById('gapBadge');
+  const timer=document.getElementById('dcTimer');
+  let seconds=29;
+
+  // Count up the timer
+  setInterval(()=>{
+    seconds=(seconds+1)%120;
+    const m=Math.floor(seconds/60);
+    const s=seconds%60;
+    timer.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+  },1000);
+
+  // Pulse the gap badge
+  let badgeVisible=true;
+  setInterval(()=>{
+    badgeVisible=!badgeVisible;
+    badge.style.opacity=badgeVisible?'1':'0.4';
+  },2200);
+})();
+</script>
+</body>
+</html>

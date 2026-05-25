@@ -184,11 +184,18 @@ const Onboarding = {
   async maybeStart(userId) {
     this._userId = userId;
 
-    // Permanent skip
+    // Fast path: localStorage says done
     if (localStorage.getItem(`cat_tour_done_${userId}`) === 'true') return;
 
     // Session snooze
     if (sessionStorage.getItem('tour_snoozed') === 'true') return;
+
+    // Check Supabase — handles PWA/Safari localStorage split on iOS
+    // (home screen PWA and Safari have separate storage contexts)
+    if (await this._isCompletedInDB(userId)) {
+      localStorage.setItem(`cat_tour_done_${userId}`, 'true');
+      return;
+    }
 
     // One-time reset for users who dismissed early before completing fix mode
     await this._checkOneTimeReset(userId);
@@ -198,6 +205,18 @@ const Onboarding = {
 
     App.navigate('dashboard');
     setTimeout(() => this._start(), 500);
+  },
+
+  async _isCompletedInDB(userId) {
+    try {
+      if (typeof sbClient === 'undefined' || !sbClient) return false;
+      const { count } = await sbClient
+        .from('events')
+        .select('id', { count: 'exact', head: true })
+        .eq('event', 'tour_completed')
+        .eq('user_id', userId);
+      return count > 0;
+    } catch { return false; }
   },
 
   notify(event) {
@@ -507,14 +526,24 @@ const Onboarding = {
   },
 
   _snooze() {
-    sessionStorage.setItem('tour_snoozed', 'true');
+    // Permanently dismiss — session-only snooze caused the tour to reappear
+    // on every new login/browser, making the app feel broken.
+    if (this._userId) {
+      localStorage.setItem(`cat_tour_done_${this._userId}`, 'true');
+      if (typeof DB !== 'undefined') DB.logEvent('tour_completed', this._userId);
+    }
     this._teardown();
   },
 
   complete() {
     if (!this._active) return;
-    if (this._userId) localStorage.setItem(`cat_tour_done_${this._userId}`, 'true');
+    if (this._userId) {
+      localStorage.setItem(`cat_tour_done_${this._userId}`, 'true');
+      // Log to Supabase so PWA home screen (separate localStorage on iOS) also knows
+      if (typeof DB !== 'undefined') DB.logEvent('tour_completed', this._userId);
+    }
     this._teardown();
+    if (typeof PWAPrompt !== 'undefined') PWAPrompt.showAfterTour();
   },
 
   _teardown() {
