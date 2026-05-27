@@ -30,13 +30,19 @@ function formatText(text) {
     return `__MATH_BLOCK_${mathBlocks.length - 1}__`;
   });
 
-  // 2. Apply line breaks ONLY to normal text
+  // 2. Escape HTML special chars in non-math text (prevents < > from being parsed as tags)
+  maskedText = maskedText
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // 3. Apply line breaks ONLY to normal text
   maskedText = maskedText
     .replaceAll('/n/', '<br>')          // DB-style marker: /n/
     .replace(/\\n/g, '<br>')           // escaped literal: \n
     .replace(/\n/g, '<br>');           // real newline character
 
-  // 3. Restore LaTeX blocks intact
+  // 4. Restore LaTeX blocks intact
   mathBlocks.forEach((block, i) => {
     maskedText = maskedText.replace(`__MATH_BLOCK_${i}__`, () => block);
   });

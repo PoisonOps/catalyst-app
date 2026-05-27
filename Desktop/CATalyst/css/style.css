@@ -2816,6 +2816,7 @@ body {
   gap: 1rem;
   align-items: flex-start;
   transition: transform 0.2s;
+  flex-shrink: 0;
 }
 
 .el-item:hover {

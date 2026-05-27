@@ -409,11 +409,16 @@ const ErrorLog = {
     `).join('');
 
     container.querySelectorAll('.el-question[data-raw]').forEach(el => {
-      const raw = decodeURIComponent(el.dataset.raw);
-      if (typeof renderMath === 'function') {
-        renderMath(el, raw);
-      } else {
-        el.innerHTML = raw.replace(/\\n/g, '<br>');
+      try {
+        const raw = decodeURIComponent(el.dataset.raw);
+        if (typeof renderMath === 'function') {
+          renderMath(el, raw);
+        } else {
+          el.textContent = raw;
+        }
+      } catch (e) {
+        console.warn('[EL] renderMath failed for card:', el.dataset.raw?.slice(0, 80), e);
+        try { el.textContent = decodeURIComponent(el.dataset.raw || ''); } catch (_) { el.textContent = '(unavailable)'; }
       }
     });
   },
