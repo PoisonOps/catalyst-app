@@ -269,12 +269,15 @@ const DB = {
 
     // ── DEDUP: localStorage ─────────────────────────────────────
     // Skip if an unfixed entry for this question already exists locally
-    const localDupe = existing.find(
-      e => e.question_id === log.question_id && !e.reattempt_status
-    );
-    if (localDupe) {
-      console.log('[DB] Skipped duplicate error log (local):', log.question_id);
-      return localDupe;  // return existing entry so callers still get an object
+    // Guard: null question_id = manual entry, always allow new saves
+    if (log.question_id) {
+      const localDupe = existing.find(
+        e => e.question_id === log.question_id && !e.reattempt_status
+      );
+      if (localDupe) {
+        console.log('[DB] Skipped duplicate error log (local):', log.question_id);
+        return localDupe;
+      }
     }
 
     const entry = {
@@ -295,18 +298,20 @@ const DB = {
     if (!USE_DEMO && sbClient && typeof FLAGS !== 'undefined' && FLAGS.SUPABASE_SYNC) {
       try {
         // ── DEDUP: Supabase ───────────────────────────────────────
-        // maybeSingle() returns null (not an error) when no row found
-        const { data: sbDupe } = await sbClient
-          .from('error_logs')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('question_id', log.question_id)
-          .eq('reattempt_status', false)
-          .maybeSingle();
+        // Guard: null question_id = manual entry, skip dedup check entirely
+        if (log.question_id) {
+          const { data: sbDupe } = await sbClient
+            .from('error_logs')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('question_id', log.question_id)
+            .eq('reattempt_status', false)
+            .maybeSingle();
 
-        if (sbDupe) {
-          if (typeof FLAGS !== 'undefined' && FLAGS.DEBUG_LOG) console.log('[DB] Skipped duplicate error log (Supabase):', log.question_id);
-          return entry;
+          if (sbDupe) {
+            if (typeof FLAGS !== 'undefined' && FLAGS.DEBUG_LOG) console.log('[DB] Skipped duplicate error log (Supabase):', log.question_id);
+            return entry;
+          }
         }
 
         const payload = {

@@ -320,6 +320,11 @@
             <option value="Medium">Medium</option>
             <option value="Hard">Hard</option>
           </select>
+          <select id="filter-set-size" class="filter-select">
+            <option value="any">Any Set Size</option>
+            <option value="small">Less than 4Q</option>
+            <option value="large">4Q or more</option>
+          </select>
           <select id="filter-count" class="filter-select">
             <option value="10">10 Questions</option>
             <option value="25" selected>25 Questions</option>
@@ -625,8 +630,13 @@
       <!-- ERROR LOG -->
       <div class="page" id="page-errorlog">
         <div class="page-header el-page-header">
-          <h2 class="page-title">You are still making these mistakes.</h2>
-          <p class="page-sub">Every mistake tracked. Fix them before the exam does.</p>
+          <div class="el-header-row">
+            <div>
+              <h2 class="page-title">You are still making these mistakes.</h2>
+              <p class="page-sub">Every mistake tracked. Fix them before the exam does.</p>
+            </div>
+            <button class="btn-sm btn-primary el-add-btn" id="el-add-btn">+ Add Mistake</button>
+          </div>
         </div>
 
         <!-- Biggest Issue (S11) -->
@@ -662,8 +672,28 @@
           <option value="fixed">Fixed</option>
         </select>
 
-        <!-- Pill filter buttons -->
-        <div class="el-filter-pills" id="el-filter-pills"></div>
+        <!-- 2-row filter bar -->
+        <div class="el-filter-bar">
+          <div class="el-filter-row" id="el-status-pills"></div>
+          <div class="el-filter-row" id="el-type-pills"></div>
+          <button class="el-more-filters-toggle" id="el-more-filters-toggle">
+            Filters <span id="el-toggle-chevron">▼</span>
+          </button>
+          <div class="el-expanded-filters hidden" id="el-expanded-filters">
+            <div class="el-subject-chips" id="el-subject-chips"></div>
+            <div class="el-topic-row">
+              <select class="filter-select el-topic-select" id="el-topic-select">
+                <option value="all">All Topics</option>
+              </select>
+              <div class="el-search-wrap">
+                <input type="search" id="el-search-input" class="el-search-input"
+                       placeholder="Search by question text..." autocomplete="off">
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- legacy pill container: hidden, kept for any external refs -->
+        <div class="el-filter-pills hidden" id="el-filter-pills"></div>
 
         <div id="error-log-list" class="error-log-list"></div>
 
@@ -712,6 +742,67 @@
         <button class="btn-skip" id="skip-error-btn">Skip</button>
         <button class="btn-primary" id="save-error-btn" style="width:auto;padding:0.65rem 1.75rem" disabled>Save
           Log</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUAL ERROR ENTRY MODAL -->
+  <div id="el-add-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span style="font-size:1.5rem">✍️</span>
+        <div>
+          <h3>Add a Mistake Manually</h3>
+          <p>From a mock test, book, or offline practice</p>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>What did you get wrong? <span style="color:var(--fix-p1-color)">*</span></label>
+          <textarea id="el-manual-question" placeholder="Describe the concept or paste the question..." rows="3"></textarea>
+        </div>
+        <div class="form-group" style="margin-top:0.85rem">
+          <label>Error Type <span style="color:var(--fix-p1-color)">*</span></label>
+          <div class="error-type-grid" id="el-manual-type-grid">
+            <button class="error-type-btn" data-type="concept_gap">
+              <span>🧠</span><strong>Concept Gap</strong><small>Didn't know the concept</small>
+            </button>
+            <button class="error-type-btn" data-type="calculation">
+              <span>🔢</span><strong>Calculation Error</strong><small>Math slip</small>
+            </button>
+            <button class="error-type-btn" data-type="misread">
+              <span>👁️</span><strong>Misread</strong><small>Read it wrong</small>
+            </button>
+            <button class="error-type-btn" data-type="guess">
+              <span>🎲</span><strong>Guess</strong><small>Guessed without solving</small>
+            </button>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.75rem;margin-top:0.85rem">
+          <div class="form-group" style="flex:1">
+            <label>Subject</label>
+            <select id="el-manual-subject" class="filter-select" style="width:100%">
+              <option value="">— Select —</option>
+              <option value="Quant">Quant</option>
+              <option value="VARC">VARC</option>
+              <option value="LRDI">LRDI</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Topic</label>
+            <select id="el-manual-topic" class="filter-select" style="width:100%">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:0.85rem">
+          <label>Your note (optional)</label>
+          <textarea id="el-manual-note" placeholder="What should you have done? What's the key insight?" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-skip" id="el-add-cancel-btn">Cancel</button>
+        <button class="btn-primary" id="el-add-save-btn" style="width:auto;padding:0.65rem 1.75rem" disabled>Save Mistake</button>
       </div>
     </div>
   </div>
@@ -973,12 +1064,12 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=4"></script>
-  <script src="js/db.js?v=7"></script>
+  <script src="js/db.js?v=8"></script>
   <script src="js/auth.js?v=7"></script>
   <script src="js/dashboard.js?v=4"></script>
-  <script src="js/practice.js?v=5"></script>
+  <script src="js/practice.js?v=6"></script>
   <script src="js/test.js?v=2"></script>
-  <script src="js/errorlog.js?v=2"></script>
+  <script src="js/errorlog.js?v=3"></script>
   <script src="js/onboarding.js?v=13"></script>
   <script src="js/app.js?v=8"></script>
   <script>

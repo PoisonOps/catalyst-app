@@ -1,7 +1,6 @@
 // ============================================================
 // ERRORLOG.JS — My Error Log screen
-// CTA banner · Insight section · Clickable type cards
-// Improved empty state · Fix My Mistakes flow · Status system
+// CTA banner · Insight section · Rich filters · Manual entry
 // ============================================================
 
 const EL_TYPE_LABELS = {
@@ -25,18 +24,26 @@ const EL_COST_MAP = {
 
 const ErrorLog = {
 
-  _activeTypeFilter: null,  // set when clicking a summary card
+  _activeTypeFilter: null,
+  _activeSubjectFilter: 'all',
+  _activeTopicFilter: 'all',
+  _searchQuery: '',
+  _manualErrorType: null,
+  _searchDebounce: null,
+  _allLogs: [],
+  _filtersExpanded: false,
 
   async init() {
     this.loadState();
 
-    // Dropdowns → explicitly call render function to update summary and insight section
+    // Hidden selects — keep listeners so saveState/loadState remain in sync
     document.getElementById('el-subject-filter').addEventListener('change', () => {
+      this._activeSubjectFilter = document.getElementById('el-subject-filter').value;
       this.saveState();
       this.render();
     });
     document.getElementById('el-type-filter').addEventListener('change', () => {
-      this._activeTypeFilter = null; // clear card-click filter when dropdown takes over
+      this._activeTypeFilter = null;
       this.saveState();
       this.render();
     });
@@ -47,28 +54,76 @@ const ErrorLog = {
 
     // CTA button
     const fixBtn = document.getElementById('el-fix-btn');
-    if (fixBtn) {
-      fixBtn.addEventListener('click', async () => {
-        setTimeout(() => ErrorLog.fixMyMistakes(), 100);
+    if (fixBtn) fixBtn.addEventListener('click', () => setTimeout(() => ErrorLog.fixMyMistakes(), 100));
+
+    // "+ Add Mistake" button
+    const addBtn = document.getElementById('el-add-btn');
+    if (addBtn) addBtn.addEventListener('click', () => this.showAddModal());
+
+    // Modal buttons
+    const cancelBtn = document.getElementById('el-add-cancel-btn');
+    if (cancelBtn) cancelBtn.addEventListener('click', () => this._closeAddModal());
+
+    const saveBtn = document.getElementById('el-add-save-btn');
+    if (saveBtn) saveBtn.addEventListener('click', () => this.saveManualError());
+
+    // Manual entry form
+    const manualQ = document.getElementById('el-manual-question');
+    if (manualQ) manualQ.addEventListener('input', () => this._validateManualForm());
+
+    const manualSubject = document.getElementById('el-manual-subject');
+    if (manualSubject) manualSubject.addEventListener('change', () => this._populateManualTopics());
+
+    document.querySelectorAll('#el-manual-type-grid .error-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#el-manual-type-grid .error-type-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        this._manualErrorType = btn.dataset.type;
+        this._validateManualForm();
       });
-    }
+    });
+
+    // "Filters ▼" toggle
+    const moreToggle = document.getElementById('el-more-filters-toggle');
+    if (moreToggle) moreToggle.addEventListener('click', () => this._toggleExpandedFilters());
+
+    // Close modal on overlay click
+    const modal = document.getElementById('el-add-modal');
+    if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) this._closeAddModal(); });
+
     await this.render();
   },
 
   _getFilteredLogs(allLogs) {
-    const subjectFilter = document.getElementById('el-subject-filter').value;
+    const subjectFilter = this._activeSubjectFilter !== 'all'
+      ? this._activeSubjectFilter
+      : document.getElementById('el-subject-filter').value;
     const typeFilter = this._activeTypeFilter || document.getElementById('el-type-filter').value;
     const statusFilter = document.getElementById('el-status-filter').value;
+    const topicFilter = this._activeTopicFilter || 'all';
+    const search = this._searchQuery;
 
     let logs = [...allLogs];
+
     if (subjectFilter !== 'all') logs = logs.filter(l => l.subject === subjectFilter);
     if (typeFilter !== 'all') {
-      const legacyMap = { concept_gap: ['concept_gap', 'conceptual'], calculation: ['calculation', 'silly'], misread: ['misread'], guess: ['guess', 'time'], unclassified: ['unclassified'] };
+      const legacyMap = {
+        concept_gap:  ['concept_gap', 'conceptual'],
+        calculation:  ['calculation', 'silly'],
+        misread:      ['misread'],
+        guess:        ['guess', 'time'],
+        unclassified: ['unclassified'],
+      };
       const allowed = legacyMap[typeFilter] || [typeFilter];
       logs = logs.filter(l => allowed.includes(l.error_type));
     }
     if (statusFilter === 'pending') logs = logs.filter(l => !l.reattempt_status);
-    if (statusFilter === 'fixed') logs = logs.filter(l => l.reattempt_status);
+    if (statusFilter === 'fixed')   logs = logs.filter(l => l.reattempt_status);
+    if (topicFilter !== 'all')      logs = logs.filter(l => l.topic === topicFilter);
+    if (search) {
+      const q = search.toLowerCase();
+      logs = logs.filter(l => (l.question_text || '').toLowerCase().includes(q));
+    }
     return logs;
   },
 
@@ -76,12 +131,23 @@ const ErrorLog = {
     if (!silent) showLoading('Loading error logs...');
     try {
       const allLogs = await DB.getErrorLogs({});
+      this._allLogs = allLogs;
       const filteredLogs = this._getFilteredLogs(allLogs);
+
       await this._renderBiggestIssue(filteredLogs);
       this._renderSummaryCards(allLogs);
-      this._renderFilterPills();
+      this._renderStatusPills();
+      this._renderTypePills();
+      this._renderSubjectChips();
+      this._renderTopicFilter(allLogs);
       this._renderLogList(allLogs);
       this._renderFooterBar(allLogs);
+
+      // Restore expanded panel state across renders
+      if (this._filtersExpanded) {
+        const panel = document.getElementById('el-expanded-filters');
+        if (panel) panel.classList.remove('hidden');
+      }
     } catch (e) {
       if (!silent) showToast('Error loading error logs', 'error');
     } finally {
@@ -100,23 +166,19 @@ const ErrorLog = {
     const type = insights.mostCommonError;
     if (!type) { block.classList.add('hidden'); return; }
 
-    // Normalise legacy keys to canonical keys for cost lookup
     const canonical = { silly: 'calculation', conceptual: 'concept_gap', time: 'guess' };
     const costKey = canonical[type] || type;
-
     const label = EL_TYPE_LABELS[type] || type;
     const { cost, gain } = EL_COST_MAP[costKey] || { cost: '~4–8 marks', gain: '+3–6 marks' };
 
     document.getElementById('el-bi-type').textContent = label;
     document.getElementById('el-bi-cost').textContent = `Cost: ${cost} — fix this = ${gain}`;
-
     block.classList.remove('hidden');
   },
 
   _renderSummaryCards(logs) {
     const pending = logs.filter(l => !l.reattempt_status).length;
-    const fixed = logs.filter(l => l.reattempt_status).length;
-
+    const fixed   = logs.filter(l => l.reattempt_status).length;
     const grid = document.getElementById('error-summary-grid');
     grid.innerHTML = `
       <div class="el-stat-box el-stat-pending">
@@ -134,44 +196,122 @@ const ErrorLog = {
     `;
   },
 
-  _renderFilterPills() {
-    const container = document.getElementById('el-filter-pills');
+  // ── New 2-row filter bar ─────────────────────────────────────
+
+  _renderStatusPills() {
+    const container = document.getElementById('el-status-pills');
     if (!container) return;
-
-    const typeFilter = this._activeTypeFilter || document.getElementById('el-type-filter').value;
-    const statusFilter = document.getElementById('el-status-filter').value;
-
+    const current = document.getElementById('el-status-filter').value;
     const pills = [
-      { label: 'All',     type: 'all',         status: 'all' },
-      { label: 'Silly',   type: 'calculation',  status: 'all' },
-      { label: 'Concept', type: 'concept_gap',  status: 'all' },
-      { label: 'Misread', type: 'misread',      status: 'all' },
-      { label: 'Guess',   type: 'guess',        status: 'all' },
-      { label: 'Pending', type: 'all',          status: 'pending' },
+      { label: 'All',     value: 'all'     },
+      { label: 'Pending', value: 'pending' },
+      { label: 'Fixed',   value: 'fixed'   },
     ];
-
-    container.innerHTML = pills.map(p => {
-      const isActive = p.type === typeFilter && p.status === statusFilter
-        || (p.label === 'All' && typeFilter === 'all' && statusFilter === 'all')
-        || (p.label === 'Pending' && statusFilter === 'pending');
-      return `<button class="el-pill${isActive ? ' active' : ''}" data-type="${p.type}" data-status="${p.status}">${p.label}</button>`;
-    }).join('');
-
-    // Deduplicate "All" active when Pending is also active
-    const activePills = container.querySelectorAll('.el-pill.active');
-    if (activePills.length > 1) activePills[0].classList.remove('active');
-
+    container.innerHTML = pills.map(p =>
+      `<button class="el-pill${p.value === current ? ' active' : ''}" data-status="${p.value}">${p.label}</button>`
+    ).join('');
     container.querySelectorAll('.el-pill').forEach(btn => {
       btn.addEventListener('click', () => {
-        const t = btn.dataset.type;
-        const s = btn.dataset.status;
-        this._activeTypeFilter = t === 'all' ? null : t;
-        document.getElementById('el-type-filter').value = t;
-        document.getElementById('el-status-filter').value = s;
+        document.getElementById('el-status-filter').value = btn.dataset.status;
         this.saveState();
         this.render();
       });
     });
+  },
+
+  _renderTypePills() {
+    const container = document.getElementById('el-type-pills');
+    if (!container) return;
+    const current = this._activeTypeFilter || document.getElementById('el-type-filter').value;
+    const pills = [
+      { label: 'All Types', value: 'all'         },
+      { label: 'Silly',     value: 'calculation'  },
+      { label: 'Concept',   value: 'concept_gap'  },
+      { label: 'Misread',   value: 'misread'      },
+      { label: 'Guess',     value: 'guess'        },
+    ];
+    container.innerHTML = pills.map(p => {
+      const isActive = p.value === current || (p.value === 'all' && !this._activeTypeFilter && current === 'all');
+      return `<button class="el-pill el-type-pill${isActive ? ' active' : ''}" data-type="${p.value}">${p.label}</button>`;
+    }).join('');
+    container.querySelectorAll('.el-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = btn.dataset.type;
+        this._activeTypeFilter = t === 'all' ? null : t;
+        document.getElementById('el-type-filter').value = t;
+        this.saveState();
+        this.render();
+      });
+    });
+  },
+
+  _renderSubjectChips() {
+    const container = document.getElementById('el-subject-chips');
+    if (!container) return;
+    const current = this._activeSubjectFilter;
+    const chips = [
+      { label: 'All Subjects', value: 'all'   },
+      { label: 'Quant',        value: 'Quant' },
+      { label: 'VARC',         value: 'VARC'  },
+      { label: 'LRDI',         value: 'LRDI'  },
+    ];
+    container.innerHTML = chips.map(c =>
+      `<button class="el-pill el-subject-chip${c.value === current ? ' active' : ''}" data-subject="${c.value}">${c.label}</button>`
+    ).join('');
+    container.querySelectorAll('.el-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this._activeSubjectFilter = btn.dataset.subject;
+        document.getElementById('el-subject-filter').value = btn.dataset.subject;
+        this.saveState();
+        this.render();
+      });
+    });
+  },
+
+  _renderTopicFilter(allLogs) {
+    const el = document.getElementById('el-topic-select');
+    if (!el) return;
+    const topics = [...new Set(allLogs.map(l => l.topic).filter(Boolean))].sort();
+    el.innerHTML = '<option value="all">All Topics</option>' +
+      topics.map(t => `<option value="${t}">${t}</option>`).join('');
+    el.value = this._activeTopicFilter || 'all';
+
+    // Attach listener only once (remove + re-add to avoid duplicates)
+    el.replaceWith(el.cloneNode(true));
+    const fresh = document.getElementById('el-topic-select');
+    fresh.value = this._activeTopicFilter || 'all';
+    fresh.addEventListener('change', (e) => {
+      this._activeTopicFilter = e.target.value;
+      this._renderLogList(this._allLogs);
+    });
+
+    // Wire search input listener too (only if not yet wired)
+    const search = document.getElementById('el-search-input');
+    if (search && !search.dataset.wired) {
+      search.dataset.wired = '1';
+      search.addEventListener('input', (e) => {
+        clearTimeout(this._searchDebounce);
+        this._searchDebounce = setTimeout(() => {
+          this._searchQuery = e.target.value.trim();
+          this._renderLogList(this._allLogs);
+        }, 250);
+      });
+    }
+  },
+
+  _toggleExpandedFilters() {
+    const panel = document.getElementById('el-expanded-filters');
+    const chevron = document.getElementById('el-toggle-chevron');
+    if (!panel) return;
+    const isHidden = panel.classList.toggle('hidden');
+    this._filtersExpanded = !isHidden;
+    if (chevron) chevron.textContent = isHidden ? '▼' : '▲';
+  },
+
+  // ── Legacy pill render (hidden container, kept for safety) ───
+
+  _renderFilterPills() {
+    // Container is now hidden; this is a no-op kept for safety
   },
 
   _renderFooterBar(logs) {
@@ -179,7 +319,6 @@ const ErrorLog = {
     const msg = document.getElementById('el-footer-msg');
     const btn = document.getElementById('el-footer-fix-btn');
     if (!bar) return;
-
     const pending = logs.filter(l => !l.reattempt_status).length;
     if (pending > 0) {
       msg.textContent = `${pending} mistake${pending === 1 ? '' : 's'} still unresolved. Don't let them repeat.`;
@@ -191,23 +330,9 @@ const ErrorLog = {
   },
 
   _renderLogList(allLogs) {
-    const subjectFilter = document.getElementById('el-subject-filter').value;
-    const typeFilter = this._activeTypeFilter || document.getElementById('el-type-filter').value;
-    const statusFilter = document.getElementById('el-status-filter').value;
+    let logs = this._getFilteredLogs(allLogs);
 
-    let logs = [...allLogs];
-
-    if (subjectFilter !== 'all') logs = logs.filter(l => l.subject === subjectFilter);
-    if (typeFilter !== 'all') {
-      // Map new types to also capture legacy equivalents
-      const legacyMap = { concept_gap: ['concept_gap', 'conceptual'], calculation: ['calculation', 'silly'], misread: ['misread'], guess: ['guess', 'time'], unclassified: ['unclassified'] };
-      const allowed = legacyMap[typeFilter] || [typeFilter];
-      logs = logs.filter(l => allowed.includes(l.error_type));
-    }
-    if (statusFilter === 'pending') logs = logs.filter(l => !l.reattempt_status);
-    if (statusFilter === 'fixed') logs = logs.filter(l => l.reattempt_status);
-
-    // Sort: pending first, newest first
+    // Sort: pending first, then newest first
     logs.sort((a, b) => {
       if (a.reattempt_status !== b.reattempt_status) return a.reattempt_status ? 1 : -1;
       return new Date(b.created_at) - new Date(a.created_at);
@@ -217,12 +342,12 @@ const ErrorLog = {
 
     if (!logs.length) {
       if (allLogs.length === 0) {
-        // True empty state — never practiced
         container.innerHTML = `
           <div class="el-empty-state">
             <div class="el-empty-icon">🎯</div>
             <h3>Nothing here yet</h3>
             <p>Start practicing → we'll track your weak areas automatically</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text2)">Or add a mistake manually with <strong>+ Add Mistake</strong></p>
             <button class="btn-fix-mistakes" onclick="App.navigate('practice')" style="margin-top:1rem;width:auto;padding:0.75rem 2rem">
               Start Practice →
             </button>
@@ -238,37 +363,39 @@ const ErrorLog = {
     }
 
     const typeLabels = {
-      concept_gap: '🧠 Concept Gap',
-      calculation: '🔢 Calculation',
-      misread: '👁️ Misread',
-      guess: '🎲 Guess',
+      concept_gap:  '🧠 Concept Gap',
+      calculation:  '🔢 Calculation',
+      misread:      '👁️ Misread',
+      guess:        '🎲 Guess',
       unclassified: '❓ Unclassified',
-      // legacy
-      conceptual: '🧠 Conceptual',
-      silly: '🤦 Silly Mistake',
-      time: '⏱️ Time Pressure',
+      conceptual:   '🧠 Concept Gap',
+      silly:        '🔢 Calculation',
+      time:         '🎲 Guess',
     };
 
     container.innerHTML = logs.map(log => `
-      <div class="el-item ${log.reattempt_status ? 'fixed' : ''}" id="el-${log.id}">
-        <span class="el-type-badge ${log.error_type}">${typeLabels[log.error_type] || log.error_type}</span>
+      <div class="el-item el-item-v2 ${log.reattempt_status ? 'fixed' : ''}" id="el-${log.id}">
+        <div class="el-stripe el-stripe-${log.error_type}"></div>
         <div class="el-body">
-          <div class="el-question" data-raw="${encodeURIComponent(log.question_text || 'Question text unavailable')}"></div>
-          <div class="el-meta">
-            ${log.subject ? `<span>${log.subject}</span>` : ''}
-            ${log.topic ? `<span> · ${log.topic}</span>` : ''}
-            <span> · ${this._formatDate(log.created_at)}</span>
+          <div class="el-header-row-card">
+            <div class="el-badges">
+              <span class="el-type-badge ${log.error_type}">${typeLabels[log.error_type] || log.error_type}</span>
+              ${!log.question_id ? '<span class="el-manual-tag">External</span>' : ''}
+            </div>
+            <span class="el-date">${this._formatDate(log.created_at)}</span>
           </div>
+          ${(log.subject || log.topic) ? `<div class="el-meta">${[log.subject, log.topic].filter(Boolean).join(' · ')}</div>` : ''}
+          <div class="el-question" data-raw="${encodeURIComponent(log.question_text || 'No description')}"></div>
           ${log.user_note ? `<div class="el-note">"${log.user_note}"</div>` : ''}
         </div>
-        ${log.reattempt_status
-        ? `<span class="el-fixed-badge">✓ Fixed</span>`
-        : `<button class="el-fix-pill" onclick="ErrorLog.markFixed('${log.id}')">Fix →</button>`
-      }
+        <div class="el-action">
+          ${log.reattempt_status
+            ? `<span class="el-fixed-badge">✓ Fixed</span>`
+            : `<button class="el-fix-pill" onclick="ErrorLog.markFixed('${log.id}')">Fix →</button>`}
+        </div>
       </div>
     `).join('');
 
-    // Render math + line breaks in each question cell after innerHTML is set
     container.querySelectorAll('.el-question[data-raw]').forEach(el => {
       const raw = decodeURIComponent(el.dataset.raw);
       if (typeof renderMath === 'function') {
@@ -295,6 +422,73 @@ const ErrorLog = {
     }
   },
 
+  // ── Manual entry modal ───────────────────────────────────────
+
+  showAddModal() {
+    const q = document.getElementById('el-manual-question');
+    const n = document.getElementById('el-manual-note');
+    const s = document.getElementById('el-manual-subject');
+    const t = document.getElementById('el-manual-topic');
+    if (q) q.value = '';
+    if (n) n.value = '';
+    if (s) s.value = '';
+    if (t) t.innerHTML = '<option value="">— Select —</option>';
+    document.querySelectorAll('#el-manual-type-grid .error-type-btn').forEach(b => b.classList.remove('selected'));
+    this._manualErrorType = null;
+    const saveBtn = document.getElementById('el-add-save-btn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Save Mistake'; }
+    document.getElementById('el-add-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  },
+
+  _closeAddModal() {
+    document.getElementById('el-add-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+  },
+
+  _validateManualForm() {
+    const hasText = (document.getElementById('el-manual-question')?.value || '').trim().length > 0;
+    const hasType = !!this._manualErrorType;
+    const saveBtn = document.getElementById('el-add-save-btn');
+    if (saveBtn) saveBtn.disabled = !(hasText && hasType);
+  },
+
+  _populateManualTopics() {
+    const subject = document.getElementById('el-manual-subject')?.value;
+    const el = document.getElementById('el-manual-topic');
+    if (!el) return;
+    const topicMap = (typeof CAT_TAXONOMY !== 'undefined' && subject && CAT_TAXONOMY[subject]) || {};
+    const topics = Object.keys(topicMap);
+    el.innerHTML = '<option value="">— Select —</option>' +
+      topics.map(t => `<option value="${t}">${t}</option>`).join('');
+  },
+
+  async saveManualError() {
+    const question_text = (document.getElementById('el-manual-question')?.value || '').trim();
+    const error_type = this._manualErrorType;
+    if (!question_text || !error_type) return;
+
+    const subject   = document.getElementById('el-manual-subject')?.value || null;
+    const topic     = document.getElementById('el-manual-topic')?.value || null;
+    const user_note = (document.getElementById('el-manual-note')?.value || '').trim();
+
+    const saveBtn = document.getElementById('el-add-save-btn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+
+    try {
+      await DB.saveErrorLog({ question_id: null, error_type, subject, topic, question_text, user_note });
+      this._closeAddModal();
+      showToast('Mistake added ✓', 'success');
+      await this.render();
+      const pending = await DB.getPendingErrorCount();
+      const badge = document.getElementById('nav-error-count');
+      if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline' : 'none'; }
+    } catch (e) {
+      showToast('Error saving: ' + e.message, 'error');
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Mistake'; }
+    }
+  },
+
   // ── FIX MY MISTAKES ──────────────────────────────────────────
 
   async fixMyMistakes() {
@@ -304,7 +498,6 @@ const ErrorLog = {
       let modeLabel = 'Fix Mode';
 
       if (!questions || !questions.length) {
-        // Fallback Logic
         questions = await DB.getFallbackFixQuestions();
         if (!questions || !questions.length) {
           hideLoading();
@@ -312,8 +505,6 @@ const ErrorLog = {
           App.navigate('practice');
           return;
         }
-
-        // Try to figure out what topic the fallback questions are from
         const sampleTopic = questions[0].topic || 'General';
         modeLabel = `Practicing your weak area: ${sampleTopic}`;
         showToast(`No pending mistakes. ${modeLabel}`, 'success');
@@ -333,8 +524,9 @@ const ErrorLog = {
     const uid = Auth.currentUser ? Auth.currentUser.id : 'anon';
     const state = {
       subject: document.getElementById('el-subject-filter').value,
-      type: document.getElementById('el-type-filter').value,
-      status: document.getElementById('el-status-filter').value
+      type:    document.getElementById('el-type-filter').value,
+      status:  document.getElementById('el-status-filter').value,
+      topic:   this._activeTopicFilter || 'all',
     };
     localStorage.setItem(`error_filters_${uid}`, JSON.stringify(state));
   },
@@ -345,14 +537,21 @@ const ErrorLog = {
       const state = JSON.parse(localStorage.getItem(`error_filters_${uid}`));
       if (state) {
         if (state.subject) document.getElementById('el-subject-filter').value = state.subject;
-        if (state.type) document.getElementById('el-type-filter').value = state.type;
-        if (state.status) document.getElementById('el-status-filter').value = state.status;
+        if (state.type)    document.getElementById('el-type-filter').value = state.type;
+        if (state.status)  document.getElementById('el-status-filter').value = state.status;
+        this._activeSubjectFilter = state.subject || 'all';
+        this._activeTypeFilter    = (state.type && state.type !== 'all') ? state.type : null;
+        this._activeTopicFilter   = state.topic || 'all';
       }
     } catch (e) { }
   },
 
   clearMemory() {
-    this._activeTypeFilter = null;
+    this._activeTypeFilter    = null;
+    this._activeSubjectFilter = 'all';
+    this._activeTopicFilter   = 'all';
+    this._searchQuery         = '';
+    this._filtersExpanded     = false;
   },
 
   _formatDate(iso) {

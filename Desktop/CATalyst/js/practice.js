@@ -138,6 +138,7 @@ const Practice = {
       this.saveState();
     });
     document.getElementById('filter-difficulty').addEventListener('change', () => this.saveState());
+    document.getElementById('filter-set-size').addEventListener('change', () => this.saveState());
     document.getElementById('filter-count').addEventListener('change', () => this.saveState());
     document.getElementById('filter-subtopic').addEventListener('change', () => this.saveState());
     document.getElementById('load-practice-btn').addEventListener('click', () => this.loadQuestions());
@@ -311,6 +312,18 @@ const Practice = {
     try {
       let questions = await DB.getQuestions(filters);
       questions = await DB.sortBySmartQueue(questions);
+
+      // Set-size post-filter — group by set_id and keep only sets matching the selected size
+      const setSizeFilter = document.getElementById('filter-set-size')?.value || 'any';
+      if (setSizeFilter !== 'any') {
+        const setCounts = new Map();
+        questions.forEach(q => { if (q.set_id) setCounts.set(q.set_id, (setCounts.get(q.set_id) || 0) + 1); });
+        questions = questions.filter(q => {
+          if (!q.set_id) return false;
+          const n = setCounts.get(q.set_id) || 1;
+          return setSizeFilter === 'small' ? n < 4 : n >= 4;
+        });
+      }
 
       // First-session detection — cap to 10 questions
       const userId = Auth.currentUser ? Auth.currentUser.id : null;
@@ -1085,6 +1098,7 @@ const Practice = {
       subject:    document.getElementById('filter-subject').value,
       topic:      document.getElementById('filter-topic').value,
       difficulty: document.getElementById('filter-difficulty').value,
+      setSize:    document.getElementById('filter-set-size')?.value || 'any',
       count:      document.getElementById('filter-count').value,
       subtopics:  [...this._selectedSubtopics],
       matchAll:   document.getElementById('filter-match-all')?.checked ?? false,
@@ -1100,6 +1114,7 @@ const Practice = {
         if (state.subject)    document.getElementById('filter-subject').value = state.subject;
         if (state.topic)      document.getElementById('filter-topic').dataset.pendingValue = state.topic;
         if (state.difficulty) document.getElementById('filter-difficulty').value = state.difficulty;
+        if (state.setSize)    { const el = document.getElementById('filter-set-size'); if (el) el.value = state.setSize; }
         if (state.count)      document.getElementById('filter-count').value = state.count;
         if (state.subtopics?.length) this._selectedSubtopics = state.subtopics;
         const matchAllEl = document.getElementById('filter-match-all');
