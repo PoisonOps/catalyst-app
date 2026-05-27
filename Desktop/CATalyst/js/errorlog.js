@@ -262,6 +262,7 @@ const ErrorLog = {
       btn.addEventListener('click', () => {
         this._activeSubjectFilter = btn.dataset.subject;
         document.getElementById('el-subject-filter').value = btn.dataset.subject;
+        this._activeTopicFilter = 'all'; // reset topic when subject changes
         this.saveState();
         this.render();
       });
@@ -271,9 +272,20 @@ const ErrorLog = {
   _renderTopicFilter(allLogs) {
     const el = document.getElementById('el-topic-select');
     if (!el) return;
-    const topics = [...new Set(allLogs.map(l => l.topic).filter(Boolean))].sort();
+
+    // Only show topics belonging to the active subject
+    const subjectLogs = this._activeSubjectFilter !== 'all'
+      ? allLogs.filter(l => l.subject === this._activeSubjectFilter)
+      : allLogs;
+    const topics = [...new Set(subjectLogs.map(l => l.topic).filter(Boolean))].sort();
+
     el.innerHTML = '<option value="all">All Topics</option>' +
       topics.map(t => `<option value="${t}">${t}</option>`).join('');
+
+    // If the previously selected topic doesn't exist in this subject, reset it
+    if (this._activeTopicFilter !== 'all' && !topics.includes(this._activeTopicFilter)) {
+      this._activeTopicFilter = 'all';
+    }
     el.value = this._activeTopicFilter || 'all';
 
     // Attach listener only once (remove + re-add to avoid duplicates)
