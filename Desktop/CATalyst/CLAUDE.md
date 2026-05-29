@@ -50,7 +50,7 @@ Supabase tables: `questions`, `sets`, `attempt_logs`, `error_logs`, `reports`, `
 
 Fix session flow: `loadFixSession()` → Phase 1 questions → `_showFixTransition()` (2.5s auto-advance) → `_startPhase2()` → `_showFixSessionComplete()`.
 
-`onPageEnter()` auto-loads questions 120ms after navigating to Practice. Filter panel behaviour: **open when no questions are loaded** (so the user sees the Load Questions button), **collapsed after questions load** (`_collapseFilters()` / `_openFilters()` helpers manage this). The filter-count select (`#filter-count`) controls 10/25/50 questions.
+`onPageEnter()` auto-loads questions 120ms after navigating to Practice. Filter panel behaviour: **open when no questions are loaded** (so the user sees the Load Questions button), **collapsed after questions load** (`_collapseFilters()` / `_openFilters()` helpers manage this). The filter-count select (`#filter-count`) controls 10/25/50 questions. The set-size filter (`#filter-set-size`) is applied client-side after DB fetch — it counts siblings by `set_id` using a Map and filters out questions whose set falls outside the chosen range (standalone questions with no `set_id` are excluded when any set-size filter is active).
 
 First-session flow: on signup, `cat_first_session_${userId}` is set in localStorage. `loadQuestions()` detects this and caps to 10 questions, shows a nudge card at session end, then clears the flag so subsequent sessions use the selected count.
 
@@ -67,13 +67,35 @@ First-session flow: on signup, `cat_first_session_${userId}` is set in localStor
 
 ### Error Log (`js/errorlog.js`)
 
-State: `_activeTypeFilter` tracks card-click filtering separately from the dropdown value. Both must stay in sync. `saveState()`/`loadState()` depend on the hidden `<select>` element IDs (`el-subject-filter`, `el-type-filter`, `el-status-filter`) — do not remove those elements even though they're `display:none`.
+State lives entirely on the `ErrorLog` object:
+- `_activeSubjectFilter`, `_activeTypeFilter`, `_activeTopicFilter`, `_searchQuery` — active filter values
+- `_allLogs` — cached full log array from the last `render()` call; used by `_renderLogList` and `_renderTopicFilter` so they don't re-fetch
+- `_filtersExpanded` — tracks whether the collapsible advanced-filter panel is open
+- `_manualErrorType` — holds the selected type in the "+ Add Mistake" modal before save
+
+Hidden `<select>` elements (`#el-subject-filter`, `#el-type-filter`, `#el-status-filter`) are `display:none` but **must not be removed** — `saveState()`/`loadState()` read and write them directly, and they stay in sync with the visible pill/chip UI.
+
+`_getFilteredLogs(allLogs)` is the single filter gate — all render methods call it. It reads `_activeSubjectFilter` (falling back to `#el-subject-filter` value), `_activeTypeFilter`, `#el-status-filter`, `_activeTopicFilter`, and `_searchQuery`. When subject changes (`_renderSubjectChips` click), `_activeTopicFilter` is reset to `'all'` to avoid stale cross-subject topic selections.
+
+`_renderTopicFilter(allLogs)` builds the topic dropdown from only the logs matching the active subject — never from all logs. It also `replaceWith(cloneNode)` the select on every render to avoid duplicate change listeners.
+
+Manual entry modal: `showAddModal()` resets form state, `_validateManualForm()` gates the Save button (requires both question text AND error type), `saveManualError()` calls `DB.saveErrorLog({ question_id: null, ... })`. Null `question_id` is exempt from the dedup check in `db.js`.
+
+Card rendering uses `class="el-item el-item-v2"`. Cards are flex items inside `.error-log-list` which has a fixed `height`; `.el-item` must have `flex-shrink: 0` to prevent cards from collapsing to invisible bars when the list has many items.
 
 `DB.getErrorInsights(logs)` returns `{ mostCommonError, errorTypeCounts, topicCounts, sortedTopics, weakestTopic }`. Legacy error type keys (`silly`, `conceptual`, `time`) must always be mapped to canonical keys (`calculation`, `concept_gap`, `guess`) before cost/label lookups. The canonical label and cost maps live at the top of `errorlog.js` (`EL_TYPE_LABELS`, `EL_COST_MAP`).
 
 ### Math Rendering & Text Formatting
 
-KaTeX is loaded via CDN (`index.html`). Never set question content as raw `innerHTML` — always use `renderMath(el, rawText, isRC)` from `practice.js`. This function safely masks LaTeX delimiters (`$$...$$`, `\[...\]`, `\(...\)`) before applying line-break replacements, then restores them before calling KaTeX's auto-render. RC passages use `formatRC()` which splits on `/n/n/` for paragraph breaks and `/n/` for line breaks within paragraphs.
+KaTeX is loaded via CDN (`index.html`). Never set question content as raw `innerHTML` — always use `renderMath(el, rawText, isRC)` from `practice.js`. This function:
+1. Masks LaTeX delimiters (`$$...$$`, `\[...\]`, `\(...\)`) into placeholders
+2. Escapes `&`, `<`, `>` in non-math text so stray comparison symbols don't break HTML parsing
+3. Replaces `/n/` and `\n` with `<br>`
+4. Restores LaTeX placeholders, then calls KaTeX auto-render
+
+RC passages use `formatRC()` which splits on `/n/n/` for paragraph breaks and wraps each in `<p class="rc-para">`. `formatRC` does **not** HTML-escape (the `<p>` and `<br>` tags it adds are intentional).
+
+Card question text in the error log is stored on the element as `data-raw="${encodeURIComponent(question_text)}"` (URI-encoded, not base64). Decoded with `decodeURIComponent(el.dataset.raw)` before passing to `renderMath`.
 
 ### Question Data Shape
 
@@ -97,7 +119,9 @@ KaTeX is loaded via CDN (`index.html`). Never set question content as raw `inner
 
 **Auth container centering:** `#auth-screen .auth-container` must have `margin: 0 auto` to center the 420px form on desktop. Without it the form left-aligns because the parent is `display: block`, not flex.
 
-**Error log card truncation:** `.el-question` uses `-webkit-line-clamp: 3` to cap card height on mobile. The full question text is always available in `el.dataset.raw` (base64-encoded) — never truncate the data-raw attribute.
+**Error log card truncation:** `.el-question` uses `-webkit-line-clamp: 3` to cap card height on mobile. The full question text is always available in `el.dataset.raw` (URI-encoded via `encodeURIComponent`) — never truncate the data-raw attribute.
+
+**Flex scroll containers:** Any `display:flex; flex-direction:column` container with a fixed `height` will shrink its flex children to fit before scrolling. Always add `flex-shrink: 0` to cards/items that should maintain their natural height. `.el-item` has this set — preserve it.
 
 ### Service Worker (`sw.js`)
 
@@ -194,6 +218,12 @@ Supabase table: `push_subscriptions` — created by running `push-notifications-
 - **iOS:** Shows numbered steps (tap Share → Add to Home Screen). No native install API on iOS
 - **Android:** Calls `deferredPrompt.prompt()` to trigger Chrome's native install sheet
 
+### Landing Page (`landing.html`)
+
+`landing.html` is a **standalone marketing page** — separate from the SPA (`index.html`). It has no Supabase connection, no auth, and no shared JS with the app. It is served at `/landing.html` as a static file (Vercel serves existing files before applying rewrites, so the SPA catch-all rewrite does not intercept it).
+
+The landing page uses GSAP + ScrollTrigger for scroll-pinned animations, a CSS-only iPhone mockup with Dynamic Island, dark/light theme toggle (persisted via `localStorage`), and a marquee strip. It links to `https://catalyst-app-six.vercel.app/` for all CTAs. No cache-busting version strings needed — the service worker does not cache `landing.html`.
+
 ### Social / OG
 
 - OG image: `og-image.png` in repo root, served at `/og-image.png` (1200×630px)
@@ -220,7 +250,9 @@ Only run `vercel --prod` after confirming the feature works locally. Deploying u
 - `analytics.html` — Internal analytics dashboard (not linked from the app)
 - `analytics-setup.sql` — Run once in Supabase to create `events` table + RLS policies
 - `reset-password.html` — Standalone password reset page; has its own Supabase client init with hardcoded prod credentials
-- `vercel.json` — Single catch-all rewrite (`"/(.*)" → "/index.html"`) so Vercel serves the SPA for all routes
+- `vercel.json` — Cron for push notifications + catch-all rewrite (`"/((?!api/).*)" → "/index.html"`) so Vercel serves the SPA for all non-API routes. Static files like `landing.html` and `reset-password.html` are served directly by Vercel before the rewrite is checked.
+- `api/send-push.js` — Vercel serverless function (CommonJS) that sends push notifications. Called by Vercel Cron and by cron-job.org (4×/day). Requires env vars: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`.
+- `push-notifications-setup.sql` — Run once in prod Supabase SQL Editor to create `push_subscriptions` table + RLS policies
 - `migrate-to-prod.js` — Copies questions + sets from dev Supabase → prod via UPSERT (safe to re-run). Requires service-role keys passed as env vars: `DEV_SERVICE_KEY=xxx PROD_SERVICE_KEY=yyy node migrate-to-prod.js`
 
 ## Current Business Context
