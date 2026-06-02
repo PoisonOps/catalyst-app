@@ -868,12 +868,15 @@ const DB = {
   async logEvent(eventName, userId = null, metadata = {}) {
     if (!sbClient) return;
     try {
-      await sbClient.from('events').insert({
+      const { error } = await sbClient.from('events').insert({
         event:    eventName,
         user_id:  userId || null,
-        metadata: Object.keys(metadata).length ? metadata : null,
+        metadata: Object.keys(metadata).length ? metadata : {},
       });
-    } catch (_) { /* fire and forget — never block the UI */ }
+      if (error && FLAGS.DEBUG_LOG) console.error('[DB] logEvent failed:', error.message, { eventName, userId });
+    } catch (err) {
+      if (FLAGS.DEBUG_LOG) console.error('[DB] logEvent exception:', err?.message || err, { eventName });
+    }
   },
 
   // ── PUSH SUBSCRIPTIONS ──────────────────────────────────────

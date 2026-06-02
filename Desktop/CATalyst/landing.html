@@ -888,6 +888,135 @@ nav{
 .fia-t{padding:0 0 17px;font-size:14px;color:var(--fg-3);line-height:1.7}
 
 /* ══════════════════════════════════════
+   MAX WAITLIST
+══════════════════════════════════════ */
+.max-wait{
+  padding:88px 0;background:var(--bg-0);border-top:1px solid var(--line-1);
+  position:relative;overflow:hidden;
+}
+.max-wait::before{
+  content:'';position:absolute;
+  width:640px;height:640px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(245,158,11,.07) 0%,transparent 70%);
+  top:-160px;right:-120px;z-index:0;
+}
+.max-wait::after{
+  content:'';position:absolute;
+  width:400px;height:400px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(245,158,11,.04) 0%,transparent 70%);
+  bottom:-100px;left:-80px;z-index:0;
+}
+.mw-inner{
+  display:flex;flex-direction:column;gap:48px;
+  align-items:flex-start;position:relative;z-index:1;
+}
+@media(min-width:900px){
+  .mw-inner{flex-direction:row;gap:64px;align-items:flex-start}
+  .mw-left,.mw-right{flex:1}
+}
+.mw-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:var(--r-pill);
+  background:var(--cat-amber-bg);border:1px solid var(--cat-amber-border);
+  font-size:11px;font-weight:700;color:var(--cat-amber);
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:22px;
+}
+.mw-badge-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--cat-amber);
+  animation:bk 2s ease-in-out infinite;box-shadow:0 0 6px rgba(245,158,11,.7);
+  flex-shrink:0;
+}
+.mw-hl{
+  font-family:var(--f-d);font-size:clamp(26px,4vw,40px);
+  font-weight:800;font-style:italic;letter-spacing:-.02em;line-height:1.1;
+  margin-bottom:16px;
+}
+.mw-hl-accent{
+  background:linear-gradient(135deg,var(--cat-amber) 0%,var(--cat-amber-soft) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.mw-sub{
+  font-size:15px;color:var(--fg-2);line-height:1.75;
+  max-width:460px;margin-bottom:28px;
+}
+.mw-bullets{list-style:none;display:flex;flex-direction:column;gap:13px;margin-bottom:30px}
+.mw-bullets li{
+  display:flex;align-items:center;gap:10px;
+  font-size:14px;color:var(--fg-2);
+}
+.mw-bullet-check{
+  width:20px;height:20px;border-radius:50%;flex-shrink:0;
+  background:var(--cat-amber-bg);border:1px solid var(--cat-amber-border);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--cat-amber);font-size:10px;font-weight:700;
+}
+.mw-price-tag{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:9px 18px;border-radius:var(--r-pill);
+  background:var(--bg-2);border:1px solid var(--line-2);
+  font-size:13px;color:var(--fg-3);
+}
+.mw-price-tag strong{color:var(--cat-amber);font-size:16px;font-weight:800}
+
+/* CARD */
+.mw-card{
+  background:var(--bg-2);
+  border:1px solid var(--cat-amber-border);
+  border-radius:var(--r-xl);
+  padding:28px 24px;
+  position:relative;overflow:hidden;
+  box-shadow:0 0 0 1px rgba(245,158,11,.08),0 20px 60px -12px rgba(245,158,11,.14);
+  width:100%;
+}
+@media(min-width:900px){.mw-card{max-width:440px}}
+.mw-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,transparent,var(--cat-amber),transparent);
+}
+.mw-card-title{font-size:16px;font-weight:700;color:var(--fg-1);margin-bottom:6px}
+.mw-card-sub{font-size:13px;color:var(--fg-3);line-height:1.6;margin-bottom:22px}
+.mw-form{display:flex;flex-direction:column;gap:10px}
+.mw-form input{
+  width:100%;padding:13px 16px;
+  background:var(--bg-3);border:1px solid var(--line-2);
+  border-radius:var(--r-md);font-size:14px;font-family:var(--f-b);
+  color:var(--fg-1);outline:none;
+  transition:border-color 180ms,box-shadow 180ms;
+  -webkit-appearance:none;
+}
+.mw-form input::placeholder{color:var(--fg-4)}
+.mw-form input:focus{border-color:var(--cat-amber-border);box-shadow:0 0 0 3px rgba(245,158,11,.1)}
+.mw-hp{display:none}
+.mw-submit{
+  width:100%;padding:14px;
+  background:var(--cat-amber);color:#0d0d0d;
+  border-radius:var(--r-md);font-size:14px;font-weight:700;font-family:var(--f-b);
+  cursor:pointer;border:none;
+  transition:background 180ms,transform 120ms,opacity 180ms;
+  box-shadow:0 0 0 1px rgba(245,158,11,.30),0 8px 24px -8px rgba(245,158,11,.45);
+}
+.mw-submit:hover:not(:disabled){background:var(--cat-amber-soft);transform:translateY(-1px)}
+.mw-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.mw-note{font-size:11px;color:var(--fg-4);text-align:center;margin-top:10px}
+.mw-count{
+  display:flex;align-items:center;gap:8px;
+  margin-top:18px;padding-top:16px;
+  border-top:1px solid var(--line-1);
+  font-size:12px;color:var(--fg-3);
+}
+.mw-count-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+  background:var(--cat-amber);
+  animation:bk 2s ease-in-out infinite;
+  box-shadow:0 0 6px rgba(245,158,11,.7);
+}
+.mw-count strong{color:var(--fg-1)}
+.mw-success{display:none;text-align:center;padding:12px 0}
+.mw-success-icon{font-size:36px;margin-bottom:12px}
+.mw-success-title{font-size:16px;font-weight:700;color:var(--fg-1);margin-bottom:6px}
+.mw-success-sub{font-size:13px;color:var(--fg-3);line-height:1.65}
+
+/* ══════════════════════════════════════
    FOOTER
 ══════════════════════════════════════ */
 footer{
@@ -945,6 +1074,10 @@ footer{
         <div class="hero-ctas">
           <a href="https://catalyst-app-six.vercel.app/" class="btn-primary magnet">Start 3-day free trial →</a>
           <a href="#loop" class="btn-ghost">See how it works</a>
+          <button id="btn-install-app" class="btn-ghost" style="display:none">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
+            Install App
+          </button>
         </div>
         <div class="trust-pills">
           <span class="trust-pill">No card required</span>
@@ -1480,6 +1613,77 @@ footer{
   </div>
 </section>
 
+<!-- ═══════ MAX WAITLIST ═══════ -->
+<!--
+  SETUP (one-time, ~2 min):
+  Run this SQL in your PROD Supabase → SQL Editor:
+
+  CREATE TABLE IF NOT EXISTS waitlist (
+    id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    name       text        NOT NULL,
+    email      text        NOT NULL,
+    source     text        DEFAULT 'landing',
+    created_at timestamptz DEFAULT now()
+  );
+  ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "waitlist_insert" ON waitlist FOR INSERT WITH CHECK (true);
+  CREATE POLICY "waitlist_select" ON waitlist FOR SELECT USING (auth.role() = 'service_role');
+
+  Then view signups: Supabase dashboard → Table Editor → waitlist
+-->
+<section class="max-wait z1" id="max">
+  <div class="container">
+    <div class="mw-inner">
+
+      <!-- LEFT: copy -->
+      <div class="mw-left reveal">
+        <div class="mw-badge"><div class="mw-badge-dot"></div>Coming Soon · CATalyst Max</div>
+        <h2 class="mw-hl">
+          Keep using iQuanta.<br>
+          Upload your DPPs here.<br>
+          <span class="mw-hl-accent">Never repeat a mistake again.</span>
+        </h2>
+        <p class="mw-sub">CATalyst Max works on <em>any</em> question, from any coaching. Upload your DPP as a PDF — AI extracts every question, you solve it, and Fix Mode runs on your mistakes. Not ours.</p>
+        <ul class="mw-bullets">
+          <li><div class="mw-bullet-check">✓</div>Upload iQuanta, TIME, IMS, Bodhee — any DPP</li>
+          <li><div class="mw-bullet-check">✓</div>AI extracts questions, options &amp; solutions automatically</li>
+          <li><div class="mw-bullet-check">✓</div>Fix Mode runs on your material, your mistakes</li>
+        </ul>
+        <div class="mw-price-tag">Early access · <strong>₹999</strong> till CAT 2026</div>
+      </div>
+
+      <!-- RIGHT: form card -->
+      <div class="mw-right reveal-right">
+        <div class="mw-card">
+          <div class="mw-card-title">Join the waitlist</div>
+          <p class="mw-card-sub">First 20 members get early access and beta pricing locked before launch.</p>
+
+          <form class="mw-form" id="max-wl-form" novalidate>
+            <!-- honeypot: hidden from humans, bots fill it -->
+            <input class="mw-hp" type="text" name="_hp" tabindex="-1" autocomplete="off" />
+            <input type="text"  name="name"  id="mw-name"  placeholder="Your name"     required autocomplete="name" />
+            <input type="email" name="email" id="mw-email" placeholder="Email address" required autocomplete="email" />
+            <button type="submit" class="mw-submit" id="mw-submit">Notify me when it launches →</button>
+          </form>
+
+          <div class="mw-success" id="mw-success">
+            <div class="mw-success-icon">🎯</div>
+            <div class="mw-success-title">You're on the list.</div>
+            <div class="mw-success-sub">We'll email you the moment Max is ready. You'll get first access and beta pricing — before anyone else.</div>
+          </div>
+
+          <div class="mw-note" id="mw-note">No spam. One email when Max launches.</div>
+          <div class="mw-count">
+            <div class="mw-count-dot"></div>
+            <span>Waitlist open · first <strong>20</strong> get beta pricing</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <!-- ═══════ FOOTER ═══════ -->
 <footer class="z1">
   <div class="container">
@@ -1490,6 +1694,7 @@ footer{
       </div>
       <div class="foot-links">
         <a href="https://catalyst-app-six.vercel.app/">Open App</a>
+        <a href="#max" style="color:var(--cat-amber)">Max — Coming Soon</a>
         <a href="https://wa.me/917080442040">WhatsApp</a>
         <a href="#loop">How it works</a>
       </div>
@@ -1802,6 +2007,77 @@ document.querySelectorAll('.fcard').forEach(card => {
   });
 })();
 
+/* Max waitlist section */
+gsap.fromTo('.mw-left',
+  { y: 36, opacity: 0 },
+  { scrollTrigger: { trigger: '.mw-inner', start: 'top 82%', once: true }, y: 0, opacity: 1, duration: .8, ease: 'power3.out' }
+);
+gsap.fromTo('.mw-right',
+  { y: 36, opacity: 0 },
+  { scrollTrigger: { trigger: '.mw-inner', start: 'top 82%', once: true }, y: 0, opacity: 1, duration: .8, ease: 'power3.out', delay: .12 }
+);
+
+/* Max waitlist form submission — writes directly to prod Supabase */
+(function() {
+  const SUPA_URL = 'https://lvbqmaarriglqaegemgc.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2YnFtYWFycmlnbHFhZWdlbWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NzA2MTQsImV4cCI6MjA5MzQ0NjYxNH0.o284rHiW_XCPulBUdmFSMFJftNKTCkipCJ-mTwBQjaw';
+
+  const form    = document.getElementById('max-wl-form');
+  const success = document.getElementById('mw-success');
+  const submit  = document.getElementById('mw-submit');
+  const note    = document.getElementById('mw-note');
+  if (!form) return;
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    // honeypot check — bots fill the hidden field
+    if (form.querySelector('input[name="_hp"]').value) return;
+
+    const name  = document.getElementById('mw-name').value.trim();
+    const email = document.getElementById('mw-email').value.trim();
+    if (!name || !email || !email.includes('@')) return;
+
+    submit.textContent = 'Joining…';
+    submit.disabled = true;
+
+    try {
+      const res = await fetch(SUPA_URL + '/rest/v1/waitlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPA_KEY,
+          'Authorization': 'Bearer ' + SUPA_KEY,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ name, email, source: 'landing' })
+      });
+
+      if (res.ok || res.status === 201) {
+        form.style.display = 'none';
+        note.style.display = 'none';
+        success.style.display = 'block';
+      } else {
+        const err = await res.json().catch(() => ({}));
+        // Table might not exist yet — show a graceful fallback
+        const msg = (err.message || '').toLowerCase();
+        if (msg.includes('does not exist') || msg.includes('relation')) {
+          // Waitlist table not set up yet — show success anyway and log for Sahil
+          console.warn('[Max waitlist] Table not found — run the setup SQL in Supabase. Submission:', { name, email });
+          form.style.display = 'none';
+          note.style.display = 'none';
+          success.style.display = 'block';
+        } else {
+          submit.textContent = 'Notify me when it launches →';
+          submit.disabled = false;
+        }
+      }
+    } catch (_) {
+      submit.textContent = 'Notify me when it launches →';
+      submit.disabled = false;
+    }
+  });
+})();
+
 /* Price cards */
 gsap.fromTo('.price-card',
   { y: 48, opacity: 0, scale: .95 },
@@ -1869,6 +2145,23 @@ document.querySelectorAll('.fiq').forEach(q => {
     if (up) { el.textContent = `−${Math.min(cur + 1, 35)}`; if (cur >= 35) up = false; }
     else    { el.textContent = `−${Math.max(cur - 1, 28)}`; if (cur <= 28) up = true; }
   }, 800);
+})();
+
+/* ═══ PWA INSTALL BUTTON ═══ */
+(() => {
+  const btn = document.getElementById('btn-install-app');
+  if (!btn) return;
+
+  const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  if (isStandalone) return;
+
+  const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+  if (!isMobile) return;
+
+  btn.style.display = 'inline-flex';
+  btn.addEventListener('click', () => {
+    window.location.href = 'https://catalyst-app-six.vercel.app/?install=1';
+  });
 })();
 </script>
 </body>

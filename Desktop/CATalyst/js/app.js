@@ -433,3 +433,9 @@ const PWAPrompt = {
 };
 
 PWAPrompt.init();
+
+// If redirected from landing page "Install App" button, show prompt immediately
+if (new URLSearchParams(location.search).get('install') === '1') {
+  history.replaceState({}, '', location.pathname);
+  setTimeout(() => PWAPrompt._show(), 900);
+}
