@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 CATalyst is a **mistake-fixing system** for CAT exam aspirants — not a practice app. The core loop is: Solve → Realize → Diagnose → Fix → Reinforce → Return. Every UI and data decision is driven by the "Mistake Pressure System": make mistakes visible, show the mark cost, force acknowledgment, push the user to fix immediately.
 
+**New positioning (updated):** "Keep using iQuanta. Keep using Bodhee. But when you get something wrong — bring it here. CATalyst catches your mistake pattern and forces you to fix it before it becomes a CAT day habit." This removes the question quality trust objection and positions CATalyst as infrastructure on top of coaching — not a competitor.
+
 ## Running the App
 
 No build tools, no npm, no bundler. Open `index.html` directly in a browser or serve it with any static file server:
@@ -16,6 +18,51 @@ python3 -m http.server 8080
 ```
 
 There are no lint, test, or compile steps.
+
+## Current Product State
+
+- **Production:** https://catalyst-app-six.vercel.app
+- **Landing page:** https://catalyst-app-six.vercel.app/landing.html (live)
+- **Deployments:** 20+ Vercel deployments, 60+ commits
+- **Users:** 3 trial signups, 1 paying user (Oviya — ₹489 till CAT)
+- **Fix Mode completions:** confirmed by at least 3 users (Hitarth, Krishna, one other)
+- **Key contacts:** Hitarth (most engaged, suggested ₹449 bundle), Shirin (converting ~June 13), Siddhant (99.85%ile, founder of CAT Unfiltered with 400 signups — said "100000% IT WILL HELP", revisit August)
+- **Revenue:** ₹489 (1 paying user). Target: ₹1L MRR by month 5–6.
+- **Question bank:** ~794 questions (see Question Bank Status below)
+
+## Pricing
+
+- First 20 users locked price: ₹99/month OR ₹489 till CAT (190 days remaining). 19 slots remaining.
+- After 20 users: pricing TBD (higher).
+- ₹99/month is kept intentionally alongside the bundle — ₹99×6 = ₹594 > ₹489, so the math nudges users toward upfront payment.
+- Payment: manual UPI `7080442040@pthdfc` via WhatsApp `+91 70804 42040`. Razorpay integration is a pending priority (doesn't scale past 20 users).
+- **Trial duration: 7 days** (`TRIAL_DAYS` in `db.js` — verify in code and align with any copy that says 3 days).
+
+### Tier Structure (planned)
+
+| | Free Trial | Pro | Max |
+|---|---|---|---|
+| Duration | 7 days | Till CAT | Till CAT |
+| Price | ₹0 | ₹489 | ₹999 |
+| Our 800+ Questions | 50 | ✅ All | ✅ All |
+| DPP PDF Upload | ❌ | ❌ | ✅ Up to 30 PDFs |
+| AI Generated Solutions | ❌ | ✅ | ✅ |
+| Fix Mode | ✅ | ✅ | ✅ |
+| Push Notifications | ✅ | ✅ | ✅ |
+
+## Active Bugs
+
+Fix these before any outreach push — in priority order:
+
+1. **[HIGH] Analytics events not logging** — `events` table exists, `DB.logEvent()` exists, but inserts are not firing. Debug the call chain from `DB.logEvent()` → Supabase insert. Without this we are blind on conversion data.
+
+2. **[HIGH] DI set images missing** — ~50 Data Interpretation sets have no images uploaded to Supabase Storage. `image_url` fields are empty/null. Affects the entire DI section on mobile. Need to crop, name, and upload image assets for all 50 sets.
+
+3. **[LOW] `package.json` uncommitted** — run `git diff package.json`, commit if intentional.
+
+4. **[LOW] `.DS_Store` not in `.gitignore`** — one-line fix.
+
+> **RC scroll on mobile — FIXED.** RC passages now scroll correctly on mobile Chrome. This was a previous high-priority bug; it is resolved.
 
 ## Architecture
 
@@ -56,7 +103,14 @@ First-session flow: on signup, `cat_first_session_${userId}` is set in localStor
 
 ### Onboarding Tour (`js/onboarding.js`)
 
-`Onboarding.maybeStart(userId)` is called from `App.init()` (first login) and the `else` branch of `onLogin()` (returning users). It runs once per user and walks through the full CATalyst loop: Practice → tag wrong answer → Error Log → Fix Mode P1 → P2.
+`Onboarding.maybeStart(userId)` is called from `App.init()` (first login) and the `else` branch of `onLogin()` (returning users). It runs once per user and walks through the full CATalyst loop in 15 steps:
+
+- **Phase 1 (steps 1–6):** Welcome → Practice → Filters → Timer → Answer → Result
+- **Phase 2 (steps 7–8):** End session nudge → Summary
+- **Phase 3 (steps 9–10):** Error log → Fix My Mistakes
+- **Phase 4 (steps 11–15):** Fix Mode P1 + P2 complete loop
+
+Single "Let's Go" on welcome screen, "Not now" + "I've got it" available during tour.
 
 - Snooze for a session: `sessionStorage.tour_snoozed = 'true'`
 - Reset tour: `localStorage.removeItem('cat_tour_done_${userId}')`
@@ -150,11 +204,11 @@ Card question text in the error log is stored on the element as `data-raw="${enc
 
 ### Trial & Payment System
 
-- Trial duration: **3 days** (`TRIAL_DAYS = 3` in `db.js → getTrialStatus()`)
+- Trial duration: **7 days** (`TRIAL_DAYS = 7` in `db.js → getTrialStatus()`) — verify in code
 - Trial state stored in localStorage as `cat_trial` → `{ started_at, is_paid }`
 - `DB.initTrial()` — called on signup; creates the trial record and fires `trial_started` event
 - `DB.isPaid()` / `DB.markAsPaid()` — reads/writes `is_paid` flag locally only
-- Payment is **manual**: user pays ₹489 via UPI, sends WhatsApp screenshot, Sahil activates
+- Payment is **manual**: user pays via UPI `7080442040@pthdfc`, sends WhatsApp screenshot to `+91 70804 42040`, Sahil activates
 - To activate a paid user: run two SQL lines in Supabase — find UUID via `auth.users`, then insert a `payment_completed` event row (see `analytics-setup.sql`)
 
 ### Analytics System
@@ -163,7 +217,8 @@ Card question text in the error log is stored on the element as `data-raw="${enc
 - Events table schema: `id, event, user_id (nullable uuid), metadata (jsonb), created_at`
 - Table + RLS policies created by running `analytics-setup.sql` in Supabase SQL Editor once
 - Dashboard: `analytics.html` — standalone page, uses prod anon key, real-time via Supabase channel subscription. Keep URL private.
-- Events fired automatically:
+- **BUG: events are not logging** — inserts not firing despite `DB.logEvent()` being called. Fix before next outreach push.
+- Events that should fire:
 
 | Event | Where |
 |---|---|
@@ -201,9 +256,9 @@ Supabase table: `push_subscriptions` — created by running `push-notifications-
 
 **Frontend flow:** `Push.setup()` in `auth.js` runs 5s after login. Shows a soft banner (`#push-banner`) before the native browser prompt. On permission grant, calls `reg.pushManager.subscribe()` with the VAPID public key from `config.js` (`VAPID_PUBLIC_KEY`), then saves the subscription via `DB.savePushSubscription()`.
 
-**Sender:** `api/send-push.js` — Vercel serverless function (CommonJS). Reads all subscriptions, fetches each user's pending mistake count, picks from 3 notification pools (static, dynamic with `{mistakes}/{days}/{day}` placeholders, zero-mistakes), enforces a minimum gap of `(24h / NOTIFICATIONS_PER_DAY) * 0.75` between sends, deletes expired subscriptions (410/404 responses).
+**Sender:** `api/send-push.js` — Vercel serverless function (CommonJS). Reads all subscriptions, fetches each user's pending mistake count, picks from 3 notification pools (static, dynamic with `{mistakes}/{days}/{day}` placeholders, zero-mistakes), enforces a minimum gap of `(24h / NOTIFICATIONS_PER_DAY) * 0.75` between sends, deletes expired subscriptions (410/404 responses). Notification copy tones: Guilt / Funny / Urgency.
 
-**Scheduling:** Vercel Cron triggers once at 13:30 UTC (7pm IST) as a fallback. Primary schedule (4x/day) runs via cron-job.org hitting the same endpoint with `Authorization: Bearer $CRON_SECRET`. To change frequency: update `NOTIFICATIONS_PER_DAY` in `api/send-push.js` and add/remove cron-job.org jobs.
+**Scheduling:** Sends 4×/day at 8am, 1pm, 6pm, 9pm IST via cron-job.org. Vercel Cron triggers at 13:30 UTC (7pm IST) as fallback. To change frequency: update `NOTIFICATIONS_PER_DAY` in `api/send-push.js` and add/remove cron-job.org jobs.
 
 **Deep link:** Notifications with pending mistakes set `url` to `https://catalyst-app-six.vercel.app/#fix`. `App._handleDeepLink()` in `app.js` detects this hash on boot and calls `Practice.loadFixSession()` after a 400ms delay.
 
@@ -222,12 +277,79 @@ Supabase table: `push_subscriptions` — created by running `push-notifications-
 
 `landing.html` is a **standalone marketing page** — separate from the SPA (`index.html`). It has no Supabase connection, no auth, and no shared JS with the app. It is served at `/landing.html` as a static file (Vercel serves existing files before applying rewrites, so the SPA catch-all rewrite does not intercept it).
 
-The landing page uses GSAP + ScrollTrigger for scroll-pinned animations, a CSS-only iPhone mockup with Dynamic Island, dark/light theme toggle (persisted via `localStorage`), and a marquee strip. It links to `https://catalyst-app-six.vercel.app/` for all CTAs. No cache-busting version strings needed — the service worker does not cache `landing.html`.
+The landing page uses GSAP + ScrollTrigger for scroll-pinned animations, a CSS-only iPhone mockup with Dynamic Island, dark/light theme toggle (persisted via `localStorage`), testimonials section, and a marquee strip. It links to `https://catalyst-app-six.vercel.app/` for all CTAs. No cache-busting version strings needed — the service worker does not cache `landing.html`.
+
+**Note on conversion:** High-touch 1:1 onboarding (WhatsApp DM → walk through app → answer questions) converted Oviya to ₹489. Product tour walkthrough in the landing page is less effective than a single concrete demo — one question → one insight → one fix. Future landing page iteration should lead with this demo flow.
 
 ### Social / OG
 
 - OG image: `og-image.png` in repo root, served at `/og-image.png` (1200×630px)
 - OG + Twitter Card meta tags in `index.html` `<head>` — absolute URLs pointing to `https://catalyst-app-six.vercel.app`
+
+## Question Bank Status
+
+Total: ~794 questions
+
+| Section | Count | Notes |
+|---|---|---|
+| VARC — RC | 218 | 56 Easy, 94 Medium, 68 Hard |
+| VARC — VA | 207 | 45 Easy, 113 Medium, 49 Hard |
+| Quant — Arithmetic | 166 | 31 Easy, 72 Medium, 63 Hard |
+| Quant — Algebra | 49 | 5 Easy, 34 Medium, 10 Hard |
+| Quant — Geometry | 2 | Critically thin — needs expansion |
+| Quant — Modern Math | 5 | Critically thin |
+| Quant — Number System | 5 | Critically thin |
+| LRDI — DI | 69 | 13 Easy, 53 Medium, 3 Hard — **images missing** |
+| LRDI — LR | 53 | 13 Easy, 12 Medium, 28 Hard — some images missing |
+| LRDI — LR Based DI | 21 | 0 Easy, 3 Medium, 18 Hard |
+
+**Weakest area: Quant** — Geometry (2 questions), Modern Math (5), Number System (5) are nearly empty. This will hurt users filtering by these topics.
+
+**Source:** Cracku free PDF resources. Copyright consideration at scale — review before aggressive distribution.
+
+## Product Roadmap
+
+### Priority 1 — Fix before next outreach push
+1. Fix analytics bug (events not logging) — HIGH
+2. Upload DI set images for all ~50 affected sets — HIGH
+
+### Priority 2 — After 10 paying users
+3. Razorpay payment integration — manual UPI doesn't scale past ~20 users
+4. Custom domain — `catalyst-app-six.vercel.app` is not shareable in outreach posts
+5. Daily DPP + AI Roadmap feature:
+   - Onboarding diagnostic (10 questions across topics)
+   - Identifies weak areas from first session
+   - Generates personalized daily DPP from question bank
+   - Adapts based on performance and mistake patterns
+   - Streak counter + roadmap showing progress till CAT date
+6. Leaderboard — mistake fix rate ranking among all users (motivates competitive aspirants)
+
+### Priority 3 — CATalyst Max (after ₹25k revenue)
+DPP PDF upload → Claude API vision extraction pipeline:
+- PDF → page images → Claude API (claude-sonnet with vision) → structured JSON
+- Extracts: question, options, answer, solution, images/diagrams
+- Confirmation screen before questions enter practice pool (non-negotiable)
+- AI generates solutions when DPP has none
+- Handles MCQ, TITA, Set type, image-based questions
+- `question_assets` table for diagrams/charts with `storage_url` + `position` metadata
+- 30 PDF / 25 page per-user limit (750 pages max = ₹187 API cost worst case)
+- ₹999 till CAT pricing — 81% margin at worst case
+- **Requires:** Anthropic API key via console.anthropic.com (separate from Claude Pro subscription — pay-as-you-go, ~$0.003/page)
+- Build estimate: 8–10 days. Validate demand with waitlist on landing page before building.
+
+### Priority 4 — Growth
+- Instagram presence for CAT audience
+- Referral system — aspirants refer friends, both get extended trial
+- Mock test integration — import official CAT mock scores directly
+
+## Distribution Context
+
+**ICP (Ideal Customer Profile):** NOT beginners just starting prep (they don't feel the pain yet). YES: 3–8 months into prep, taking mocks regularly, frustrated by repeating same mistakes, already enrolled in a coaching, serious about CAT 2026.
+
+**Wrong channels:** General WhatsApp/Telegram groups skew toward beginners.
+**Right channels:** r/CATprep Reddit, iQuanta Facebook group, CAT 2025 repeaters communities, mid-prep WhatsApp groups, Siddhant's CAT Unfiltered community (revisit August when prep gets serious).
+
+**100+ DMs sent → 15–18 replies → 3 trial signups → 1 paid.** Conversion bottleneck is not product quality — it's reaching the right audience at the right prep stage.
 
 ## Deploy Discipline
 
@@ -237,7 +359,7 @@ The landing page uses GSAP + ScrollTrigger for scroll-pinned animations, a CSS-o
 npx serve .   # serves on localhost:3000 → uses dev Supabase
 ```
 
-Only run `vercel --prod` after confirming the feature works locally. Deploying untested changes to prod pollutes real analytics and affects real users.
+Only run `vercel --prod` after confirming the feature works locally.
 
 **Cache busting:** JS files are loaded with `?v=N` query strings (e.g. `js/practice.js?v=2`). Increment `N` across all script tags in `index.html` whenever deploying a breaking JS change — this forces browsers to fetch fresh files instead of serving a stale cached version.
 
@@ -254,19 +376,5 @@ Only run `vercel --prod` after confirming the feature works locally. Deploying u
 - `api/send-push.js` — Vercel serverless function (CommonJS) that sends push notifications. Called by Vercel Cron and by cron-job.org (4×/day). Requires env vars: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`.
 - `push-notifications-setup.sql` — Run once in prod Supabase SQL Editor to create `push_subscriptions` table + RLS policies
 - `migrate-to-prod.js` — Copies questions + sets from dev Supabase → prod via UPSERT (safe to re-run). Requires service-role keys passed as env vars: `DEV_SERVICE_KEY=xxx PROD_SERVICE_KEY=yyy node migrate-to-prod.js`
-
-## Current Business Context
-
-- Builder: Sahil Solankey, CAT 2026 aspirant, solo founder
-- Status: Live at `https://catalyst-app-six.vercel.app`, connected to prod Supabase
-- Pricing: two plans — **₹99/month** or **₹489 one-time** (till CAT 2026). Both are founder's pricing, locked for first 20 users. UPI `7080442040@pthdfc` (tap-to-pay link + copy button in upgrade modal), activation via WhatsApp `+91 70804 42040`
-- Question bank: 794 questions + 145 sets (Quant, LRDI, VARC) migrated from dev to prod Supabase
-- Trial: 3 days free for all new signups
-- Do NOT suggest new features until we have paying users
-- Do NOT change the core Fix Mode loop — it is the product
-
-## Current Priorities (in order)
-1. Outreach to get first 10 users (CAT WhatsApp/Telegram groups, Reddit r/CATPrep)
-2. Fix any production bugs reported by users
-3. Set up proper UPI payment automation
-4. Custom domain + Resend SMTP (so password reset emails don't go to spam)
+- `CATalyst_Max_Update.md` — Full technical + business plan for the DPP upload / Max tier feature
+- `CATalyst Design System/` — Design tokens, component previews, and UI kit reference (standalone HTML previews, no build required)
