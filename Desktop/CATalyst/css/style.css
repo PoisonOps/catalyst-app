@@ -4059,6 +4059,19 @@ body {
   transition: background 0.2s, border-color 0.2s;
 }
 
+/* A sticky passage is pinned on top (z-index) while the options scroll past
+   beneath it. The wrong/correct-state tints above have higher specificity than
+   .passage-context.is-sticky, so they were replacing its opaque background with
+   a near-transparent one — letting the options show through and overlap the
+   passage. Re-assert an opaque base here (tint composited over it) so the pinned
+   passage always hides what scrolls behind it. */
+.question-card.wrong-state .passage-context.is-sticky {
+  background: linear-gradient(rgba(244, 76, 96, 0.06), rgba(244, 76, 96, 0.06)), #111827;
+}
+.question-card.correct-state .passage-context.is-sticky {
+  background: linear-gradient(rgba(62, 207, 122, 0.05), rgba(62, 207, 122, 0.05)), #111827;
+}
+
 /* ── Fix Mode Phase 1 (red accent) ─────────────────────────── */
 /* Applied to #practice-area. Overrides accent-colored elements */
 /* Fix Mode P1 banner strip */
