@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 CATalyst is a **mistake-fixing system** for CAT exam aspirants — not a practice app. The core loop is: Solve → Realize → Diagnose → Fix → Reinforce → Return. Every UI and data decision is driven by the "Mistake Pressure System": make mistakes visible, show the mark cost, force acknowledgment, push the user to fix immediately.
 
-**New positioning (updated):** "Keep using iQuanta. Keep using Bodhee. But when you get something wrong — bring it here. CATalyst catches your mistake pattern and forces you to fix it before it becomes a CAT day habit." This removes the question quality trust objection and positions CATalyst as infrastructure on top of coaching — not a competitor.
+**Positioning (v2 pivot, June 2026):** CATalyst is becoming a **coaching-replacement system for self-study CAT aspirants** — it interviews you, builds your personal roadmap, gives you adaptive daily practice from real CAT questions, fixes your mistakes, and adjusts every week. The core insight from field testing: the Fix Mode loop only works if CATalyst is where the user practices, and coached users will never make it their practice home. So we build for the people who have no practice home. The Fix Mode loop is unchanged — it remains the core product mechanism.
+
+The full pivot spec lives in `CATalyst_Max_v2_Plan.md` — read it before any product or roadmap decision. **Build starts only after the first MVP Dev client (locked decision).** The earlier "infrastructure on top of coaching / keep using iQuanta" positioning is retired — coached aspirants never stuck (their portal is their practice home; a second app loses to sunk cost every time).
 
 ## Running the App
 
@@ -26,29 +28,39 @@ There are no lint, test, or compile steps.
 - **Deployments:** 20+ Vercel deployments, 60+ commits
 - **Users:** 3 trial signups, 1 paying user (Oviya — ₹489 till CAT)
 - **Fix Mode completions:** confirmed by at least 3 users (Hitarth, Krishna, one other)
-- **Key contacts:** Hitarth (most engaged, suggested ₹449 bundle), Shirin (converting ~June 13), Siddhant (99.85%ile, founder of CAT Unfiltered with 400 signups — said "100000% IT WILL HELP", revisit August)
+- **Key contacts:** Hitarth (most engaged, suggested ₹449 bundle), Shirin (converting ~June 13), Siddhant (99.85%ile, founder of CAT Unfiltered, 400 signups / 32 paying in 6 days — validated the concept strongly, but his community is early-stage aspirants; revisit August), Prakhar (warm lead, on Rodha portal — v1 didn't fit his workflow)
 - **Revenue:** ₹489 (1 paying user). Target: ₹1L MRR by month 5–6.
 - **Question bank:** ~794 questions (see Question Bank Status below)
 
+**Field-test learnings (May 20 – June 11, 2026) — the evidence behind the v2 pivot:**
+- 100+ DMs → 15–18 replies → 3 trials → 1 paid. 95% of feedback was positive; ~0% of usage followed. Compliments ≠ conversions ≠ retention.
+- Oviya converted after a 45-minute personal VARC guidance conversation — she bought trust in Sahil, not the product, and hasn't used CATalyst since ("coaching material comes first").
+- Coached aspirants don't solve on CATalyst → no mistakes logged → Fix Mode never triggers → loop never starts.
+- Nobody manually logs mistakes from another platform. Max v1 (PDF upload) premise was wrong — coaching DPPs live inside portals, not PDFs. **Scrapped.**
+
 ## Pricing
 
-- First 20 users locked price: ₹99/month OR ₹489 till CAT (190 days remaining). 19 slots remaining.
-- After 20 users: pricing TBD (higher).
-- ₹99/month is kept intentionally alongside the bundle — ₹99×6 = ₹594 > ₹489, so the math nudges users toward upfront payment.
-- Payment: manual UPI `7080442040@pthdfc` via WhatsApp `+91 70804 42040`. Razorpay integration is a pending priority (doesn't scale past 20 users).
+**Current (live):**
+- First 20 users locked price: ₹99/month OR ₹489 till CAT. 19 slots remaining. Honored for existing users after the v2 launch.
+- Payment: manual UPI `7080442040@pthdfc` via WhatsApp `+91 70804 42040`. Razorpay integration is part of the Max v2 build (manual UPI doesn't scale past 20 users).
 - **Trial duration: 7 days** (`TRIAL_DAYS` in `db.js` — verify in code and align with any copy that says 3 days).
 
-### Tier Structure (planned)
+### Tier Structure (Max v2 — locked)
 
-| | Free Trial | Pro | Max |
-|---|---|---|---|
-| Duration | 7 days | Till CAT | Till CAT |
-| Price | ₹0 | ₹489 | ₹999 |
-| Our 800+ Questions | 50 | ✅ All | ✅ All |
-| DPP PDF Upload | ❌ | ❌ | ✅ Up to 30 PDFs |
-| AI Generated Solutions | ❌ | ✅ | ✅ |
-| Fix Mode | ✅ | ✅ | ✅ |
-| Push Notifications | ✅ | ✅ | ✅ |
+| | Free | ₹99 Roadmap Week | Pro ₹489/CAT | Max ₹999/CAT |
+|---|---|---|---|---|
+| Question bank | Browse sample | Full (7 days) | Full | Full |
+| Fix Mode + Error Log | Demo | ✅ | ✅ | ✅ |
+| Counselling + AI Roadmap | ❌ | ✅ (1 week) | ❌ | ✅ till CAT |
+| Adaptive daily DPPs | ❌ | ✅ (1 week) | ❌ | ✅ |
+| Weekly AI reviews | ❌ | ❌ | ❌ | ✅ |
+| Tracker/streaks/graphs | ❌ | Basic | Basic | Full |
+| Cohort/accountability | ❌ | ❌ | ❌ | ✅ |
+
+- **₹99 paid entry, no free AI** — user pays before any AI runs; payment is the seriousness filter, and every ₹99 trial is profitable (~58% margin; Max ~78%+).
+- ₹99 is credited toward Max ("Upgrade for ₹900"). Day 7 = upgrade wall: roadmap + adaptive DPPs continue only on Max.
+- Pro stays for question-bank-only users; Max is the flagship.
+- Marketing anchor: **"Coaching-level structure. ₹999 till CAT."** vs ₹15–30k coaching.
 
 ## Active Bugs
 
@@ -305,51 +317,80 @@ Total: ~794 questions
 
 **Weakest area: Quant** — Geometry (2 questions), Modern Math (5), Number System (5) are nearly empty. This will hurt users filtering by these topics.
 
-**Source:** Cracku free PDF resources. Copyright consideration at scale — review before aggressive distribution.
+**Source:** Cracku free PDF resources. Copyright consideration at scale — shift toward PYQs + original/licensed questions as revenue grows.
+
+### Max v2 Launch Bank Strategy
+
+| Source | Count | Status |
+|---|---|---|
+| CAT PYQs 2015–2024 (official) | ~660 | To extract + tag |
+| Existing CATalyst bank | ~794 | Live (Quant thin: 226) |
+| **Launch total** | **~1,450 real questions** | Sufficient — do not delay launch for 3,000 |
+
+- **PYQs are the trust killer-app** — "Practice on real CAT questions from the last 10 years" ends the question-quality objection permanently.
+- **No AI-generated questions, ever** (locked decision). AI selects and sequences; humans authored.
+- Tagging schema (every question): `year · subject · topic · subtopic · difficulty · question_type (MCQ/TITA/Set) · CAT-frequency-weight · trap_type`
+- One-time PYQ trend analysis of 10 years of papers → topic frequency weights stored as data, used by daily DPP selection. This is pattern intelligence — **never claim prediction**.
+- Growth path: 1,450 → 3,000+ over year one. Quant expansion first (Geometry/Number System are embarrassing — fix early).
+- Tagging accuracy is a product-death risk: bad tags = random-feeling DPPs. Spot-check 10% manually; beta feedback loop.
 
 ## Product Roadmap
 
-### Priority 1 — Fix before next outreach push
-1. Fix analytics bug (events not logging) — HIGH
-2. Upload DI set images for all ~50 affected sets — HIGH
+The roadmap is now defined by **CATalyst Max v2** (`CATalyst_Max_v2_Plan.md`). Max v1 (DPP PDF upload → Claude vision extraction) is **SCRAPPED** — coaching portals don't give PDFs; the premise was invalid.
 
-### Priority 2 — After 10 paying users
-3. Razorpay payment integration — manual UPI doesn't scale past ~20 users
-4. Custom domain — `catalyst-app-six.vercel.app` is not shareable in outreach posts
-5. Daily DPP + AI Roadmap feature:
-   - Onboarding diagnostic (10 questions across topics)
-   - Identifies weak areas from first session
-   - Generates personalized daily DPP from question bank
-   - Adapts based on performance and mistake patterns
-   - Streak counter + roadmap showing progress till CAT date
-6. Leaderboard — mistake fix rate ranking among all users (motivates competitive aspirants)
+### Pre-build (zero-cost, can start now)
+1. Landing page: "CATalyst Max — Coming Soon" + waitlist email capture
+2. Draft counselling interview script on paper
+3. Identify PYQ source (clean 10-year papers + solutions)
+4. Sketch roadmap weekly-view UI on paper
+5. Fix analytics bug (events not logging) — still HIGH; we're blind on conversion data
+6. Upload DI set images for ~50 affected sets — still HIGH
 
-### Priority 3 — CATalyst Max (after ₹25k revenue)
-DPP PDF upload → Claude API vision extraction pipeline:
-- PDF → page images → Claude API (claude-sonnet with vision) → structured JSON
-- Extracts: question, options, answer, solution, images/diagrams
-- Confirmation screen before questions enter practice pool (non-negotiable)
-- AI generates solutions when DPP has none
-- Handles MCQ, TITA, Set type, image-based questions
-- `question_assets` table for diagrams/charts with `storage_url` + `position` metadata
-- 30 PDF / 25 page per-user limit (750 pages max = ₹187 API cost worst case)
-- ₹999 till CAT pricing — 81% margin at worst case
-- **Requires:** Anthropic API key via console.anthropic.com (separate from Claude Pro subscription — pay-as-you-go, ~$0.003/page)
-- Build estimate: 8–10 days. Validate demand with waitlist on landing page before building.
+### Max v2 build (5–7 weeks solo — **starts only after first MVP Dev client**)
 
-### Priority 4 — Growth
-- Instagram presence for CAT audience
-- Referral system — aspirants refer friends, both get extended trial
-- Mock test integration — import official CAT mock scores directly
+The product: counselling interview (chat UI, ~10 min, mentor tone) → User Profile → AI-generated weekly roadmap (every block has a *because*) → adaptive daily DPPs ("Today: 15 questions · ~40 min", zero decisions required) → Fix Mode after every session (unchanged) → weekly AI review every Sunday → day-7 upgrade wall to Max.
+
+**Architecture principle: AI thinks once; logic repeats daily.** AI runs at onboarding (interview + profile), roadmap generation, and weekly adjustment only. Daily DPP selection is a weighted database query (roadmap priority × mistake history × difficulty adaptation) — near-zero recurring cost (~₹40 one-time + ~₹10/month per user).
+
+Build order:
+1. **Week 1–2:** PYQ extraction + tagging (660 Qs — the grind; gates everything, start first)
+2. **Week 2–3:** Counselling chat UI + profile schema + roadmap generator (roadmap quality IS the product — budget 15–20 prompt iterations)
+3. **Week 4:** Daily DPP engine (logic-based selection) + daily loop integration
+4. **Week 5:** Tracker/streaks/graphs, weekly review generation, Razorpay (₹99 + ₹999 flows, credit logic), upgrade wall
+5. **Week 6:** Beta onboarding (10 self-study aspirants, free Max, in exchange for tracked data + testimonials)
+6. **Week 7:** Polish + public launch prep
+
+New Supabase tables: `user_profiles` · `roadmaps` · `roadmap_weeks` · `daily_dpps` · `dpp_attempts` · `streaks` · `weekly_reviews` · `payments`
+
+Total cash to launched product: < ₹8,000 (Claude API dev testing ₹2–4k, beta ₹1–1.5k, domain catalystedu.in ₹700/yr, Razorpay free/2%, Vercel + Supabase free tier).
+
+Also planned: custom domain, accountability layer (batch completion %, Telegram group, streak leaderboard — mostly community ops, minimal code).
+
+### The two quality risks code can't solve
+1. **Roadmap pedagogical soundness** (FATAL if mediocre) — mitigate with Sahil's CAT knowledge + beta pressure-testing every generated roadmap
+2. **Tagging accuracy** — bad tags = random-feeling DPPs = product death; 10% manual spot-checks
+
+### Locked decisions (do not relitigate)
+1. Max v1 (PDF upload) scrapped. 2. ICP = self-study aspirants; coached users are bonus. 3. No AI-generated questions, ever. 4. AI thinks once, logic repeats daily. 5. ₹99 paid entry (credited), no free AI. 6. No ads until 20+ paying users + testimonials. 7. Launch bank = ~1,450 real questions. 8. Roadmap UI = weekly view, never a 190-day wall. 9. Build starts only after first MVP Dev client. 10. Fix Mode loop unchanged.
 
 ## Distribution Context
 
-**ICP (Ideal Customer Profile):** NOT beginners just starting prep (they don't feel the pain yet). YES: 3–8 months into prep, taking mocks regularly, frustrated by repeating same mistakes, already enrolled in a coaching, serious about CAT 2026.
+**ICP (locked, v2):** Self-study CAT aspirant. Serious about CAT 2026. No coaching (cost, distance, or choice). Currently cobbling together Rodha YouTube + free PDFs + random advice. Deepest pain: *"Am I doing this right? What should I do today?"* — anxiety, zero structure, zero feedback, isolation. **Secondary (bonus only):** under-coached aspirants (cheap recorded course, no guidance) and droppers re-attempting without re-paying. The old ICP (coached, mock-taking aspirants) is retired — they never stuck.
 
-**Wrong channels:** General WhatsApp/Telegram groups skew toward beginners.
-**Right channels:** r/CATprep Reddit, iQuanta Facebook group, CAT 2025 repeaters communities, mid-prep WhatsApp groups, Siddhant's CAT Unfiltered community (revisit August when prep gets serious).
+**Market sizing (honest):** ~3 lakh CAT takers/year, ~1–1.5 lakh self-studiers. Season-one realistic: 300–700 users. Strong bootstrap business, not a unicorn.
 
-**100+ DMs sent → 15–18 replies → 3 trial signups → 1 paid.** Conversion bottleneck is not product quality — it's reaching the right audience at the right prep stage.
+**Channel truth: this product's channel is NOT DMs.** The 100-DM experiment (→ 15–18 replies → 3 trials → 1 paid) proved DMs don't scale trust. v2 sells through content + founder presence where self-studiers gather, in priority order:
+1. **Reddit r/CATprep** — "coaching or self-study?" asked daily; genuine long-form answers + founder story
+2. **Quora** — same questions, evergreen, compounds for months
+3. **Telegram self-study groups** — daily helpful presence, occasional proof drops
+4. **YouTube comments** (Rodha, Bodhee, free-content videos) — the literal gathering place of the ICP
+5. **Instagram @catalyst page** — NOT acquisition; the credibility check. 15–20 proof posts, 2/week. An empty page kills conversions.
+
+**Hard rules:** No paid ads until 20+ paying users + testimonials + known funnel conversion. Founder-as-face is text-first, not video-first. The proof engine is the beta: 10 self-study aspirants on free Max → real improvement graphs after 6–8 weeks — those artifacts ARE the marketing.
+
+**Timing:** June–September is the coaching-decision window. Beta by August + Siddhant's CAT Unfiltered opening in August = launch into peak demand.
+
+**Distribution is the entire risk. The product stopped being the bottleneck weeks ago.**
 
 ## Deploy Discipline
 
@@ -376,5 +417,6 @@ Only run `vercel --prod` after confirming the feature works locally.
 - `api/send-push.js` — Vercel serverless function (CommonJS) that sends push notifications. Called by Vercel Cron and by cron-job.org (4×/day). Requires env vars: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`.
 - `push-notifications-setup.sql` — Run once in prod Supabase SQL Editor to create `push_subscriptions` table + RLS policies
 - `migrate-to-prod.js` — Copies questions + sets from dev Supabase → prod via UPSERT (safe to re-run). Requires service-role keys passed as env vars: `DEV_SERVICE_KEY=xxx PROD_SERVICE_KEY=yyy node migrate-to-prod.js`
-- `CATalyst_Max_Update.md` — Full technical + business plan for the DPP upload / Max tier feature
+- `CATalyst_Max_v2_Plan.md` — **The current product plan.** Full spec for the Max v2 pivot (coaching replacement for self-studiers): problem evidence, product journey, question bank strategy, build plan, costs, pricing, marketing, locked decisions. Read before any product or roadmap decision.
+- `CATalyst_Max_Update.md` — SUPERSEDED. Max v1 (DPP PDF upload) plan — scrapped; kept for historical context only
 - `CATalyst Design System/` — Design tokens, component previews, and UI kit reference (standalone HTML previews, no build required)
