@@ -95,10 +95,37 @@ body::before{
 }
 
 /* ══════════════════════════════════════
+   ANNOUNCE BAR
+══════════════════════════════════════ */
+#announce{
+  position:fixed;top:0;left:0;right:0;z-index:1001;height:36px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:0 14px;
+  background:linear-gradient(90deg,rgba(245,158,11,.14),rgba(245,158,11,.05) 50%,rgba(245,158,11,.14)),rgba(7,7,12,.92);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border-bottom:1px solid var(--cat-amber-border);
+  font-size:12px;color:var(--fg-2);
+  white-space:nowrap;overflow:hidden;
+  transition:background 180ms;
+}
+#announce:hover{background:linear-gradient(90deg,rgba(245,158,11,.20),rgba(245,158,11,.09) 50%,rgba(245,158,11,.20)),rgba(7,7,12,.92)}
+#announce strong{color:var(--cat-amber);font-weight:800}
+#announce .an-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--cat-amber);flex-shrink:0;
+  animation:bk 2s ease-in-out infinite;box-shadow:0 0 6px rgba(245,158,11,.7);
+}
+#announce .an-cta{color:var(--cat-amber);font-weight:700;flex-shrink:0}
+#announce:hover .an-cta{color:var(--cat-amber-soft)}
+.an-x{display:none}
+@media(min-width:640px){.an-x{display:inline}}
+section[id]{scroll-margin-top:104px}
+
+/* ══════════════════════════════════════
    NAV
 ══════════════════════════════════════ */
 nav{
-  position:fixed;top:0;left:0;right:0;z-index:1000;
+  position:fixed;top:36px;left:0;right:0;z-index:1000;
   height:58px;display:flex;align-items:center;padding:0 20px;
   background:rgba(7,7,12,.82);
   backdrop-filter:blur(24px) saturate(200%);
@@ -123,7 +150,7 @@ nav{
    HERO
 ══════════════════════════════════════ */
 .hero{
-  min-height:100svh;padding:88px 0 72px;
+  min-height:100svh;padding:124px 0 72px;
   display:flex;align-items:center;
   position:relative;overflow:hidden;
 }
@@ -1016,6 +1043,113 @@ nav{
 .mw-success-title{font-size:16px;font-weight:700;color:var(--fg-1);margin-bottom:6px}
 .mw-success-sub{font-size:13px;color:var(--fg-3);line-height:1.65}
 
+/* ── MAX JOURNEY DEMO (animated) ── */
+.mw-demo{margin-top:72px;position:relative;z-index:1}
+.mw-demo-label{
+  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--cat-amber);display:flex;align-items:center;gap:10px;margin-bottom:22px;
+}
+.mw-demo-label::before{content:'';width:20px;height:1.5px;background:var(--cat-amber);flex-shrink:0}
+.mwd-steps{display:none}
+@media(min-width:900px){
+  .mwd-steps{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    position:relative;align-items:center;margin-bottom:18px;height:12px;
+  }
+  .mwd-steps::before{
+    content:'';position:absolute;top:50%;left:12.5%;right:12.5%;height:2px;
+    background:var(--line-2);transform:translateY(-50%);border-radius:2px;
+  }
+  .mwd-line-fill{
+    position:absolute;top:50%;left:12.5%;height:2px;width:0;
+    background:linear-gradient(90deg,var(--cat-amber),var(--cat-amber-soft));
+    transform:translateY(-50%);border-radius:2px;
+    box-shadow:0 0 10px rgba(245,158,11,.55);
+  }
+  .mwd-dot{
+    width:11px;height:11px;border-radius:50%;margin:0 auto;
+    background:var(--bg-3);border:2px solid var(--line-3);
+    position:relative;z-index:1;
+  }
+}
+.mwd-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:560px){.mwd-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.mwd-grid{grid-template-columns:repeat(4,1fr);gap:18px}}
+.mwd-card{
+  background:var(--bg-1);border:1px solid var(--line-2);border-radius:var(--r-lg);
+  padding:16px;
+}
+.mwd-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.mwd-num{
+  font-family:var(--f-m);font-size:10px;font-weight:700;color:var(--cat-amber);
+  background:var(--cat-amber-bg);border:1px solid var(--cat-amber-border);
+  padding:3px 7px;border-radius:var(--r-pill);flex-shrink:0;
+}
+.mwd-title{font-size:13px;font-weight:700;color:var(--fg-1)}
+.mwd-screen{
+  background:var(--bg-2);border:1px solid var(--line-1);border-radius:var(--r-md);
+  padding:12px;min-height:138px;display:flex;flex-direction:column;gap:8px;justify-content:center;
+}
+.mwd-anim{opacity:0}
+/* card 1 — chat */
+.mwd-bub{font-size:11px;line-height:1.5;padding:7px 10px;border-radius:10px;max-width:92%}
+.mwd-bub-ai{
+  background:var(--bg-3);border:1px solid var(--line-2);color:var(--fg-2);
+  border-bottom-left-radius:3px;align-self:flex-start;
+}
+.mwd-bub-me{
+  background:var(--cat-amber-bg);border:1px solid var(--cat-amber-border);color:var(--cat-amber-soft);
+  border-bottom-right-radius:3px;align-self:flex-end;
+}
+.mwd-typing{
+  display:flex;gap:3px;padding:8px 10px;align-self:flex-start;
+  background:var(--bg-3);border:1px solid var(--line-2);
+  border-radius:10px;border-bottom-left-radius:3px;
+}
+.mwd-typing span{width:4px;height:4px;border-radius:50%;background:var(--fg-3);animation:mwdTy 1s ease-in-out infinite}
+.mwd-typing span:nth-child(2){animation-delay:.15s}
+.mwd-typing span:nth-child(3){animation-delay:.3s}
+@keyframes mwdTy{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}
+/* card 2 — roadmap */
+.mwd-wk{font-family:var(--f-m);font-size:10px;color:var(--cat-amber);letter-spacing:.08em;text-transform:uppercase}
+.mwd-rrow{
+  display:flex;align-items:center;gap:8px;font-size:11px;color:var(--fg-2);
+  background:var(--bg-3);border:1px solid var(--line-1);border-radius:8px;padding:6px 9px;
+}
+.mwd-rdot{width:6px;height:6px;border-radius:50%;background:var(--cat-amber);flex-shrink:0}
+.mwd-why{font-size:10px;color:var(--fg-4);font-style:italic;line-height:1.45}
+/* card 3 — daily plan */
+.mwd-today{font-size:12px;font-weight:700;color:var(--fg-1)}
+.mwd-pbar{height:6px;background:var(--bg-3);border-radius:var(--r-pill);overflow:hidden}
+.mwd-pfill{
+  height:100%;width:0;border-radius:var(--r-pill);
+  background:linear-gradient(90deg,var(--cat-amber),var(--cat-amber-soft));
+}
+.mwd-trow{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--fg-3)}
+.mwd-tick{
+  width:15px;height:15px;border-radius:50%;flex-shrink:0;font-size:8px;
+  background:var(--cat-green-bg);border:1px solid var(--cat-green-border);color:var(--cat-green);
+  display:flex;align-items:center;justify-content:center;
+}
+.mwd-tick-fix{background:var(--cat-amber-bg);border-color:var(--cat-amber-border);color:var(--cat-amber)}
+/* card 4 — weekly review */
+.mwd-chart{display:flex;align-items:flex-end;gap:8px;height:64px;padding:0 4px}
+.mwd-bar{
+  flex:1;border-radius:5px 5px 2px 2px;transform-origin:bottom;
+  background:var(--bg-3);border:1px solid var(--line-2);
+}
+.mwd-bar.hot{
+  background:linear-gradient(180deg,var(--cat-amber-soft),var(--cat-amber));
+  border-color:var(--cat-amber-border);
+}
+.mwd-badge-up{
+  align-self:flex-start;display:inline-flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:700;color:var(--cat-green);
+  background:var(--cat-green-bg);border:1px solid var(--cat-green-border);
+  padding:3px 9px;border-radius:var(--r-pill);
+}
+.mw-demo-caption{margin-top:18px;font-size:12px;color:var(--fg-4);text-align:center}
+
 /* ══════════════════════════════════════
    FOOTER
 ══════════════════════════════════════ */
@@ -1040,6 +1174,13 @@ footer{
 </head>
 <body>
 <div id="sline"></div>
+
+<!-- ═══════ ANNOUNCE BAR ═══════ -->
+<a href="#max" id="announce">
+  <span class="an-dot"></span>
+  <span>Coming soon — <strong>CATalyst Max</strong><span class="an-x"> · CAT prep without coaching</span></span>
+  <span class="an-cta">Join the waitlist →</span>
+</a>
 
 <!-- ═══════ NAV ═══════ -->
 <nav class="z1">
@@ -1552,6 +1693,141 @@ footer{
   </div>
 </section>
 
+<!-- ═══════ MAX WAITLIST ═══════ -->
+<!--
+  SETUP (one-time, ~2 min):
+  Run this SQL in your PROD Supabase → SQL Editor:
+
+  CREATE TABLE IF NOT EXISTS waitlist (
+    id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    name       text        NOT NULL,
+    email      text        NOT NULL,
+    source     text        DEFAULT 'landing',
+    created_at timestamptz DEFAULT now()
+  );
+  ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "waitlist_insert" ON waitlist FOR INSERT WITH CHECK (true);
+  CREATE POLICY "waitlist_select" ON waitlist FOR SELECT USING (auth.role() = 'service_role');
+
+  Then view signups: Supabase dashboard → Table Editor → waitlist
+-->
+<section class="max-wait z1" id="max">
+  <div class="container">
+    <div class="mw-inner">
+
+      <!-- LEFT: copy -->
+      <div class="mw-left reveal">
+        <div class="mw-badge"><div class="mw-badge-dot"></div>Coming Soon · CATalyst Max</div>
+        <h2 class="mw-hl">
+          CAT prep without coaching.<br>
+          A system that knows you —<br>
+          <span class="mw-hl-accent">and what you should do today.</span>
+        </h2>
+        <p class="mw-sub">Max interviews you like a mentor, builds your personal weekly roadmap, and hands you a daily plan from <em>real</em> CAT questions. Every week it reviews your mistakes and adjusts the plan — so you never again wonder "am I doing this right?"</p>
+        <ul class="mw-bullets">
+          <li><div class="mw-bullet-check">✓</div>A 10-minute counselling interview → your personal weekly roadmap</li>
+          <li><div class="mw-bullet-check">✓</div>Adaptive daily practice built on real CAT questions from the last 10 years</li>
+          <li><div class="mw-bullet-check">✓</div>Weekly review that adjusts your plan — like a mentor who never forgets</li>
+        </ul>
+        <div class="mw-price-tag">Coaching-level structure · <strong>₹999</strong> till CAT 2026</div>
+      </div>
+
+      <!-- RIGHT: form card -->
+      <div class="mw-right reveal-right">
+        <div class="mw-card">
+          <div class="mw-card-title">Join the waitlist</div>
+          <p class="mw-card-sub">First 20 members get early access and beta pricing locked before launch.</p>
+
+          <form class="mw-form" id="max-wl-form" novalidate>
+            <!-- honeypot: hidden from humans, bots fill it -->
+            <input class="mw-hp" type="text" name="_hp" tabindex="-1" autocomplete="off" />
+            <input type="text"  name="name"  id="mw-name"  placeholder="Your name"     required autocomplete="name" />
+            <input type="email" name="email" id="mw-email" placeholder="Email address" required autocomplete="email" />
+            <button type="submit" class="mw-submit" id="mw-submit">Notify me when it launches →</button>
+          </form>
+
+          <div class="mw-success" id="mw-success">
+            <div class="mw-success-icon">🎯</div>
+            <div class="mw-success-title">You're on the list.</div>
+            <div class="mw-success-sub">We'll email you the moment Max is ready. You'll get first access and beta pricing — before anyone else.</div>
+          </div>
+
+          <div class="mw-note" id="mw-note">No spam. One email when Max launches.</div>
+          <div class="mw-count">
+            <div class="mw-count-dot"></div>
+            <span>Waitlist open · first <strong>20</strong> get beta pricing</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── ANIMATED JOURNEY DEMO ── -->
+    <div class="mw-demo">
+      <div class="mw-demo-label">What you get — on repeat, every week</div>
+
+      <div class="mwd-steps" aria-hidden="true">
+        <div class="mwd-line-fill" id="mwd-line"></div>
+        <div class="mwd-dot"></div>
+        <div class="mwd-dot"></div>
+        <div class="mwd-dot"></div>
+        <div class="mwd-dot"></div>
+      </div>
+
+      <div class="mwd-grid">
+
+        <div class="mwd-card">
+          <div class="mwd-head"><span class="mwd-num">01</span><span class="mwd-title">It interviews you</span></div>
+          <div class="mwd-screen">
+            <div class="mwd-bub mwd-bub-ai mwd-anim" id="mwd-bub1">How many hours can you give daily? Which topics scare you?</div>
+            <div class="mwd-typing mwd-anim" id="mwd-typing"><span></span><span></span><span></span></div>
+            <div class="mwd-bub mwd-bub-me mwd-anim" id="mwd-bub2">2–3 hrs. Arithmetic + RC.</div>
+          </div>
+        </div>
+
+        <div class="mwd-card">
+          <div class="mwd-head"><span class="mwd-num">02</span><span class="mwd-title">Builds your roadmap</span></div>
+          <div class="mwd-screen">
+            <div class="mwd-wk mwd-anim" id="mwd-wk">Week 1 · Arithmetic first</div>
+            <div class="mwd-rrow mwd-anim"><span class="mwd-rdot"></span>3 Arithmetic DPPs</div>
+            <div class="mwd-rrow mwd-anim"><span class="mwd-rdot"></span>2 RC sets</div>
+            <div class="mwd-rrow mwd-anim"><span class="mwd-rdot"></span>Mini-mock Sunday</div>
+            <div class="mwd-why mwd-anim" id="mwd-why">because: it costs you the most marks</div>
+          </div>
+        </div>
+
+        <div class="mwd-card">
+          <div class="mwd-head"><span class="mwd-num">03</span><span class="mwd-title">Plans every day</span></div>
+          <div class="mwd-screen">
+            <div class="mwd-today mwd-anim" id="mwd-today">Today · 15 questions · ~40 min</div>
+            <div class="mwd-pbar"><div class="mwd-pfill" id="mwd-pfill"></div></div>
+            <div class="mwd-trow mwd-anim"><span class="mwd-tick">✓</span>Solved 12 / 15</div>
+            <div class="mwd-trow mwd-anim"><span class="mwd-tick">✓</span>3 mistakes → Error Log</div>
+            <div class="mwd-trow mwd-anim"><span class="mwd-tick mwd-tick-fix">⚡</span>Fix Mode · 6 min</div>
+          </div>
+        </div>
+
+        <div class="mwd-card">
+          <div class="mwd-head"><span class="mwd-num">04</span><span class="mwd-title">Adjusts every week</span></div>
+          <div class="mwd-screen">
+            <div class="mwd-chart">
+              <div class="mwd-bar mwd-anim" style="height:34%"></div>
+              <div class="mwd-bar mwd-anim" style="height:48%"></div>
+              <div class="mwd-bar mwd-anim" style="height:61%"></div>
+              <div class="mwd-bar hot mwd-anim" style="height:84%"></div>
+            </div>
+            <div class="mwd-badge-up mwd-anim" id="mwd-badge">▲ Arithmetic 54% → 78%</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mw-demo-caption">This loop runs till CAT day — and it never forgets a week.</div>
+    </div>
+
+  </div>
+</section>
+
 <!-- ═══════ FINAL CTA ═══════ -->
 <section class="fcta z1">
   <div class="container">
@@ -1613,76 +1889,6 @@ footer{
   </div>
 </section>
 
-<!-- ═══════ MAX WAITLIST ═══════ -->
-<!--
-  SETUP (one-time, ~2 min):
-  Run this SQL in your PROD Supabase → SQL Editor:
-
-  CREATE TABLE IF NOT EXISTS waitlist (
-    id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-    name       text        NOT NULL,
-    email      text        NOT NULL,
-    source     text        DEFAULT 'landing',
-    created_at timestamptz DEFAULT now()
-  );
-  ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
-  CREATE POLICY "waitlist_insert" ON waitlist FOR INSERT WITH CHECK (true);
-  CREATE POLICY "waitlist_select" ON waitlist FOR SELECT USING (auth.role() = 'service_role');
-
-  Then view signups: Supabase dashboard → Table Editor → waitlist
--->
-<section class="max-wait z1" id="max">
-  <div class="container">
-    <div class="mw-inner">
-
-      <!-- LEFT: copy -->
-      <div class="mw-left reveal">
-        <div class="mw-badge"><div class="mw-badge-dot"></div>Coming Soon · CATalyst Max</div>
-        <h2 class="mw-hl">
-          Keep using iQuanta.<br>
-          Upload your DPPs here.<br>
-          <span class="mw-hl-accent">Never repeat a mistake again.</span>
-        </h2>
-        <p class="mw-sub">CATalyst Max works on <em>any</em> question, from any coaching. Upload your DPP as a PDF — AI extracts every question, you solve it, and Fix Mode runs on your mistakes. Not ours.</p>
-        <ul class="mw-bullets">
-          <li><div class="mw-bullet-check">✓</div>Upload iQuanta, TIME, IMS, Bodhee — any DPP</li>
-          <li><div class="mw-bullet-check">✓</div>AI extracts questions, options &amp; solutions automatically</li>
-          <li><div class="mw-bullet-check">✓</div>Fix Mode runs on your material, your mistakes</li>
-        </ul>
-        <div class="mw-price-tag">Early access · <strong>₹999</strong> till CAT 2026</div>
-      </div>
-
-      <!-- RIGHT: form card -->
-      <div class="mw-right reveal-right">
-        <div class="mw-card">
-          <div class="mw-card-title">Join the waitlist</div>
-          <p class="mw-card-sub">First 20 members get early access and beta pricing locked before launch.</p>
-
-          <form class="mw-form" id="max-wl-form" novalidate>
-            <!-- honeypot: hidden from humans, bots fill it -->
-            <input class="mw-hp" type="text" name="_hp" tabindex="-1" autocomplete="off" />
-            <input type="text"  name="name"  id="mw-name"  placeholder="Your name"     required autocomplete="name" />
-            <input type="email" name="email" id="mw-email" placeholder="Email address" required autocomplete="email" />
-            <button type="submit" class="mw-submit" id="mw-submit">Notify me when it launches →</button>
-          </form>
-
-          <div class="mw-success" id="mw-success">
-            <div class="mw-success-icon">🎯</div>
-            <div class="mw-success-title">You're on the list.</div>
-            <div class="mw-success-sub">We'll email you the moment Max is ready. You'll get first access and beta pricing — before anyone else.</div>
-          </div>
-
-          <div class="mw-note" id="mw-note">No spam. One email when Max launches.</div>
-          <div class="mw-count">
-            <div class="mw-count-dot"></div>
-            <span>Waitlist open · first <strong>20</strong> get beta pricing</span>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
 
 <!-- ═══════ FOOTER ═══════ -->
 <footer class="z1">
@@ -2016,6 +2222,75 @@ gsap.fromTo('.mw-right',
   { y: 36, opacity: 0 },
   { scrollTrigger: { trigger: '.mw-inner', start: 'top 82%', once: true }, y: 0, opacity: 1, duration: .8, ease: 'power3.out', delay: .12 }
 );
+
+/* Max journey demo — looping motion graphic */
+(function() {
+  const demo = document.querySelector('.mw-demo');
+  if (!demo) return;
+
+  const cards = gsap.utils.toArray('.mwd-card');
+  const dots  = gsap.utils.toArray('.mwd-dot');
+
+  // Reduced motion: show everything statically, no loop
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    gsap.set('.mwd-anim', { opacity: 1 });
+    gsap.set('#mwd-pfill', { width: '80%' });
+    gsap.set('#mwd-line', { width: '75%' });
+    return;
+  }
+
+  const ACT    = { borderColor: 'rgba(245,158,11,.40)', boxShadow: '0 0 0 1px rgba(245,158,11,.08), 0 14px 40px -12px rgba(245,158,11,.22)', duration: .45, ease: 'power2.out' };
+  const DEACT  = { borderColor: 'rgba(255,255,255,.10)', boxShadow: '0 0 0 rgba(0,0,0,0)', duration: .45, ease: 'power2.out' };
+  const DOT_ON = { background: '#F59E0B', borderColor: 'rgba(245,158,11,.7)', boxShadow: '0 0 10px rgba(245,158,11,.7)', duration: .3 };
+  const DOT_OFF= { background: '#1C1C28', borderColor: 'rgba(255,255,255,.18)', boxShadow: '0 0 0 rgba(0,0,0,0)', duration: .3 };
+
+  const tl = gsap.timeline({
+    repeat: -1, repeatDelay: 1.4,
+    defaults: { ease: 'power2.out' },
+    scrollTrigger: { trigger: '.mw-demo', start: 'top 82%' }
+  });
+
+  // STEP 1 — interview chat
+  tl.to(cards[0], ACT, 0)
+    .to(dots[0], DOT_ON, 0)
+    .fromTo('#mwd-bub1',   { opacity: 0, y: 8 },  { opacity: 1, y: 0, duration: .45 }, .15)
+    .fromTo('#mwd-typing', { opacity: 0 },        { opacity: 1, duration: .25 }, .85)
+    .to('#mwd-typing',     { opacity: 0, duration: .2 }, 2.0)
+    .fromTo('#mwd-bub2',   { opacity: 0, y: 8 },  { opacity: 1, y: 0, duration: .45 }, 2.1)
+
+  // STEP 2 — roadmap reveal
+    .to(cards[0], DEACT, 3.4)
+    .to(cards[1], ACT, 3.4)
+    .to(dots[1], DOT_ON, 3.4)
+    .to('#mwd-line', { width: '25%', duration: .5 }, 3.4)
+    .fromTo('#mwd-wk',   { opacity: 0 },          { opacity: 1, duration: .3 }, 3.6)
+    .fromTo('.mwd-rrow', { opacity: 0, x: -10 },  { opacity: 1, x: 0, duration: .35, stagger: .18 }, 3.75)
+    .fromTo('#mwd-why',  { opacity: 0 },          { opacity: 1, duration: .4 }, 4.5)
+
+  // STEP 3 — daily plan
+    .to(cards[1], DEACT, 5.9)
+    .to(cards[2], ACT, 5.9)
+    .to(dots[2], DOT_ON, 5.9)
+    .to('#mwd-line', { width: '50%', duration: .5 }, 5.9)
+    .fromTo('#mwd-today', { opacity: 0, y: 6 },   { opacity: 1, y: 0, duration: .35 }, 6.1)
+    .fromTo('#mwd-pfill', { width: 0 },           { width: '80%', duration: 1.5, ease: 'power1.inOut' }, 6.3)
+    .fromTo('.mwd-trow',  { opacity: 0, x: -8 },  { opacity: 1, x: 0, duration: .3, stagger: .25 }, 6.4)
+
+  // STEP 4 — weekly review
+    .to(cards[2], DEACT, 8.6)
+    .to(cards[3], ACT, 8.6)
+    .to(dots[3], DOT_ON, 8.6)
+    .to('#mwd-line', { width: '75%', duration: .5 }, 8.6)
+    .fromTo('.mwd-bar',   { scaleY: 0, opacity: 0, transformOrigin: 'center bottom' }, { scaleY: 1, opacity: 1, duration: .6, stagger: .12, ease: 'power3.out' }, 8.8)
+    .fromTo('#mwd-badge', { opacity: 0, scale: .7 }, { opacity: 1, scale: 1, duration: .5, ease: 'back.out(2)' }, 9.6)
+
+  // HOLD, then clean fade-out so the loop restarts smoothly
+    .to(cards[3], DEACT, 11.8)
+    .to(dots, DOT_OFF, 11.8)
+    .to('#mwd-line', { width: 0, duration: .45 }, 11.8)
+    .to('.mwd-anim', { opacity: 0, duration: .45 }, 11.8)
+    .to('#mwd-pfill', { width: 0, duration: .45 }, 11.8);
+})();
 
 /* Max waitlist form submission — writes directly to prod Supabase */
 (function() {
