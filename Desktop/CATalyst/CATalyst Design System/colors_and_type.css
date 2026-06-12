@@ -1,0 +1,219 @@
+/* =============================================================
+   CATalyst Design System — Foundations
+   Colors + Typography tokens for a mistake-correction product.
+
+   Philosophy: Pain (red) → Awareness → Action (blue) → Correction (green)
+   Default theme is DARK. Light mode tokens are provided via [data-theme="light"].
+   ============================================================= */
+
+/* ---------- Fonts ------------------------------------------------ */
+/* NOTE: original product font is unknown — these are FLAGGED SUBSTITUTIONS
+   from Google Fonts that closely match the vibe seen in screenshots.
+   - Display headlines ("You still have 26 mistakes to fix"): heavy / italic chunky display
+   - Body / UI: clean neutral grotesque
+   - Mono: timers, question counters ("Q 1 / 25", "0:29") */
+
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+:root {
+  /* ---------- CORE BRAND COLORS ---------- */
+  /* Semantic feelings: pain, action, correction, warning */
+  --cat-red:        #F44C60;  /* MISTAKES — wrong answers, urgency, pending errors */
+  --cat-red-soft:   #F86A7C;  /* lighter red, hover/active */
+  --cat-red-bg:     rgba(244, 76, 96, 0.10);  /* red surface wash */
+  --cat-red-border: rgba(244, 76, 96, 0.35);
+
+  --cat-blue:       #5B6CFF;  /* ACTIONS — primary CTAs, brand, progression */
+  --cat-blue-soft:  #7B89FF;
+  --cat-blue-bg:    rgba(91, 108, 255, 0.12);
+  --cat-blue-border:rgba(91, 108, 255, 0.40);
+
+  --cat-green:      #22C55E;  /* CORRECT — success, fixed, calm confirmation */
+  --cat-green-soft: #4ADE80;
+  --cat-green-bg:   rgba(34, 197, 94, 0.10);
+  --cat-green-border:rgba(34, 197, 94, 0.40);
+
+  --cat-amber:      #F59E0B;  /* WARNING — weak areas, lightning bolt logo, medium difficulty */
+  --cat-amber-soft: #FBBF24;
+  --cat-amber-bg:   rgba(245, 158, 11, 0.12);
+  --cat-amber-border:rgba(245, 158, 11, 0.40);
+
+  /* ---------- DARK THEME (DEFAULT) ---------- */
+  --bg-0:           #07070C;  /* page background, deepest */
+  --bg-1:           #0E0E16;  /* base surface */
+  --bg-2:           #15151F;  /* card surface */
+  --bg-3:           #1C1C28;  /* elevated surface, hover */
+  --bg-4:           #24243240; /* subtle wash overlay */
+
+  --line-1:         rgba(255, 255, 255, 0.06);  /* subtle hairline */
+  --line-2:         rgba(255, 255, 255, 0.10);  /* default border */
+  --line-3:         rgba(255, 255, 255, 0.18);  /* emphasized border */
+
+  --fg-1:           #FFFFFF;  /* primary text */
+  --fg-2:           rgba(255, 255, 255, 0.78);  /* secondary text */
+  --fg-3:           rgba(255, 255, 255, 0.56);  /* tertiary, labels */
+  --fg-4:           rgba(255, 255, 255, 0.36);  /* placeholder, disabled */
+
+  /* Glow shadows — used on hero/CTA elements to amplify emotional weight */
+  --glow-red:       0 0 0 1px rgba(244, 76, 96, 0.30), 0 8px 32px -8px rgba(244, 76, 96, 0.45);
+  --glow-blue:      0 0 0 1px rgba(91, 108, 255, 0.30), 0 8px 32px -8px rgba(91, 108, 255, 0.55);
+  --glow-green:     0 0 0 1px rgba(34, 197, 94, 0.30), 0 8px 32px -8px rgba(34, 197, 94, 0.45);
+
+  /* Soft elevation shadows for cards */
+  --shadow-sm:      0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-md:      0 4px 16px -4px rgba(0, 0, 0, 0.50);
+  --shadow-lg:      0 16px 48px -8px rgba(0, 0, 0, 0.60);
+
+  /* ---------- RADII ---------- */
+  --radius-xs:      6px;   /* tags, small chips */
+  --radius-sm:      10px;  /* inputs, small buttons */
+  --radius-md:      14px;  /* cards, buttons */
+  --radius-lg:      20px;  /* large cards, hero blocks */
+  --radius-xl:      28px;  /* big hero, full-bleed surfaces */
+  --radius-pill:    999px; /* pills, filter chips */
+
+  /* ---------- SPACING ---------- */
+  --space-1:        4px;
+  --space-2:        8px;
+  --space-3:        12px;
+  --space-4:        16px;
+  --space-5:        20px;
+  --space-6:        24px;
+  --space-8:        32px;
+  --space-10:       40px;
+  --space-12:       48px;
+  --space-16:       64px;
+
+  /* ---------- TYPOGRAPHY FAMILIES ---------- */
+  --font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --font-body:    "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* ---------- TYPOGRAPHY SEMANTIC ---------- */
+  /* Display headlines feel emotional, condensed, italic-leaning — meant
+     to confront the user about their mistakes. Big, heavy, expressive. */
+  --type-display-1-size:   56px;
+  --type-display-1-line:   1.02;
+  --type-display-1-weight: 800;
+  --type-display-1-tracking: -0.02em;
+
+  --type-display-2-size:   40px;
+  --type-display-2-line:   1.05;
+  --type-display-2-weight: 800;
+  --type-display-2-tracking: -0.02em;
+
+  --type-h1-size:   30px;
+  --type-h1-line:   1.15;
+  --type-h1-weight: 700;
+  --type-h1-tracking: -0.015em;
+
+  --type-h2-size:   24px;
+  --type-h2-line:   1.2;
+  --type-h2-weight: 700;
+  --type-h2-tracking: -0.01em;
+
+  --type-h3-size:   18px;
+  --type-h3-line:   1.3;
+  --type-h3-weight: 700;
+  --type-h3-tracking: -0.005em;
+
+  --type-body-size: 16px;
+  --type-body-line: 1.55;
+  --type-body-weight: 400;
+
+  --type-body-sm-size: 14px;
+  --type-body-sm-line: 1.5;
+  --type-body-sm-weight: 400;
+
+  --type-label-size: 12px;
+  --type-label-line: 1.2;
+  --type-label-weight: 600;
+  --type-label-tracking: 0.06em;
+  --type-label-case: uppercase;
+
+  --type-mono-size: 14px;
+  --type-mono-line: 1.4;
+  --type-mono-weight: 500;
+
+  /* ---------- MOTION ---------- */
+  /* Fast, minimal, purposeful — most transitions are sub-200ms */
+  --ease-out:       cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out:    cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast:       120ms;
+  --dur-base:       180ms;
+  --dur-slow:       320ms;
+}
+
+/* Light mode overrides */
+[data-theme="light"] {
+  --bg-0:           #F6F6FA;
+  --bg-1:           #FFFFFF;
+  --bg-2:           #F2F2F7;
+  --bg-3:           #E9E9F0;
+  --bg-4:           #DCDCE540;
+
+  --line-1:         rgba(0, 0, 0, 0.06);
+  --line-2:         rgba(0, 0, 0, 0.10);
+  --line-3:         rgba(0, 0, 0, 0.18);
+
+  --fg-1:           #0E0E16;
+  --fg-2:           rgba(14, 14, 22, 0.78);
+  --fg-3:           rgba(14, 14, 22, 0.58);
+  --fg-4:           rgba(14, 14, 22, 0.36);
+
+  --cat-red-bg:     rgba(255, 77, 77, 0.08);
+  --cat-blue-bg:    rgba(91, 108, 255, 0.08);
+  --cat-green-bg:   rgba(34, 197, 94, 0.10);
+  --cat-amber-bg:   rgba(245, 158, 11, 0.10);
+}
+
+/* ---------- TYPOGRAPHY CLASSES ---------- */
+.t-display-1 {
+  font-family: var(--font-display);
+  font-size: var(--type-display-1-size);
+  line-height: var(--type-display-1-line);
+  font-weight: var(--type-display-1-weight);
+  letter-spacing: var(--type-display-1-tracking);
+}
+.t-display-2 {
+  font-family: var(--font-display);
+  font-size: var(--type-display-2-size);
+  line-height: var(--type-display-2-line);
+  font-weight: var(--type-display-2-weight);
+  letter-spacing: var(--type-display-2-tracking);
+}
+.t-h1 { font-family: var(--font-body); font-size: var(--type-h1-size); line-height: var(--type-h1-line); font-weight: var(--type-h1-weight); letter-spacing: var(--type-h1-tracking); }
+.t-h2 { font-family: var(--font-body); font-size: var(--type-h2-size); line-height: var(--type-h2-line); font-weight: var(--type-h2-weight); letter-spacing: var(--type-h2-tracking); }
+.t-h3 { font-family: var(--font-body); font-size: var(--type-h3-size); line-height: var(--type-h3-line); font-weight: var(--type-h3-weight); letter-spacing: var(--type-h3-tracking); }
+.t-body  { font-family: var(--font-body); font-size: var(--type-body-size); line-height: var(--type-body-line); font-weight: var(--type-body-weight); }
+.t-body-sm { font-family: var(--font-body); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-line); font-weight: var(--type-body-sm-weight); }
+.t-label { font-family: var(--font-body); font-size: var(--type-label-size); line-height: var(--type-label-line); font-weight: var(--type-label-weight); letter-spacing: var(--type-label-tracking); text-transform: var(--type-label-case); }
+.t-mono  { font-family: var(--font-mono); font-size: var(--type-mono-size); line-height: var(--type-mono-line); font-weight: var(--type-mono-weight); font-variant-numeric: tabular-nums; }
+
+/* Quick utility: italic-display for the emotional headlines */
+.t-display-italic { font-style: italic; }
+
+/* ---------- INTERACTION STATES ---------- */
+/* Wrong-answer shake animation — applied to elements when user answers wrong */
+@keyframes cat-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+.cat-shake { animation: cat-shake 320ms var(--ease-in-out) both; }
+
+/* Correct-answer pulse */
+@keyframes cat-correct-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45); }
+  70%  { box-shadow: 0 0 0 14px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+/* Light theme red wash needs slightly different opacity for the new pinkish red */
+[data-theme="light"] {
+  --cat-red-bg: rgba(244, 76, 96, 0.08);
+}
+.cat-correct-pulse { animation: cat-correct-pulse 600ms var(--ease-out) both; }

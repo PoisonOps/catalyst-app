@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  
+  <defs>
+    <linearGradient id="sb-bolt-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FBBF24"></stop>
+      <stop offset="100%" stop-color="#F59E0B"></stop>
+    </linearGradient>
+  </defs>
+  <path d="M28 4 L10 24 H20 L16 44 L38 22 H28 L32 4 Z" fill="url(#sb-bolt-grad)" stroke="#F59E0B" stroke-width="1.2" stroke-linejoin="round"></path>
+</svg>
