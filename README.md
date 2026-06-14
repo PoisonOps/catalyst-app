@@ -1,124 +1,213 @@
-# CATalyst ⚡
+<img src="https://raw.githubusercontent.com/PoisonOps/catalyst-app/main/assets/header.svg" width="100%" alt="CATalyst"/>
 
-> A mistake-fixing system for CAT exam aspirants. Not a practice app — a system that makes errors visible and forces you to fix them.
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=16&duration=3000&pause=800&color=2E5BFF&center=true&vCenter=true&width=700&lines=Mistake-fixing+system+for+CAT+aspirants.;Not+a+practice+app+%E2%80%94+a+correction+engine.;Fix+Mode%3A+Phase+1+re-attempt+%2B+Phase+2+drill.;794+questions+%C2%B7+145+sets+%C2%B7+live+with+paying+users." alt="Typing"/>
+</p>
 
-**Live → [catalyst-app-six.vercel.app](https://catalyst-app-six.vercel.app)**  
-**Trial → 3 days free · ₹489 one-time thereafter**
+<p align="center">
+  <a href="https://catalyst-app-six.vercel.app"><img src="https://img.shields.io/badge/Live_App-catalyst--app--six.vercel.app-2E5BFF?style=flat-square&logoColor=white"/></a>
+  <img src="https://img.shields.io/badge/Trial-3_days_free-4ADE80?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Price-%E2%82%B9489_one--time-E8820C?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Stack-Vanilla_JS_SPA-E9E5DC?style=flat-square"/>
+  <img src="https://img.shields.io/badge/DB-Supabase_Postgres-3ECF8E?style=flat-square&logo=supabase&logoColor=white"/>
+</p>
 
 ---
 
 ## The Problem
 
-CAT aspirants do hundreds of practice questions but keep scoring the same marks. Not because they lack knowledge — because they keep making the *same mistakes* and never stop to fix them. They just do more practice.
+CAT aspirants do hundreds of practice questions but keep scoring the same marks. Not because they lack knowledge — because they **repeat the same mistakes** and never stop to fix them.
 
-CATalyst breaks that loop.
+Every other prep app optimises for the feeling of progress (questions done, topics covered). CATalyst optimises for the one thing that actually improves scores: **diagnosing and fixing your specific error patterns.**
 
 ---
 
 ## The Fix Mode Loop
 
 ```
-Solve → Get it wrong → Tag the error type
-         (calculation error / concept gap / guess)
-              ↓
-         Error Log — see your pattern, see the mark cost
-              ↓
-         "Fix My Mistakes"
-              ↓
-    Phase 1 (red): Re-attempt your logged errors
-              ↓
-    Phase 2 (blue): Drill your weakest topic
-              ↓
-         Session complete — see exactly how many you fixed
+                    ┌─────────────────────────────────────────┐
+                    │                                         │
+          Solve a question                                    │
+                    │                                         │
+                    ▼                                         │
+            Get it wrong                                      │
+                    │                                         │
+                    ▼                                         │
+     Tag the error type (mandatory)                          │
+     ├── calculation_error  (knew it, fumbled it)            │
+     ├── concept_gap        (didn't understand it)           │
+     └── guess              (had no idea)                    │
+                    │                                         │
+                    ▼                                         │
+          Error Log — see the mark cost                       │
+          per error type, per subject                         │
+                    │                                         │
+                    ▼                                         │
+        "Fix My Mistakes" button                              │
+                    │                                         │
+          ┌─────────┴─────────┐                              │
+          ▼                   ▼                              │
+   Phase 1 (RED)        Phase 2 (BLUE)                       │
+   Re-attempt your      Drill your                           │
+   logged errors        weakest topic                        │
+          │                   │                              │
+          └─────────┬─────────┘                              │
+                    ▼                                         │
+          Session complete screen                             │
+          (X mistakes fixed this session)                     │
+                    │                                         │
+                    └─────────────────────────────────────────┘
 ```
 
 This loop is the product. Everything else is infrastructure.
 
 ---
 
-## Key Features
+## Architecture
 
-- **Fix Mode** — 2-phase session: re-attempt past errors → drill the weak topic
-- **Error Tagging** — mark wrong answers as `calculation error`, `concept gap`, or `guess`
-- **Error Log** — full filterable history of mistakes with mark cost shown per error
-- **Mistake Pressure System** — makes errors visible and costly, psychologically
-- **Daily Push Notifications** — "You have 12 unfixed mistakes. Fix them now." Deep-links to Fix Mode
-- **PWA** — installable on home screen, works offline for reading
-- **Onboarding Tour** — walks every new user through the full Fix Mode loop on first login
-- **Trial + Payment** — 3-day free trial, ₹489 one-time, manual UPI activation
+**Single-file SPA** — no framework, no bundler, no build step. Open `index.html` in a browser.
+
+**Script load order is critical** — each file depends on the previous:
+
+```
+config.js → db.js → auth.js → dashboard.js → practice.js
+         → test.js → errorlog.js → onboarding.js → app.js
+```
+
+`app.js` is always last. It boots the app after all other modules are defined.
+
+### Data flow
+
+```
+User action
+    │
+    ▼
+DB.*  (all data ops go through here — never raw Supabase calls)
+    │
+    ├── Supabase Postgres  (source of truth)
+    └── localStorage cache  (namespaced: cat_<key>_${userId})
+              │
+              └── Why namespaced? Multi-user devices.
+                  cat_trial_abc123 ≠ cat_trial_xyz789
+```
+
+### Practice.js state machine
+
+The most complex file. Key variables:
+
+```javascript
+_isFixSession   // true when launched from "Fix My Mistakes"
+_fixPhase       // 1 = re-attempt errors (red UI), 2 = drill topic (blue UI)
+_fixedInSession // locked copy of Phase 1 correct count
+                // before Phase 2 resets _sessionCorrect
+_sessionTimes   // NOT reset between phases — cumulative for session screen
+```
+
+Fix session flow:
+```
+loadFixSession()
+    → Phase 1 questions (red UI)
+    → _showFixTransition()  ← 2.5s auto-advance
+    → _startPhase2() (blue UI)
+    → _showFixSessionComplete()
+```
+
+### Push notification deep link
+
+Notifications with pending mistakes set `url` to `/#fix`. On click:
+
+```javascript
+// app.js — _handleDeepLink()
+if (window.location.hash === '#fix') {
+  setTimeout(() => Practice.loadFixSession(), 400);
+}
+```
+
+Sends the user straight into Fix Mode — no menu, no friction.
 
 ---
 
-## Architecture
+## Key Technical Decisions
 
-Single-file SPA — no framework, no bundler, no build step. Open `index.html` directly.
+**Why vanilla JS instead of React?**
+Speed of iteration. No reconciliation, no virtual DOM, no build step. `App.navigate(page)` hides all `.page` divs and shows `#page-<name>`. That's the entire router. When a bug hits at 11pm, I'm reading one file, not tracing through 14 components.
 
-**Script load order** (critical — each file depends on the previous):
-```
-config.js → db.js → auth.js → dashboard.js → practice.js → test.js → errorlog.js → onboarding.js → app.js
-```
+**Why `sets!left` in the Supabase query?**
+PostgREST defaults to INNER JOIN. Without `!left`, any question where `set_id IS NULL` is silently dropped. Spent 3 hours debugging missing questions before finding this. Now permanently documented.
 
-**Data layer:** All reads/writes through `DB.*`. Supabase (Postgres + Auth) as source of truth, localStorage as namespaced cache (`cat_<key>_${userId}`).
+**Why KaTeX instead of MathJax?**
+KaTeX renders synchronously. MathJax is async and caused questions to flash unstyled before math rendered. Never set question content as raw `innerHTML` — always route through `renderMath(el, rawText, isRC)`.
 
-**Supabase tables:** `questions`, `sets`, `attempt_logs`, `error_logs`, `reports`, `feedback`, `events`, `push_subscriptions`
+**Why localStorage cache alongside Supabase?**
+Perceived performance. The dashboard loads instantly from cache while Supabase fetches in the background. For a PWA on 3G, this matters.
 
-**Practice.js** is the core. Key state:
-| Variable | What it tracks |
-|---|---|
-| `_isFixSession` | true when launched from "Fix My Mistakes" |
-| `_fixPhase` | `1` = re-attempt errors (red), `2` = drill topic (blue) |
-| `_fixedInSession` | locked count of Phase 1 fixes before Phase 2 resets |
-| `_sessionTimes` | cumulative — never reset between phases |
+**Why separate dev/prod Supabase instances?**
+Analytics pollution. Every test session was showing up in real user analytics. Separate databases mean localhost never touches real data.
+
+**Why iOS PWA needs Supabase for tour state?**
+Safari and the installed PWA have separate `localStorage` on iOS. The onboarding tour completion flag is written to both localStorage AND Supabase `events` table — so it doesn't restart when a user switches from Safari to the PWA.
 
 ---
 
 ## Tech Stack
 
-| Layer | Tech |
-|---|---|
-| Frontend | Vanilla JS SPA — no framework, no bundler |
-| Auth | Supabase Auth — email/password + Google OAuth |
-| Database | Supabase Postgres |
-| Realtime cache | localStorage (per-user namespaced keys) |
-| Push Notifications | Web Push API · Vercel Serverless sender · cron-job.org schedule |
-| UI Animations | GSAP + ScrollTrigger |
-| Math Rendering | KaTeX (auto-render) |
-| PWA | Service Worker (`sw.js`) · network-first HTML/CSS, cache-first JS |
-| Hosting | Vercel |
+| Layer | Tech | Why |
+|---|---|---|
+| Frontend | Vanilla JS SPA | No build step, fast iteration |
+| Auth | Supabase Auth | Email + Google OAuth, session management |
+| Database | Supabase Postgres | RLS policies, realtime capable |
+| Cache | localStorage (namespaced) | Instant loads, multi-user safe |
+| Math | KaTeX | Synchronous render, no flash |
+| Push | Web Push + Vercel Function | Daily "fix your mistakes" nudge |
+| PWA | Service Worker (cache-first JS) | Offline reading, installable |
+| Cron | cron-job.org → Vercel Function | 4×/day push scheduling |
+| Hosting | Vercel | Zero config, instant deploys |
+
+---
+
+## Supabase Tables
+
+```sql
+questions         — content, type (mcq/tita), subject, topic, set_id
+sets              — passage/instruction for set questions
+attempt_logs      — every attempt: user_id, question_id, is_correct, time_taken
+error_logs        — wrong answers: user_id, question_id, error_type, is_fixed
+events            — analytics: signup, fix_mode_started, tour_completed, etc.
+push_subscriptions — endpoint, p256dh, auth per user
+```
 
 ---
 
 ## Running Locally
 
-No install. No build. Just serve the files:
-
 ```bash
+git clone https://github.com/PoisonOps/catalyst-app.git
+cd catalyst-app
 npx serve .
-# → localhost:3000, uses dev Supabase automatically (config.js detects hostname)
+# → localhost:3000 auto-uses dev Supabase (config.js detects hostname)
+# No .env needed — dev credentials in js/config.js
 ```
-
-Dev and prod have separate Supabase databases. Local never touches real user data.
 
 ---
 
 ## Question Bank
 
-794 questions + 145 sets across **Quant, LRDI, and VARC** — migrated to production Supabase via `migrate-to-prod.js`.
+**794 questions + 145 sets** across Quant, LRDI, and VARC.
 
-Questions follow the CAT taxonomy defined in `js/config.js → CAT_TAXONOMY`.
-
----
-
-## Pricing
-
-| Plan | Price |
-|---|---|
-| Monthly | ₹99/month |
-| Lifetime | ₹489 one-time (till CAT 2026) |
-
-Both are founder pricing, locked for the first 20 users. Payment via UPI, manual activation.
+Migrated from dev to prod via `migrate-to-prod.js` (safe to re-run — UPSERT):
+```bash
+DEV_SERVICE_KEY=xxx PROD_SERVICE_KEY=yyy node migrate-to-prod.js
+```
 
 ---
 
-Built by [Sahil Solankey](https://sahilsolankey.vercel.app) · CAT 2026 aspirant, solo founder  
-Questions or bugs → [WhatsApp](https://wa.me/917080442040)
+## Honest Retrospective
+
+> I should have shipped with 50 questions, not 794. The Fix Mode loop was right from day one. I spent too long building content when I should have been validating the loop with real users. The push notification system was built before I had 10 users. Classic premature scaling. The lesson: ship the core loop first, everything else second.
+
+---
+
+<p align="center">
+  Built by <a href="https://sahilsolankey.vercel.app">Sahil Solankey</a> · CAT 2026 aspirant · solo founder<br/>
+  <a href="https://wa.me/917080442040">WhatsApp</a> · <a href="mailto:sahilsolankey1009@gmail.com">Email</a>
+</p>
