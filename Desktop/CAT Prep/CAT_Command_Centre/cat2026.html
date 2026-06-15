@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAT 2026 — Execution System</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #0a0a0a;
+  --bg2: #111111;
+  --bg3: #1a1a1a;
+  --bg4: #222222;
+  --bd: #2a2a2a;
+  --bd2: #333333;
+  --text: #e8e8e8;
+  --text2: #999;
+  --text3: #555;
+  --green: #00c47a;
+  --green-dim: #00c47a22;
+  --red: #ff4d4d;
+  --red-dim: #ff4d4d18;
+  --amber: #ffaa00;
+  --amber-dim: #ffaa0018;
+  --blue: #4d9fff;
+  --blue-dim: #4d9fff18;
+  --purple: #a78bfa;
+  --r: 6px;
+  --font: 'IBM Plex Sans', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+/* LAYOUT */
+.app { display: flex; height: 100vh; overflow: hidden; }
+.sidebar { width: 220px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--bd); display: flex; flex-direction: column; overflow-y: auto; }
+.main { flex: 1; overflow-y: auto; padding: 0; }
+
+/* SIDEBAR */
+.sidebar-header { padding: 18px 16px 12px; border-bottom: 1px solid var(--bd); }
+.sidebar-logo { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--green); letter-spacing: .1em; text-transform: uppercase; }
+.sidebar-sub { font-size: 10px; color: var(--text3); margin-top: 3px; font-family: var(--mono); }
+.sidebar-section { padding: 10px 10px 4px; font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; font-family: var(--mono); }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 12px; cursor: pointer; border-radius: 4px; margin: 1px 6px; font-size: 13px; color: var(--text2); transition: all .15s; }
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--green-dim); color: var(--green); }
+.nav-item .icon { font-size: 14px; width: 18px; text-align: center; }
+.nav-badge { margin-left: auto; font-size: 10px; font-family: var(--mono); background: var(--red); color: #fff; padding: 1px 5px; border-radius: 10px; min-width: 18px; text-align: center; }
+.nav-badge.amber { background: var(--amber); color: #000; }
+
+/* HEADER */
+.page-header { padding: 20px 28px 0; border-bottom: 1px solid var(--bd); display: flex; align-items: flex-end; gap: 16px; padding-bottom: 0; }
+.page-title { font-size: 20px; font-weight: 700; letter-spacing: -.02em; padding-bottom: 14px; }
+.page-tabs { display: flex; gap: 0; }
+.ptab { padding: 10px 16px; font-size: 12px; font-weight: 600; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; letter-spacing: .02em; }
+.ptab.active { color: var(--green); border-bottom-color: var(--green); }
+.ptab:hover:not(.active) { color: var(--text); }
+
+/* CONTENT */
+.page-content { padding: 20px 28px; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* CARDS */
+.card { background: var(--bg2); border: 1px solid var(--bd); border-radius: var(--r); padding: 16px; margin-bottom: 12px; }
+.card-title { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 12px; font-family: var(--mono); }
+
+/* STATS */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.stat-box { background: var(--bg2); border: 1px solid var(--bd); border-radius: var(--r); padding: 14px; }
+.stat-val { font-size: 28px; font-weight: 700; font-family: var(--mono); line-height: 1; }
+.stat-lbl { font-size: 10px; color: var(--text3); margin-top: 4px; text-transform: uppercase; letter-spacing: .06em; }
+.stat-box.green .stat-val { color: var(--green); }
+.stat-box.red .stat-val { color: var(--red); }
+.stat-box.amber .stat-val { color: var(--amber); }
+.stat-box.blue .stat-val { color: var(--blue); }
+
+/* PROGRESS */
+.prog-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+.prog-label { font-size: 11px; color: var(--text2); width: 140px; flex-shrink: 0; font-family: var(--mono); }
+.prog-bar { flex: 1; height: 4px; background: var(--bd2); border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 2px; transition: width .5s; }
+.prog-pct { font-size: 11px; color: var(--text3); width: 36px; text-align: right; font-family: var(--mono); }
+
+/* FORM */
+.fg { margin-bottom: 10px; }
+.fg label { display: block; font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; font-family: var(--mono); }
+.fg input, .fg select, .fg textarea {
+  width: 100%; padding: 8px 10px; font-size: 12px;
+  border: 1px solid var(--bd2); border-radius: var(--r);
+  background: var(--bg3); color: var(--text);
+  font-family: var(--font); outline: none; transition: border .15s;
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus { border-color: var(--green); }
+.fg textarea { resize: vertical; min-height: 64px; }
+.fg select option { background: var(--bg3); }
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fgrid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.ffull { grid-column: 1/-1; }
+
+/* BUTTONS */
+.btn { padding: 8px 16px; font-size: 11px; font-weight: 600; border-radius: var(--r); cursor: pointer; letter-spacing: .04em; text-transform: uppercase; font-family: var(--mono); transition: all .15s; border: 1px solid; }
+.btn-green { background: var(--green); color: #000; border-color: var(--green); }
+.btn-green:hover { opacity: .85; }
+.btn-ghost { background: transparent; color: var(--text2); border-color: var(--bd2); }
+.btn-ghost:hover { border-color: var(--text2); color: var(--text); }
+.btn-red { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+.btn-sm { padding: 5px 10px; font-size: 10px; }
+.btn-full { width: 100%; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+/* TABLES */
+.tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.tbl th { text-align: left; font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; padding: 8px 10px; border-bottom: 1px solid var(--bd); font-family: var(--mono); }
+.tbl td { padding: 9px 10px; border-bottom: 1px solid var(--bd); color: var(--text2); vertical-align: top; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: var(--bg3); color: var(--text); }
+
+/* BADGES */
+.badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; font-family: var(--mono); white-space: nowrap; }
+.badge-green { background: var(--green-dim); color: var(--green); }
+.badge-red { background: var(--red-dim); color: var(--red); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); }
+.badge-blue { background: var(--blue-dim); color: var(--blue); }
+.badge-purple { background: #a78bfa18; color: var(--purple); }
+.badge-gray { background: var(--bg4); color: var(--text3); }
+
+/* TABS */
+.sub-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.sub-tab { padding: 5px 12px; font-size: 10px; font-weight: 600; border: 1px solid var(--bd2); border-radius: 20px; cursor: pointer; color: var(--text3); font-family: var(--mono); letter-spacing: .05em; text-transform: uppercase; transition: all .15s; }
+.sub-tab.active { background: var(--green); color: #000; border-color: var(--green); }
+.sub-tab:hover:not(.active) { border-color: var(--text3); color: var(--text); }
+
+/* EMPTY */
+.empty { text-align: center; padding: 32px; color: var(--text3); font-size: 12px; font-family: var(--mono); }
+
+/* ALERTS */
+.alert { padding: 10px 14px; border-radius: var(--r); font-size: 12px; margin-bottom: 10px; font-family: var(--mono); line-height: 1.6; }
+.alert-green { background: var(--green-dim); border: 1px solid var(--green); color: var(--green); }
+.alert-red { background: var(--red-dim); border: 1px solid var(--red); color: var(--red); }
+.alert-amber { background: var(--amber-dim); border: 1px solid var(--amber); color: var(--amber); }
+
+/* TOAST */
+.toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 18px; border-radius: var(--r); font-size: 12px; font-weight: 600; z-index: 9999; display: none; font-family: var(--mono); box-shadow: 0 4px 20px rgba(0,0,0,.4); }
+.toast.ok { background: var(--green); color: #000; }
+.toast.err { background: var(--red); color: #fff; }
+
+/* CAL STRIP */
+.cal-strip { display: flex; gap: 3px; overflow-x: auto; padding-bottom: 4px; }
+.cal-day { width: 26px; height: 26px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; flex-shrink: 0; border: 1px solid var(--bd); background: var(--bg3); color: var(--text3); font-family: var(--mono); }
+.cal-day.done { background: var(--green); color: #000; border-color: var(--green); }
+.cal-day.partial { background: var(--amber-dim); color: var(--amber); border-color: var(--amber); }
+.cal-day.today { border: 2px solid var(--green) !important; color: var(--text); }
+
+/* QUEUE ITEM */
+.queue-item { background: var(--bg3); border: 1px solid var(--bd); border-radius: var(--r); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; }
+.queue-item.urgent { border-color: var(--red); }
+.queue-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.queue-dot.red { background: var(--red); }
+.queue-dot.amber { background: var(--amber); }
+.queue-dot.green { background: var(--green); }
+.queue-body { flex: 1; }
+.queue-title { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.queue-meta { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+/* RC ROW */
+.rc-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; background: var(--bg3); border-radius: 4px; margin-bottom: 3px; }
+.rc-row label { font-size: 10px; font-weight: 600; color: var(--text3); min-width: 60px; font-family: var(--mono); }
+.ni { width: 44px; padding: 4px 6px; font-size: 12px; border: 1px solid var(--bd2); border-radius: 4px; background: var(--bg4); color: var(--text); font-family: var(--mono); outline: none; text-align: center; }
+.ni:focus { border-color: var(--green); }
+.sec-box { border: 1px solid var(--bd); border-radius: var(--r); padding: 12px; margin-bottom: 10px; }
+.sec-box h4 { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px; font-family: var(--mono); }
+
+/* SCORE INPUT */
+.score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.score-label { font-size: 12px; color: var(--text2); width: 120px; flex-shrink: 0; }
+.score-input { width: 60px; padding: 5px 8px; font-size: 14px; font-family: var(--mono); font-weight: 600; border: 1px solid var(--bd2); border-radius: 4px; background: var(--bg3); color: var(--text); text-align: center; outline: none; }
+.score-input:focus { border-color: var(--green); }
+
+/* PDF TRACKER */
+.pdf-item { border: 1px solid var(--bd); border-radius: var(--r); margin-bottom: 6px; overflow: hidden; }
+.pdf-hdr { display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer; background: var(--bg3); }
+.pdf-hdr:hover { background: var(--bg4); }
+.pdf-nm { font-size: 12px; font-weight: 500; flex: 1; }
+.pdf-body { border-top: 1px solid var(--bd); padding: 10px; display: none; background: var(--bg2); }
+.pdf-body.open { display: block; }
+.q-grid { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 7px; max-height: 120px; overflow-y: auto; }
+.qn { width: 24px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 3px; font-size: 9px; font-weight: 600; cursor: pointer; border: 1px solid var(--bd); background: var(--bg4); color: var(--text3); font-family: var(--mono); }
+.qn.done { background: var(--green-dim); color: var(--green); border-color: var(--green); }
+.qn.some { background: var(--amber-dim); color: var(--amber); border-color: var(--amber); }
+.qn.cant { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+.mini { padding: 4px 6px; font-size: 11px; border: 1px solid var(--bd2); border-radius: 4px; background: var(--bg3); color: var(--text); font-family: var(--mono); outline: none; }
+.mini:focus { border-color: var(--green); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bd2); border-radius: 2px; }
+
+/* DIVIDER */
+.divider { height: 1px; background: var(--bd); margin: 14px 0; }
+
+/* LIVE CALC */
+.live-val { font-family: var(--mono); font-size: 12px; color: var(--green); font-weight: 600; margin-top: 6px; }
+
+/* COMMAND CENTER GRID */
+.cc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 900px) { .cc-grid { grid-template-columns: 1fr; } .stat-grid { grid-template-columns: repeat(2,1fr); } }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">CAT 2026</div>
+      <div class="sidebar-sub" id="sb-date">Loading...</div>
+      <div class="sidebar-sub" id="sb-days" style="color:var(--amber);margin-top:2px"></div>
+    </div>
+
+    <div class="sidebar-section">Command</div>
+    <div class="nav-item active" onclick="nav('command',this)"><span class="icon">⚡</span> Command Center <span class="nav-badge" id="badge-queue">0</span></div>
+
+    <div class="sidebar-section">Log</div>
+    <div class="nav-item" onclick="nav('daily',this)"><span class="icon">📅</span> Daily Scorecard</div>
+    <div class="nav-item" onclick="nav('lrdi',this)"><span class="icon">🧩</span> LRDI Log</div>
+    <div class="nav-item" onclick="nav('errors',this)"><span class="icon">❌</span> Error Engine</div>
+    <div class="nav-item" onclick="nav('mocks',this)"><span class="icon">📊</span> Mock Results</div>
+    <div class="nav-item" onclick="nav('pdfs',this)"><span class="icon">📚</span> PDF Tracker</div>
+
+    <div class="sidebar-section">Review</div>
+    <div class="nav-item" onclick="nav('reattempt',this)"><span class="icon">🔁</span> Reattempt Queue <span class="nav-badge" id="badge-reattempt">0</span></div>
+    <div class="nav-item" onclick="nav('weakness',this)"><span class="icon">🔥</span> Weakness Feed</div>
+    <div class="nav-item" onclick="nav('killist',this)"><span class="icon">🎯</span> Kill List</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- COMMAND CENTER -->
+    <div class="page active" id="page-command">
+      <div class="page-header"><div class="page-title">⚡ Command Center</div></div>
+      <div class="page-content">
+        <div class="stat-grid">
+          <div class="stat-box green"><div class="stat-val" id="cc-streak">0</div><div class="stat-lbl">🔥 Day Streak</div></div>
+          <div class="stat-box amber"><div class="stat-val" id="cc-queue">0</div><div class="stat-lbl">🔁 Reattempt Due</div></div>
+          <div class="stat-box red"><div class="stat-val" id="cc-weak">0</div><div class="stat-lbl">🔥 Weakness Items</div></div>
+          <div class="stat-box blue"><div class="stat-val" id="cc-days">214</div><div class="stat-lbl">Days to CAT</div></div>
+        </div>
+
+        <div class="cc-grid">
+          <div>
+            <div class="card">
+              <div class="card-title">🔁 Reattempt Queue — Due Today</div>
+              <div id="cc-reattempt-list"><div class="empty">No reattempts due.</div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">🔥 Weakness Feed — Top Issues</div>
+              <div id="cc-weakness-list"><div class="empty">Log errors to see patterns.</div></div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-title">📊 Latest Mock — Action Items</div>
+              <div id="cc-mock-actions"><div class="empty">No mocks logged yet.</div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">🎯 This Week's Kill List</div>
+              <div id="cc-killist"><div class="empty">No kill list set for this week.</div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Phase 1 Progress</div>
+              <div class="prog-row"><div class="prog-label">Arithmetic (8)</div><div class="prog-bar"><div class="prog-fill" id="pr-arith" style="width:0%;background:var(--green)"></div></div><div class="prog-pct" id="pp-arith">0%</div></div>
+              <div class="prog-row"><div class="prog-label">Algebra (8)</div><div class="prog-bar"><div class="prog-fill" id="pr-alg" style="width:0%;background:var(--green)"></div></div><div class="prog-pct" id="pp-alg">0%</div></div>
+              <div class="prog-row"><div class="prog-label">LRDI sets (60)</div><div class="prog-bar"><div class="prog-fill" id="pr-lrdi" style="width:0%;background:var(--blue)"></div></div><div class="prog-pct" id="pp-lrdi">0%</div></div>
+              <div class="prog-row"><div class="prog-label">RC accuracy</div><div class="prog-bar"><div class="prog-fill" id="pr-varc" style="width:0%;background:var(--purple)"></div></div><div class="prog-pct" id="pp-varc">0%</div></div>
+              <div class="prog-row"><div class="prog-label">Mocks (9)</div><div class="prog-bar"><div class="prog-fill" id="pr-mocks" style="width:0%;background:var(--amber)"></div></div><div class="prog-pct" id="pp-mocks">0%</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Last 21 Days</div>
+          <div class="cal-strip" id="cal-strip"></div>
+          <div style="display:flex;gap:14px;font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:6px">
+            <span style="color:var(--green)">■ Full Day</span><span style="color:var(--amber)">■ Partial</span><span style="color:var(--text3)">■ Missed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAILY SCORECARD -->
+    <div class="page" id="page-daily">
+      <div class="page-header"><div class="page-title">📅 Daily Scorecard</div></div>
+      <div class="page-content">
+        <div class="fgrid" style="margin-bottom:12px">
+          <div class="fg"><label>Date</label><input type="date" id="log-date"></div>
+          <div></div>
+        </div>
+
+        <div class="cc-grid">
+          <div>
+            <div class="sec-box">
+              <h4>📖 VARC — 1=correct, 0=wrong</h4>
+              <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">RC PASSAGE 1</div>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:6px;cursor:pointer"><input type="checkbox" id="rc1-done" style="accent-color:var(--green)"> Passage 1 attempted</label>
+              <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:10px">
+                <div class="rc-row"><label>RC1 Q1</label><input class="ni" type="number" id="rc1q1" min="0" max="1" oninput="vLive()"></div>
+                <div class="rc-row"><label>RC1 Q2</label><input class="ni" type="number" id="rc1q2" min="0" max="1" oninput="vLive()"></div>
+                <div class="rc-row"><label>RC1 Q3</label><input class="ni" type="number" id="rc1q3" min="0" max="1" oninput="vLive()"></div>
+                <div class="rc-row"><label>RC1 Q4</label><input class="ni" type="number" id="rc1q4" min="0" max="1" oninput="vLive()"></div>
+              </div>
+              <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">RC PASSAGE 2</div>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:6px;cursor:pointer"><input type="checkbox" id="rc2-done" style="accent-color:var(--green)"> Passage 2 attempted</label>
+              <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:10px">
+                <div class="rc-row"><label>RC2 Q1</label><input class="ni" type="number" id="rc2q1" min="0" max="1" oninput="vLive()"></div>
+                <div class="rc-row"><label>RC2 Q2</label><input class="ni" type="number" id="rc2q2" min="0" max="1" oninput="vLive()"></div>
+                <div class="rc-row"><label>RC2 Q3</label><input class="ni" type="number" id="rc2q3" min="0" max="1" oninput="vLive()"></div>
+                <div class="rc-row"><label>RC2 Q4</label><input class="ni" type="number" id="rc2q4" min="0" max="1" oninput="vLive()"></div>
+              </div>
+              <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">VA QUESTIONS</div>
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <div class="rc-row"><label>VA Q1</label><input class="ni" type="number" id="vaq1" min="0" max="1" oninput="vLive()"></div>
+                <div class="rc-row"><label>VA Q2</label><input class="ni" type="number" id="vaq2" min="0" max="1" oninput="vLive()"></div>
+                <div class="rc-row"><label>VA Q3</label><input class="ni" type="number" id="vaq3" min="0" max="1" oninput="vLive()"></div>
+                <div class="rc-row"><label>VA Q4</label><input class="ni" type="number" id="vaq4" min="0" max="1" oninput="vLive()"></div>
+              </div>
+              <div class="live-val" id="varc-live"></div>
+            </div>
+            <div class="sec-box">
+              <h4>🧮 QA</h4>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:8px;cursor:pointer"><input type="checkbox" id="q-done" style="accent-color:var(--green)"> 30 Qs done</label>
+              <div class="fgrid">
+                <div class="fg"><label>Topic</label>
+                  <select id="q-topic">
+                    <option value="">— select —</option>
+                    <optgroup label="Arithmetic"><option>Averages &amp; Ratio</option><option>Percentages</option><option>Profit &amp; Loss</option><option>TSD</option><option>Time &amp; Work</option><option>SI &amp; CI</option><option>Arithmetic Mixed</option></optgroup>
+                    <optgroup label="Algebra"><option>Linear Equations</option><option>Quadratic Equations</option><option>Inequalities</option><option>Functions &amp; Graphs</option><option>Progressions</option><option>Logarithms</option><option>Number Systems</option><option>Algebra Mixed</option></optgroup>
+                    <optgroup label="Advanced"><option>Geometry</option><option>Probability</option><option>Coordinate Geometry</option></optgroup>
+                  </select>
+                </div>
+                <div class="fg"><label>Correct /30</label><input type="number" id="q-score" min="0" max="30" placeholder="22"></div>
+              </div>
+            </div>
+            <div class="sec-box">
+              <h4>🧩 LRDI</h4>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" id="l-s1" style="accent-color:var(--green)"> Set 1 done + tagged</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" id="l-s2" style="accent-color:var(--green)"> Set 2 done + tagged</label>
+              </div>
+              <div class="fg"><label>Hours studied</label><input type="number" id="d-hours" min="0" max="8" step="0.5" placeholder="3.5"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card">
+              <div class="card-title">Execution Scorecard</div>
+              <div class="score-row"><span class="score-label">Focus (0–10)</span><input class="score-input" type="number" id="sc-focus" min="0" max="10" placeholder="7"></div>
+              <div class="score-row"><span class="score-label">Decision Quality (0–10)</span><input class="score-input" type="number" id="sc-decision" min="0" max="10" placeholder="7"></div>
+              <div class="score-row"><span class="score-label">Energy (0–10)</span><input class="score-input" type="number" id="sc-energy" min="0" max="10" placeholder="7"></div>
+              <div class="score-row"><span class="score-label">Wasted Time?</span>
+                <select id="sc-wasted" style="width:100px;padding:5px 8px;font-size:12px;border:1px solid var(--bd2);border-radius:4px;background:var(--bg3);color:var(--text);font-family:var(--font);outline:none">
+                  <option value="No">No</option><option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div class="divider"></div>
+              <div class="fg"><label>Biggest Mistake Today</label><input type="text" id="sc-mistake" placeholder="What went wrong?"></div>
+              <div class="fg"><label>Biggest Win Today</label><input type="text" id="sc-win" placeholder="What clicked?"></div>
+              <div class="fg"><label>Notes</label><textarea id="d-notes" placeholder="Anything else..."></textarea></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Topic Progress (weekly update)</div>
+              <div class="fgrid">
+                <div class="fg"><label>Arith done (0–8)</label><input type="number" id="q-arith" min="0" max="8" value="0" onchange="saveTopicProgress()"></div>
+                <div class="fg"><label>Algebra done (0–8)</label><input type="number" id="q-alg" min="0" max="8" value="0" onchange="saveTopicProgress()"></div>
+              </div>
+            </div>
+            <button class="btn btn-green btn-full" onclick="saveDay()">✓ Save to Database</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Recent Sessions</div>
+          <div id="sessions-list"><div class="empty">No sessions yet.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LRDI LOG -->
+    <div class="page" id="page-lrdi">
+      <div class="page-header"><div class="page-title">🧩 LRDI Log</div></div>
+      <div class="page-content">
+        <div class="card">
+          <div class="card-title">Tag Set → Saves to Database</div>
+          <div class="fgrid3">
+            <div class="fg"><label>PDF</label>
+              <select id="l-pdf">
+                <option value="">— select —</option>
+                <optgroup label="ACTIVE"><option>Top 121 Arrangement</option><option>Top 163 Charts</option><option>Top 41 Selection</option><option>Top 80 Puzzles</option></optgroup>
+                <optgroup label="LATER"><option>Top 103 DI Basics</option><option>Top 61 Games &amp; Tournaments</option><option>Top 34 Scheduling</option><option>Top 13 Routes &amp; Networks</option><option>Top 24 Maxima-Minima</option><option>Top 3 Truth-Lie</option><option>Other</option></optgroup>
+              </select>
+            </div>
+            <div class="fg"><label>Set No.</label><input type="text" id="l-setno" placeholder="Set 4"></div>
+            <div class="fg"><label>Question Nos.</label><input type="text" id="l-qnos" placeholder="Q13–16"></div>
+          </div>
+          <div class="fgrid3">
+            <div class="fg"><label>Set Type</label>
+              <select id="l-type">
+                <option>Arrangement — Linear</option><option>Arrangement — Circular</option><option>Arrangement — Matrix</option>
+                <option>Puzzle — Binary</option><option>Puzzle — Seating</option><option>Puzzle — Comparison</option>
+                <option>DI — Bar Chart</option><option>DI — Line Graph</option><option>DI — Pie Chart</option><option>DI — Table</option><option>DI — Mixed</option>
+                <option>Selection — Conditional</option><option>Selection — Group</option>
+                <option>Games &amp; Tournaments — Knockout</option><option>Games &amp; Tournaments — League</option>
+                <option>Scheduling</option><option>Venn Diagram</option><option>Routes &amp; Networks</option>
+                <option>Maxima-Minima</option><option>Truth-Lie</option><option>Coins &amp; Weights</option><option>Miscellaneous</option>
+              </select>
+            </div>
+            <div class="fg"><label>Difficulty</label>
+              <select id="l-diff"><option>Easy</option><option selected>Medium</option><option>Hard</option></select>
+            </div>
+            <div class="fg"><label>Time (mins)</label><input type="number" id="l-time" min="1" max="60" placeholder="22"></div>
+          </div>
+          <div class="fgrid">
+            <div class="fg"><label>Solved?</label>
+              <select id="l-solved"><option>Yes — fully</option><option>Partial</option><option>No</option></select>
+            </div>
+            <div class="fg"><label>Selection correct?</label>
+              <select id="l-sel"><option>Good pick</option><option>Should have skipped</option><option>N/A</option></select>
+            </div>
+            <div class="fg"><label>Mistake type</label>
+              <select id="l-mistake">
+                <option>None — clean</option>
+                <option>Wrong Set Selection</option><option>Case Explosion</option><option>Hidden Constraint</option>
+                <option>Data Misread</option><option>Calculation Trap</option><option>Partial Progress</option>
+                <option>Overloaded Variables</option><option>Panic / time</option>
+              </select>
+            </div>
+            <div class="fg"><label>Master Error Type</label>
+              <select id="l-master"><option>N/A</option><option>Concept</option><option>Execution</option><option>Decision</option><option>Psychological</option></select>
+            </div>
+            <div class="fg ffull"><label>Key Insight (mandatory)</label><input type="text" id="l-insight" placeholder='"Fix one variable first before branching"'></div>
+            <div class="fg ffull"><label>Fix Action</label><input type="text" id="l-fixaction" placeholder='"Skip DI sets with >6 variables initially"'></div>
+            <div class="fg"><label>Revisit?</label>
+              <select id="l-revisit"><option value="false">No — move on</option><option value="true">Yes — revisit</option></select>
+            </div>
+          </div>
+          <button class="btn btn-green btn-full" onclick="saveLRDI()">✓ Save Set</button>
+        </div>
+
+        <div class="sub-tabs">
+          <div class="sub-tab active" id="ltab-all" onclick="lTab('all')">All Sets</div>
+          <div class="sub-tab" id="ltab-revisit" onclick="lTab('revisit')">Revisit</div>
+          <div class="sub-tab" id="ltab-brain" onclick="lTab('brain')">Selection Brain</div>
+        </div>
+        <div id="lp-all" class="card"><div class="card-title">LRDI Log — <span id="lrdi-count">0</span> sets</div><div id="lrdi-list"><div class="empty">No sets yet.</div></div></div>
+        <div id="lp-revisit" class="card" style="display:none"><div class="card-title">Revisit List</div><div id="lrdi-revisit-list"><div class="empty">No sets flagged.</div></div></div>
+        <div id="lp-brain" class="card" style="display:none"><div class="card-title">Selection Brain (unlocks at 30 sets)</div><div id="lrdi-brain"><div class="empty">Log 30+ sets to unlock patterns.</div></div></div>
+      </div>
+    </div>
+
+    <!-- ERROR ENGINE -->
+    <div class="page" id="page-errors">
+      <div class="page-header"><div class="page-title">❌ Error Engine</div></div>
+      <div class="page-content">
+        <div class="sub-tabs">
+          <div class="sub-tab active" id="etab-qa" onclick="eTab('qa')">QA</div>
+          <div class="sub-tab" id="etab-lrdi" onclick="eTab('lrdi')">LRDI</div>
+          <div class="sub-tab" id="etab-varc" onclick="eTab('varc')">VARC</div>
+        </div>
+
+        <div id="ef-qa" class="card">
+          <div class="card-title">Add QA Error</div>
+          <div class="fgrid3">
+            <div class="fg"><label>PDF</label><select id="eq-pdf"><option value="">—</option><option>Top 118 Averages</option><option>Top 136 TDW</option><option>Top 33 Percentages</option><option>Top 350+ Arithmetic</option><option>Top 48 Quadratic Eq</option><option>Top 59 Inequalities</option><option>Top 62 Profit &amp; Loss</option><option>Top 65 Linear Eq</option><option>Top 396 Algebra</option><option>Top 180 Geometry</option><option>Other</option></select></div>
+            <div class="fg"><label>Question No.</label><input type="text" id="eq-qno" placeholder="Q47"></div>
+            <div class="fg"><label>Page ref</label><input type="text" id="eq-page" placeholder="p.23"></div>
+          </div>
+          <div class="fgrid">
+            <div class="fg"><label>Topic</label><select id="eq-topic"><option>Averages &amp; Ratio</option><option>Percentages</option><option>Profit &amp; Loss</option><option>TSD</option><option>Time &amp; Work</option><option>SI &amp; CI</option><option>Linear Equations</option><option>Quadratic Equations</option><option>Inequalities</option><option>Functions &amp; Graphs</option><option>Progressions</option><option>Logarithms</option><option>Number Systems</option><option>Geometry</option><option>Probability</option><option>Other</option></select></div>
+            <div class="fg"><label>Master Error Type</label><select id="eq-master"><option>Concept</option><option>Execution</option><option>Decision</option><option>Psychological</option></select></div>
+            <div class="fg"><label>Trap Type (QA)</label>
+              <select id="eq-trap">
+                <option>Concept Misapply</option><option>Calculation Error</option><option>Algebra Mistake</option>
+                <option>Wrong Approach</option><option>Time Sink</option><option>Approximation Error</option><option>Formula Confusion</option>
+              </select>
+            </div>
+            <div class="fg"><label>Error type</label><select id="eq-etype"><option>Concept gap</option><option>Formula forgotten</option><option>Silly mistake</option><option>Wrong approach</option><option>Time pressure</option><option>Calculation slip</option><option>Misread question</option></select></div>
+            <div class="fg ffull"><label>Why wrong</label><input type="text" id="eq-why" placeholder="Why you got it wrong"></div>
+            <div class="fg ffull"><label>Fix Action (mandatory)</label><input type="text" id="eq-fix" placeholder='"Recheck algebra steps before final answer"'></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="saveError('qa')">Add QA Error</button>
+        </div>
+
+        <div id="ef-lrdi" class="card" style="display:none">
+          <div class="card-title">Add LRDI Error</div>
+          <div class="fgrid3">
+            <div class="fg"><label>PDF</label><select id="el-pdf"><option value="">—</option><option>Top 121 Arrangement</option><option>Top 163 Charts</option><option>Top 41 Selection</option><option>Top 80 Puzzles</option><option>Top 103 DI Basics</option><option>Top 61 Games</option><option>Other</option></select></div>
+            <div class="fg"><label>Set No.</label><input type="text" id="el-setno" placeholder="Set 7"></div>
+            <div class="fg"><label>Question Nos.</label><input type="text" id="el-qnos" placeholder="Q25–28"></div>
+          </div>
+          <div class="fgrid">
+            <div class="fg"><label>Master Error Type</label><select id="el-master"><option>Concept</option><option>Execution</option><option>Decision</option><option>Psychological</option></select></div>
+            <div class="fg"><label>Trap Type (LRDI)</label>
+              <select id="el-trap">
+                <option>Wrong Set Selection</option><option>Case Explosion</option><option>Hidden Constraint</option>
+                <option>Data Misread</option><option>Calculation Trap</option><option>Partial Progress</option><option>Overloaded Variables</option>
+              </select>
+            </div>
+            <div class="fg ffull"><label>Fix Action</label><input type="text" id="el-fix" placeholder="What will you do differently?"></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="saveError('lrdi')">Add LRDI Error</button>
+        </div>
+
+        <div id="ef-varc" class="card" style="display:none">
+          <div class="card-title">Add VARC Error</div>
+          <div class="fgrid3">
+            <div class="fg"><label>PDF</label><select id="ev-pdf"><option value="">—</option><option>Top 858 RC</option><option>Top 199 Para Jumbles</option><option>Top 48 Odd One Out</option><option>Top 96 Para Completion</option><option>Top 334 Verbal Ability</option><option>Top 38 Critical Reasoning</option><option>Other</option></select></div>
+            <div class="fg"><label>Question No.</label><input type="text" id="ev-qno" placeholder="Q112"></div>
+            <div class="fg"><label>Passage ref</label><input type="text" id="ev-page" placeholder="Passage 14"></div>
+          </div>
+          <div class="fgrid">
+            <div class="fg"><label>Master Error Type</label><select id="ev-master"><option>Concept</option><option>Execution</option><option>Decision</option><option>Psychological</option></select></div>
+            <div class="fg"><label>Question Type</label>
+              <select id="ev-type">
+                <option>Main Idea / Primary Purpose</option><option>Tone / Author Attitude</option><option>Inference</option>
+                <option>EXCEPT / NOT True</option><option>Detail-Based (Fact)</option><option>Function of Paragraph / Line</option>
+                <option>Vocabulary in Context</option><option>Title / Best Summary</option><option>Application / Analogy</option>
+                <option>Para Jumble</option><option>Odd One Out</option><option>Para Completion</option><option>Critical Reasoning</option>
+              </select>
+            </div>
+            <div class="fg"><label>Trap Type (VARC)</label>
+              <select id="ev-trap">
+                <option>Tone Trap</option><option>Extreme Option</option><option>Half Right</option><option>Scope Trap</option>
+                <option>Inference Jump</option><option>Keyword Trap</option><option>Author Intent</option><option>Overthinking</option>
+                <option>Distortion</option><option>Reverse Logic</option><option>Cause–Effect Flip</option><option>Language Trap</option><option>Paraphrase Trap</option>
+              </select>
+            </div>
+            <div class="fg ffull"><label>Why fell for it</label><input type="text" id="ev-why" placeholder="What made you pick wrong?"></div>
+            <div class="fg ffull"><label>Fix Action</label><input type="text" id="ev-fix" placeholder='"Eliminate extreme words first"'></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="saveError('varc')">Add VARC Error</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Error Log — <span id="err-count">0</span> entries</div>
+          <div id="err-warn" style="display:none" class="alert alert-red" style="margin-bottom:10px"></div>
+          <div id="errors-list"><div class="empty">No errors yet. Every mistake logged = one less on exam day.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOCKS -->
+    <div class="page" id="page-mocks">
+      <div class="page-header"><div class="page-title">📊 Mock Results</div></div>
+      <div class="page-content">
+        <div class="card">
+          <div class="card-title">Log Mock → Saves to Database</div>
+          <div class="fgrid">
+            <div class="fg"><label>Type</label><select id="m-type"><option>Full Mock</option><option>VARC Sectional</option><option>QA Sectional</option><option>LRDI Sectional</option></select></div>
+            <div class="fg"><label>Date</label><input type="date" id="m-date"></div>
+          </div>
+          <div class="fgrid3">
+            <div class="fg"><label>VARC score</label><input type="number" id="m-varc" min="-30" max="72" placeholder="32"></div>
+            <div class="fg"><label>QA score</label><input type="number" id="m-qa" min="-30" max="72" placeholder="28"></div>
+            <div class="fg"><label>LRDI score</label><input type="number" id="m-lrdi" min="-30" max="72" placeholder="24"></div>
+          </div>
+          <div class="fg"><label>Percentile (if known)</label><input type="number" id="m-pct" min="0" max="100" step="0.01" placeholder="94.5"></div>
+          <div class="divider"></div>
+          <div class="fgrid">
+            <div class="fg"><label>🛑 STOP (Thing 1)</label><input type="text" id="m-stop1" placeholder="What to stop doing"></div>
+            <div class="fg"><label>🛑 STOP (Thing 2)</label><input type="text" id="m-stop2" placeholder="What to stop doing"></div>
+            <div class="fg"><label>🚀 START (Thing 1)</label><input type="text" id="m-start1" placeholder="What to start doing"></div>
+            <div class="fg"><label>🚀 START (Thing 2)</label><input type="text" id="m-start2" placeholder="What to start doing"></div>
+            <div class="fg ffull"><label>💪 DOUBLE DOWN (Strength to push)</label><input type="text" id="m-doubledown" placeholder="What's working that you should do more"></div>
+          </div>
+          <button class="btn btn-green btn-full" onclick="saveMock()">✓ Save Mock</button>
+        </div>
+        <div class="card"><div class="card-title">Mock History — <span id="mock-count">0</span></div><div id="mocks-list"><div class="empty">No mocks yet.</div></div></div>
+        <div id="trend-card" class="card" style="display:none"><div class="card-title">Score Trend</div><div id="trend-body"></div></div>
+      </div>
+    </div>
+
+    <!-- PDF TRACKER -->
+    <div class="page" id="page-pdfs">
+      <div class="page-header"><div class="page-title">📚 PDF Tracker</div></div>
+      <div class="page-content">
+        <div class="sub-tabs">
+          <div class="sub-tab active" id="ptab-active" onclick="pTab('active')">ACTIVE</div>
+          <div class="sub-tab" id="ptab-later" onclick="pTab('later')">LATER (Phase 2+)</div>
+        </div>
+        <div id="pdf-active"></div>
+        <div id="pdf-later" style="display:none">
+          <div class="alert alert-amber" style="margin-bottom:10px">⚠️ Don't open these until ACTIVE is fully done. Phase 2 starts July 1.</div>
+          <div id="pdf-later-inner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REATTEMPT QUEUE -->
+    <div class="page" id="page-reattempt">
+      <div class="page-header"><div class="page-title">🔁 Reattempt Queue</div></div>
+      <div class="page-content">
+        <div class="alert alert-amber">Errors logged 2+ days ago that are still Pending reattempt. Work through these before logging new errors.</div>
+        <div id="reattempt-full-list" style="margin-top:14px"><div class="empty">No reattempts pending.</div></div>
+      </div>
+    </div>
+
+    <!-- WEAKNESS FEED -->
+    <div class="page" id="page-weakness">
+      <div class="page-header"><div class="page-title">🔥 Weakness Feed</div></div>
+      <div class="page-content">
+        <div class="alert alert-red">Repeat errors (2+) and Decision errors. These are your highest priority focus areas.</div>
+        <div id="weakness-full-list" style="margin-top:14px"><div class="empty">No patterns yet. Keep logging errors.</div></div>
+      </div>
+    </div>
+
+    <!-- KILL LIST -->
+    <div class="page" id="page-killist">
+      <div class="page-header"><div class="page-title">🎯 Kill List</div></div>
+      <div class="page-content">
+        <div class="card">
+          <div class="card-title">This Week's Focus — Max 3 Weaknesses</div>
+          <div class="fgrid">
+            <div class="fg"><label>Week (e.g. W3 May)</label><input type="text" id="kl-week" placeholder="W3 May 2026"></div>
+            <div></div>
+            <div class="fg"><label>Weakness 1</label><input type="text" id="kl-w1" placeholder="e.g. Arrangement under time pressure"></div>
+            <div class="fg"><label>Weakness 2</label><input type="text" id="kl-w2" placeholder="e.g. RC Inference questions"></div>
+            <div class="fg"><label>Weakness 3</label><input type="text" id="kl-w3" placeholder="e.g. Quadratic Equations approach"></div>
+            <div class="fg ffull"><label>Notes</label><input type="text" id="kl-notes" placeholder="How you plan to fix them this week"></div>
+          </div>
+          <button class="btn btn-green btn-full" onclick="saveKillList()">✓ Set This Week's Kill List</button>
+        </div>
+        <div class="card"><div class="card-title">Kill List History</div><div id="killist-history"><div class="empty">No kill lists set yet.</div></div></div>
+      </div>
+    </div>
+
+  </div><!-- end main -->
+</div><!-- end app -->
+
+<script>
+// ── SUPABASE CONFIG ───────────────────────────────────────
+const SB_URL = 'https://saemvxizuxumdabgcofm.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhZW12eGl6dXh1bWRhYmdjb2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2NDM2MTYsImV4cCI6MjA5MzIxOTYxNn0.HOjkzKc3UhAFnmWvCn_FZJWt1r6PIJBWQt54ljm1s2s';
+
+const SB_HEADERS = {
+  'Content-Type': 'application/json',
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Prefer': 'return=representation'
+};
+
+async function sbInsert(table, data) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+    method: 'POST', headers: SB_HEADERS, body: JSON.stringify(data)
+  });
+  if (!r.ok) { const e = await r.text(); throw new Error(e); }
+  return r.json();
+}
+async function sbSelect(table, params = '') {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}&order=created_at.desc`, { headers: { ...SB_HEADERS, 'Prefer': '' } });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbUpdate(table, id, data) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'PATCH', headers: SB_HEADERS, body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ── PDF RESOURCES ─────────────────────────────────────────
+const PDFS = {
+  active: {
+    QA: [{name:'Top 118 Averages, Ratio & Proportion',total:118},{name:'Top 136 Time, Distance & Work',total:136},{name:'Top 33 Percentages',total:33},{name:'Top 350+ Arithmetic',total:350},{name:'Top 48 Quadratic Equations',total:48},{name:'Top 59 Inequalities',total:59},{name:'Top 62 Profit & Loss',total:62},{name:'Top 65 Linear Equations',total:65}],
+    LRDI: [{name:'Top 121 Arrangement',total:121},{name:'Top 163 Charts',total:163},{name:'Top 41 Selection With Condition',total:41},{name:'Top 80 Puzzles',total:80}],
+    VARC: [{name:'Top 199 Para Jumbles',total:199},{name:'Top 48 Odd One Out',total:48},{name:'Top 858 Reading Comprehension',total:858},{name:'Top 96 Para Completion & Summary',total:96}]
+  },
+  later: {
+    QA: [{name:'Top 108 Data Sufficiency',total:108},{name:'Top 131 Number Systems',total:131},{name:'Top 17 Coordinate Geometry',total:17},{name:'Top 180 Geometry',total:180},{name:'Top 23 Remainders',total:23},{name:'Top 396 Algebra',total:396},{name:'Top 49 Probability',total:49},{name:'Top 54 Logarithms',total:54},{name:'Top 72 Progressions',total:72},{name:'Top 93 Functions & Graphs',total:93}],
+    LRDI: [{name:'Top 103 DI Basics',total:103},{name:'Top 13 Routes & Networks',total:13},{name:'Top 24 Maxima-Minima',total:24},{name:'Top 3 Truth-Lie',total:3},{name:'Top 34 Scheduling',total:34},{name:'Top 61 Games & Tournaments',total:61},{name:'Top 75 Data Change Period',total:75},{name:'Top 8 Coins & Weights',total:8}],
+    VARC: [{name:'Top 104 Grammar & Sentence Correction',total:104},{name:'Top 123 Vocabulary',total:123},{name:'Top 334 Verbal Ability',total:334},{name:'Top 38 Critical Reasoning',total:38}]
+  }
+};
+
+// ── IN-MEMORY PDF PROGRESS (loaded from Supabase on boot) ─
+let pdfProg = {};  // key -> {q_num: 'done'/'some'/'cant', _priority, _revision}
+let topicP = { arith: 0, alg: 0 }; // loaded from progress_meta in Supabase
+
+// ── IN-MEMORY CACHE ───────────────────────────────────────
+let cache = { days:[], lrdi:[], errors:[], mocks:[], killist:[] };
+
+// ── UTILS ─────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + type; t.style.display = 'block';
+  clearTimeout(window._tt); window._tt = setTimeout(() => t.style.display = 'none', 2400);
+}
+function today() { return new Date().toISOString().split('T')[0]; }
+function addDays(d, n) { const dt = new Date(d); dt.setDate(dt.getDate()+n); return dt.toISOString().split('T')[0]; }
+function setEl(id, v) { const e = document.getElementById(id); if(e) e.textContent = v; }
+function setBar(b, p, pct) {
+  pct = Math.min(Math.max(pct,0),100);
+  const be = document.getElementById(b); if(be) be.style.width = pct + '%';
+  const pe = document.getElementById(p); if(pe) pe.textContent = pct + '%';
+}
+
+// ── NAV ───────────────────────────────────────────────────
+function nav(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+  if(id === 'pdfs') renderPDFs();
+  if(id === 'reattempt') renderReattemptFull();
+  if(id === 'weakness') renderWeaknessFull();
+  if(id === 'killist') renderKillListHistory();
+  if(id === 'command') renderCommand();
+}
+function eTab(t) { ['qa','lrdi','varc'].forEach(s => { document.getElementById('ef-'+s).style.display = s===t?'block':'none'; document.getElementById('etab-'+s).className='sub-tab'+(s===t?' active':''); }); }
+function lTab(t) { ['all','revisit','brain'].forEach(s => { document.getElementById('lp-'+s).style.display = s===t?'block':'none'; document.getElementById('ltab-'+s).className='sub-tab'+(s===t?' active':''); }); if(t==='brain') renderBrain(); }
+function pTab(t) { document.getElementById('pdf-active').style.display = t==='active'?'block':'none'; document.getElementById('pdf-later').style.display = t==='later'?'block':'none'; document.getElementById('ptab-active').className='sub-tab'+(t==='active'?' active':''); document.getElementById('ptab-later').className='sub-tab'+(t==='later'?' active':''); }
+
+// ── DATE ──────────────────────────────────────────────────
+function updateDates() {
+  const now = new Date();
+  const dL = Math.ceil((new Date('2026-11-27') - now) / 864e5);
+  const w = Math.max(1, Math.ceil((now - new Date('2026-04-27')) / 604800000));
+  setEl('sb-date', now.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'short'}));
+  setEl('sb-days', dL + ' days to CAT · W' + w);
+  setEl('cc-days', dL);
+}
+
+// ── VARC LIVE ─────────────────────────────────────────────
+function vLive() {
+  const rc = ['rc1q1','rc1q2','rc1q3','rc1q4','rc2q1','rc2q2','rc2q3','rc2q4'];
+  const va = ['vaq1','vaq2','vaq3','vaq4'];
+  let rcc=0,rct=0,vac=0,vat=0;
+  rc.forEach(id => { const v=document.getElementById(id).value; if(v!==''){rct++;rcc+=parseInt(v)||0;} });
+  va.forEach(id => { const v=document.getElementById(id).value; if(v!==''){vat++;vac+=parseInt(v)||0;} });
+  const lv = document.getElementById('varc-live'); if(!lv) return;
+  const parts = [];
+  if(rct>0) parts.push(`RC: ${rcc}/${rct} (${Math.round(rcc/rct*100)}%)`);
+  if(vat>0) parts.push(`VA: ${vac}/${vat}`);
+  lv.textContent = parts.join(' · ');
+}
+
+// ── SAVE DAY ──────────────────────────────────────────────
+async function saveDay() {
+  const date = document.getElementById('log-date').value; if(!date) { alert('Pick a date'); return; }
+  const rc1v = [1,2,3,4].map(i => { const v=document.getElementById('rc1q'+i).value; return v===''?null:parseInt(v); });
+  const rc2v = [1,2,3,4].map(i => { const v=document.getElementById('rc2q'+i).value; return v===''?null:parseInt(v); });
+  const vav = [1,2,3,4].map(i => { const v=document.getElementById('vaq'+i).value; return v===''?null:parseInt(v); });
+  const rc1c = rc1v.filter(v=>v===1).length, rc1t = rc1v.filter(v=>v!==null).length;
+  const rc2c = rc2v.filter(v=>v===1).length, rc2t = rc2v.filter(v=>v!==null).length;
+  const vac = vav.filter(v=>v===1).length;
+  const checks = ['rc1-done','rc2-done','q-done','l-s1','l-s2'];
+  const done = checks.filter(id => document.getElementById(id).checked).length;
+  const status = done>=4?'Full Day':done>0?'Partial':'Missed';
+  const data = {
+    date, status, rc1_correct:rc1c, rc1_total:rc1t, rc2_correct:rc2c, rc2_total:rc2t, va_correct:vac,
+    qa_score: parseInt(document.getElementById('q-score').value)||0,
+    qa_topic: document.getElementById('q-topic').value,
+    hours: parseFloat(document.getElementById('d-hours').value)||0,
+    focus: parseInt(document.getElementById('sc-focus').value)||null,
+    decision_quality: parseInt(document.getElementById('sc-decision').value)||null,
+    energy: parseInt(document.getElementById('sc-energy').value)||null,
+    wasted_time: document.getElementById('sc-wasted').value,
+    biggest_mistake: document.getElementById('sc-mistake').value,
+    biggest_win: document.getElementById('sc-win').value,
+    notes: document.getElementById('d-notes').value,
+    arith_progress: parseInt(document.getElementById('q-arith').value)||0,
+    alg_progress: parseInt(document.getElementById('q-alg').value)||0
+  };
+  try {
+    await sbInsert('daily_sessions', data);
+    toast('✓ Session saved!');
+    await loadAll(); renderAll();
+    resetDay();
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+}
+
+async function saveTopicProgress() {
+  topicP.arith = parseInt(document.getElementById('q-arith').value)||0;
+  topicP.alg = parseInt(document.getElementById('q-alg').value)||0;
+  // Save both values to Supabase progress_meta table
+  try {
+    await Promise.all([
+      sbUpsert('progress_meta', [{key:'arith_topics', value: String(topicP.arith)}], 'key'),
+      sbUpsert('progress_meta', [{key:'alg_topics',   value: String(topicP.alg)}],   'key')
+    ]);
+    toast('✓ Progress saved');
+  } catch(e) { console.warn('saveTopicProgress:', e); }
+  renderProgress();
+}
+
+function resetDay() {
+  ['rc1q1','rc1q2','rc1q3','rc1q4','rc2q1','rc2q2','rc2q3','rc2q4','vaq1','vaq2','vaq3','vaq4','q-score','d-hours','sc-focus','sc-decision','sc-energy','sc-mistake','sc-win','d-notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['rc1-done','rc2-done','q-done','l-s1','l-s2'].forEach(id=>{const e=document.getElementById(id);if(e)e.checked=false;});
+  document.getElementById('q-topic').value='';
+  document.getElementById('varc-live').textContent='';
+}
+
+// ── SAVE LRDI ─────────────────────────────────────────────
+async function saveLRDI() {
+  const insight = document.getElementById('l-insight').value.trim();
+  if(!insight) { alert('Key insight is mandatory.'); return; }
+  const data = {
+    pdf_name: document.getElementById('l-pdf').value,
+    set_no: document.getElementById('l-setno').value,
+    question_nos: document.getElementById('l-qnos').value,
+    set_type: document.getElementById('l-type').value,
+    difficulty: document.getElementById('l-diff').value,
+    time_mins: parseInt(document.getElementById('l-time').value)||0,
+    solved: document.getElementById('l-solved').value,
+    selection_correct: document.getElementById('l-sel').value,
+    mistake_type: document.getElementById('l-mistake').value,
+    master_error_type: document.getElementById('l-master').value,
+    key_insight: insight,
+    fix_action: document.getElementById('l-fixaction').value,
+    revisit: document.getElementById('l-revisit').value === 'true',
+    date: today()
+  };
+  try {
+    await sbInsert('lrdi_log', data);
+    toast('✓ LRDI set saved!');
+    ['l-time','l-insight','l-fixaction','l-setno','l-qnos'].forEach(id=>document.getElementById(id).value='');
+    await loadAll(); renderAll();
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+}
+
+// ── SAVE ERROR ────────────────────────────────────────────
+async function saveError(section) {
+  let data = { section: section.toUpperCase(), date: today(), reattempt_date: addDays(today(), 2), status: 'Pending', repeat_count: 1 };
+  if(section==='qa') {
+    data.pdf_name=document.getElementById('eq-pdf').value; data.question_no=document.getElementById('eq-qno').value;
+    data.page_ref=document.getElementById('eq-page').value; data.topic=document.getElementById('eq-topic').value;
+    data.master_error_type=document.getElementById('eq-master').value; data.trap_type=document.getElementById('eq-trap').value;
+    data.error_type=document.getElementById('eq-etype').value; data.why_wrong=document.getElementById('eq-why').value;
+    data.fix_action=document.getElementById('eq-fix').value;
+    ['eq-qno','eq-page','eq-why','eq-fix'].forEach(id=>document.getElementById(id).value='');
+  } else if(section==='lrdi') {
+    data.pdf_name=document.getElementById('el-pdf').value; data.question_no=document.getElementById('el-setno').value;
+    data.page_ref=document.getElementById('el-qnos').value; data.topic=document.getElementById('el-type').value;
+    data.master_error_type=document.getElementById('el-master').value; data.trap_type=document.getElementById('el-trap').value;
+    data.fix_action=document.getElementById('el-fix').value;
+    ['el-setno','el-qnos','el-fix'].forEach(id=>document.getElementById(id).value='');
+  } else {
+    data.pdf_name=document.getElementById('ev-pdf').value; data.question_no=document.getElementById('ev-qno').value;
+    data.page_ref=document.getElementById('ev-page').value; data.topic=document.getElementById('ev-type').value;
+    data.master_error_type=document.getElementById('ev-master').value; data.trap_type=document.getElementById('ev-trap').value;
+    data.why_wrong=document.getElementById('ev-why').value; data.fix_action=document.getElementById('ev-fix').value;
+    ['ev-qno','ev-page','ev-why','ev-fix'].forEach(id=>document.getElementById(id).value='');
+  }
+  // Check if same error exists → increment repeat count
+  const existing = cache.errors.find(e => e.section===data.section && e.topic===data.topic && e.trap_type===data.trap_type);
+  if(existing) { await sbUpdate('errors', existing.id, {repeat_count: (existing.repeat_count||1)+1}); }
+  else { await sbInsert('errors', data); }
+  toast('✓ Error saved!');
+  await loadAll(); renderAll();
+}
+
+// ── SAVE MOCK ─────────────────────────────────────────────
+async function saveMock() {
+  const varc=parseInt(document.getElementById('m-varc').value)||0;
+  const qa=parseInt(document.getElementById('m-qa').value)||0;
+  const lrdi=parseInt(document.getElementById('m-lrdi').value)||0;
+  const data = {
+    mock_type: document.getElementById('m-type').value,
+    date: document.getElementById('m-date').value || today(),
+    varc_score: varc, qa_score: qa, lrdi_score: lrdi, total_score: varc+qa+lrdi,
+    percentile: parseFloat(document.getElementById('m-pct').value)||null,
+    stop_1: document.getElementById('m-stop1').value,
+    stop_2: document.getElementById('m-stop2').value,
+    start_1: document.getElementById('m-start1').value,
+    start_2: document.getElementById('m-start2').value,
+    double_down: document.getElementById('m-doubledown').value
+  };
+  try {
+    await sbInsert('mock_results', data);
+    toast('✓ Mock saved! Type "analyse my mock" in Claude for full analysis.');
+    ['m-varc','m-qa','m-lrdi','m-pct','m-stop1','m-stop2','m-start1','m-start2','m-doubledown'].forEach(id=>document.getElementById(id).value='');
+    await loadAll(); renderAll();
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+}
+
+// ── SAVE KILL LIST ────────────────────────────────────────
+async function saveKillList() {
+  const week = document.getElementById('kl-week').value; if(!week) { alert('Enter week'); return; }
+  const data = {
+    week, weakness_1: document.getElementById('kl-w1').value,
+    weakness_2: document.getElementById('kl-w2').value, weakness_3: document.getElementById('kl-w3').value,
+    notes: document.getElementById('kl-notes').value, date: today()
+  };
+  try {
+    await sbInsert('kill_list', data);
+    toast('✓ Kill List saved!');
+    ['kl-week','kl-w1','kl-w2','kl-w3','kl-notes'].forEach(id=>document.getElementById(id).value='');
+    await loadAll(); renderAll();
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+}
+
+// ── LOAD ALL ──────────────────────────────────────────────
+async function loadAll() {
+  try {
+    const [days, lrdi, errors, mocks, killist] = await Promise.all([
+      sbSelect('daily_sessions', 'limit=100'),
+      sbSelect('lrdi_log', 'limit=200'),
+      sbSelect('errors', 'limit=500'),
+      sbSelect('mock_results', 'limit=50'),
+      sbSelect('kill_list', 'limit=20')
+    ]);
+    cache.days = days || [];
+    cache.lrdi = lrdi || [];
+    cache.errors = errors || [];
+    cache.mocks = mocks || [];
+    cache.killist = killist || [];
+  } catch(e) { console.error('Load error:', e.message); }
+}
+
+// ── RENDER ALL ────────────────────────────────────────────
+function renderAll() {
+  renderProgress();
+  renderCommand();
+  renderSessions();
+  renderLRDI();
+  renderErrors();
+  renderMocks();
+  updateBadges();
+}
+
+function renderProgress() {
+  const lrdiCount = cache.lrdi.length;
+  const fullMocks = cache.mocks.filter(m=>m.mock_type==='Full Mock').length;
+  let rcC=0,rcT=0;
+  cache.days.forEach(d=>{ rcC+=(d.rc1_correct||0)+(d.rc2_correct||0); rcT+=(d.rc1_total||0)+(d.rc2_total||0); });
+  const rcPct = rcT>0?Math.round(rcC/rcT*100):0;
+  const latestDay = cache.days[0];
+  const arith = latestDay?.arith_progress || topicP.arith || 0;
+  const alg = latestDay?.alg_progress || topicP.alg || 0;
+  setBar('pr-arith','pp-arith',Math.round(arith/8*100));
+  setBar('pr-alg','pp-alg',Math.round(alg/8*100));
+  setBar('pr-lrdi','pp-lrdi',Math.round(Math.min(lrdiCount/60,1)*100));
+  setBar('pr-varc','pp-varc',rcPct);
+  setBar('pr-mocks','pp-mocks',Math.round(fullMocks/9*100));
+  // Update arith/alg inputs
+  const ae = document.getElementById('q-arith'); if(ae) ae.value = arith;
+  const ale = document.getElementById('q-alg'); if(ale) ale.value = alg;
+}
+
+function renderCommand() {
+  const daysLogged = cache.days.length;
+  const today_str = today();
+
+  // Streak
+  let streak=0, d=new Date();
+  for(let i=0;i<200;i++){const k=d.toISOString().split('T')[0];const day=cache.days.find(x=>x.date===k);if(day&&day.status==='Full Day'){streak++;d.setDate(d.getDate()-1);}else break;}
+  setEl('cc-streak', streak);
+
+  // Reattempt due
+  const due = cache.errors.filter(e => e.status==='Pending' && e.reattempt_date && e.reattempt_date <= today_str);
+  setEl('cc-queue', due.length);
+
+  // Weakness
+  const weak = cache.errors.filter(e => (e.repeat_count||1) >= 2 || e.master_error_type === 'Decision');
+  setEl('cc-weak', weak.length);
+
+  // Calendar
+  const cal = document.getElementById('cal-strip'); if(cal) {
+    cal.innerHTML='';
+    const dayMap={};cache.days.forEach(d=>{dayMap[d.date]=d.status;});
+    for(let i=20;i>=0;i--){const dd=new Date();dd.setDate(dd.getDate()-i);const k=dd.toISOString().split('T')[0];const s=dayMap[k]||'';const div=document.createElement('div');div.className='cal-day'+(k===today_str?' today':'')+(s==='Full Day'?' done':s==='Partial'?' partial':'');div.textContent=dd.getDate();cal.appendChild(div);}
+  }
+
+  // Reattempt list (command center)
+  const ra = document.getElementById('cc-reattempt-list');
+  if(ra) {
+    if(!due.length) { ra.innerHTML='<div class="empty">No reattempts due today.</div>'; }
+    else {
+      ra.innerHTML = due.slice(0,5).map(e=>`<div class="queue-item urgent"><div class="queue-dot red"></div><div class="queue-body"><div class="queue-title">${e.section} — ${e.topic||e.trap_type||'—'}</div><div class="queue-meta">Due: ${e.reattempt_date} · Fix: ${e.fix_action||'—'}</div></div></div>`).join('');
+    }
+  }
+
+  // Weakness list (command center)
+  const wl = document.getElementById('cc-weakness-list');
+  if(wl) {
+    if(!weak.length) { wl.innerHTML='<div class="empty">No patterns yet.</div>'; }
+    else {
+      wl.innerHTML = weak.slice(0,5).map(e=>`<div class="queue-item"><div class="queue-dot ${e.master_error_type==='Decision'?'red':'amber'}"></div><div class="queue-body"><div class="queue-title">${e.section} — ${e.topic||'—'} <span class="badge ${e.master_error_type==='Decision'?'badge-red':'badge-amber'}">${e.master_error_type}</span></div><div class="queue-meta">Repeated ${e.repeat_count||1}x · ${e.trap_type||'—'}</div></div></div>`).join('');
+    }
+  }
+
+  // Latest mock actions
+  const latestMock = cache.mocks.filter(m=>m.mock_type==='Full Mock')[0];
+  const ma = document.getElementById('cc-mock-actions');
+  if(ma) {
+    if(!latestMock) { ma.innerHTML='<div class="empty">No mocks logged yet.</div>'; }
+    else {
+      ma.innerHTML=`<div style="margin-bottom:8px"><span class="badge badge-blue">Mock — ${latestMock.date}</span> <span class="badge badge-gray">${latestMock.total_score} pts</span> ${latestMock.percentile?`<span class="badge badge-purple">${latestMock.percentile}%ile</span>`:''}</div>${latestMock.stop_1||latestMock.stop_2?`<div style="font-size:12px;color:var(--red);margin-bottom:4px">🛑 Stop: ${[latestMock.stop_1,latestMock.stop_2].filter(Boolean).join(' · ')}</div>`:''} ${latestMock.start_1||latestMock.start_2?`<div style="font-size:12px;color:var(--green);margin-bottom:4px">🚀 Start: ${[latestMock.start_1,latestMock.start_2].filter(Boolean).join(' · ')}</div>`:''} ${latestMock.double_down?`<div style="font-size:12px;color:var(--blue)">💪 Push: ${latestMock.double_down}</div>`:''}`;
+    }
+  }
+
+  // Kill list
+  const kl = cache.killist[0];
+  const ke = document.getElementById('cc-killist');
+  if(ke) {
+    if(!kl) { ke.innerHTML='<div class="empty">No kill list set. Go to Kill List tab.</div>'; }
+    else {
+      ke.innerHTML=`<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">${kl.week}</div>${[kl.weakness_1,kl.weakness_2,kl.weakness_3].filter(Boolean).map((w,i)=>`<div class="queue-item"><div class="queue-dot red"></div><div class="queue-body"><div class="queue-title">${i+1}. ${w}</div></div></div>`).join('')}`;
+    }
+  }
+}
+
+function renderSessions() {
+  const el = document.getElementById('sessions-list');
+  if(!cache.days.length){el.innerHTML='<div class="empty">No sessions yet.</div>';return;}
+  el.innerHTML=`<table class="tbl"><tr><th>Date</th><th>Status</th><th>Topic</th><th>QA</th><th>RC</th><th>Hours</th><th>Focus</th><th>Win</th></tr>
+  ${cache.days.slice(0,12).map(d=>`<tr>
+    <td style="font-family:var(--mono)">${d.date}</td>
+    <td><span class="badge ${d.status==='Full Day'?'badge-green':d.status==='Partial'?'badge-amber':'badge-red'}">${d.status}</span></td>
+    <td>${d.qa_topic||'—'}</td>
+    <td style="font-family:var(--mono)">${d.qa_score||0}/30</td>
+    <td style="font-family:var(--mono)">${d.rc1_total||d.rc2_total?`${(d.rc1_correct||0)+(d.rc2_correct||0)}/${(d.rc1_total||0)+(d.rc2_total||0)}`:'—'}</td>
+    <td style="font-family:var(--mono)">${d.hours||0}h</td>
+    <td style="font-family:var(--mono)">${d.focus||'—'}/10</td>
+    <td style="font-size:11px;color:var(--text3)">${d.biggest_win||'—'}</td>
+  </tr>`).join('')}</table>`;
+}
+
+function renderLRDI() {
+  setEl('lrdi-count', cache.lrdi.length);
+  const el = document.getElementById('lrdi-list');
+  if(!cache.lrdi.length){el.innerHTML='<div class="empty">No sets yet. Start with Arrangement sets.</div>';return;}
+  el.innerHTML=`<table class="tbl"><tr><th>Ref</th><th>Type</th><th>D</th><th>Time</th><th>Solved</th><th>Mistake</th><th>Insight</th><th>Fix Action</th></tr>
+  ${cache.lrdi.slice(0,15).map(s=>`<tr>
+    <td><div style="color:var(--green);font-weight:600;font-size:10px">${s.pdf_name?s.pdf_name.split(' ').slice(0,3).join(' '):'—'}</div><div style="font-size:9px;color:var(--text3)">${s.set_no||''} ${s.question_nos||''}</div></td>
+    <td style="font-size:10px">${s.set_type?.split(' — ')[0]||'—'}</td>
+    <td><span class="badge badge-${s.difficulty==='Easy'?'green':s.difficulty==='Hard'?'red':'amber'}">${(s.difficulty||'M').charAt(0)}</span></td>
+    <td style="font-family:var(--mono)">${s.time_mins||0}m</td>
+    <td style="color:${s.solved==='Yes — fully'?'var(--green)':s.solved==='Partial'?'var(--amber)':'var(--red)'}">${s.solved==='Yes — fully'?'✓':s.solved==='Partial'?'~':'✗'}</td>
+    <td style="font-size:10px;color:var(--text3)">${s.mistake_type==='None — clean'?'—':s.mistake_type||'—'}</td>
+    <td style="font-size:10px;max-width:100px">${s.key_insight||'—'}</td>
+    <td style="font-size:10px;color:var(--amber);max-width:100px">${s.fix_action||'—'}</td>
+  </tr>`).join('')}</table>`;
+
+  const rv = document.getElementById('lrdi-revisit-list');
+  const toR = cache.lrdi.filter(s=>s.revisit);
+  rv.innerHTML = toR.length?`<table class="tbl"><tr><th>PDF</th><th>Set/Qs</th><th>Type</th><th>Insight</th><th>Fix</th></tr>${toR.map(s=>`<tr><td style="color:var(--green)">${s.pdf_name||'—'}</td><td>${s.set_no||'—'} ${s.question_nos||''}</td><td>${s.set_type||'—'}</td><td>${s.key_insight||'—'}</td><td style="color:var(--amber)">${s.fix_action||'—'}</td></tr>`).join('')}</table>`:'<div class="empty">No sets flagged.</div>';
+}
+
+function renderBrain() {
+  const el = document.getElementById('lrdi-brain');
+  if(cache.lrdi.length<30){el.innerHTML='<div class="empty">Log 30+ sets to unlock.</div>';return;}
+  const types={};
+  cache.lrdi.forEach(s=>{const t=s.set_type?.split(' — ')[0]||'Other';if(!types[t])types[t]={total:0,solved:0,times:[]};types[t].total++;if(s.solved==='Yes — fully')types[t].solved++;if(s.time_mins)types[t].times.push(s.time_mins);});
+  el.innerHTML=Object.entries(types).sort((a,b)=>b[1].total-a[1].total).map(([t,d])=>{const rate=Math.round(d.solved/d.total*100);const avg=d.times.length?Math.round(d.times.reduce((a,b)=>a+b,0)/d.times.length):0;const pick=rate>=70&&avg<=25;return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bd);font-size:12px"><span style="flex:1;font-weight:600">${t}</span><span style="font-family:var(--mono)">${d.total}</span><span style="color:${rate>=70?'var(--green)':rate>=50?'var(--amber)':'var(--red)'};font-family:var(--mono)">${rate}%</span><span style="color:var(--text3);font-family:var(--mono)">${avg}m avg</span><span class="badge ${pick?'badge-green':'badge-red'}">${pick?'PICK':'AVOID'}</span></div>`;}).join('') + '<div class="alert alert-green" style="margin-top:10px">PICK = solve rate ≥70% AND avg time ≤25min</div>';
+}
+
+function renderErrors() {
+  setEl('err-count', cache.errors.length);
+  const el = document.getElementById('errors-list');
+  if(!cache.errors.length){el.innerHTML='<div class="empty">No errors yet.</div>';return;}
+  // Warn on repeated errors
+  const repeated = cache.errors.filter(e=>(e.repeat_count||1)>=3);
+  const warn = document.getElementById('err-warn');
+  if(repeated.length && warn) {
+    warn.style.display='block';
+    warn.textContent='⚠️ SYSTEM FIX NEEDED — Same mistake 3x+: ' + repeated.map(e=>`${e.section} ${e.topic} (${e.trap_type})`).join(' | ');
+  } else if(warn) warn.style.display='none';
+  el.innerHTML=`<table class="tbl"><tr><th>Sec</th><th>Ref</th><th>Topic</th><th>Master</th><th>Trap</th><th>Fix Action</th><th>Rpt</th><th>Status</th></tr>
+  ${cache.errors.slice(0,25).map(e=>`<tr>
+    <td><span class="badge badge-${e.section==='QA'?'green':e.section==='LRDI'?'blue':'purple'}">${e.section}</span></td>
+    <td style="font-size:10px"><div style="color:var(--green)">${e.pdf_name?e.pdf_name.split(' ').slice(0,2).join(' '):'—'}</div><div style="color:var(--text3)">${e.question_no||''}</div></td>
+    <td style="font-size:11px">${e.topic||'—'}</td>
+    <td><span class="badge ${e.master_error_type==='Decision'?'badge-red':e.master_error_type==='Concept'?'badge-amber':e.master_error_type==='Execution'?'badge-blue':'badge-purple'}">${e.master_error_type||'—'}</span></td>
+    <td style="font-size:10px;color:var(--text3)">${e.trap_type||'—'}</td>
+    <td style="font-size:10px;color:var(--amber)">${e.fix_action||'—'}</td>
+    <td style="font-family:var(--mono);color:${(e.repeat_count||1)>=3?'var(--red)':'var(--text3)'}">${e.repeat_count||1}</td>
+    <td><span class="badge ${e.status==='Pending'?'badge-red':'badge-green'}">${e.status||'Pending'}</span></td>
+  </tr>`).join('')}</table>`;
+}
+
+function renderMocks() {
+  setEl('mock-count', cache.mocks.length);
+  const el = document.getElementById('mocks-list');
+  if(!cache.mocks.length){el.innerHTML='<div class="empty">No mocks yet. Phase 1: 1 full mock per week.</div>';return;}
+  const sorted = [...cache.mocks].sort((a,b)=>a.date.localeCompare(b.date));
+  let fc=0;
+  el.innerHTML=`<table class="tbl"><tr><th>#</th><th>Date</th><th>VARC</th><th>QA</th><th>LRDI</th><th>Total</th><th>%ile</th><th>Stop</th><th>Start</th></tr>
+  ${sorted.map(m=>{if(m.mock_type==='Full Mock')fc++;return`<tr>
+    <td style="font-family:var(--mono)">${m.mock_type==='Full Mock'?'M'+fc:m.mock_type.charAt(0)}</td>
+    <td style="font-family:var(--mono)">${m.date}</td>
+    <td style="font-family:var(--mono);color:var(--blue)">${m.varc_score}</td>
+    <td style="font-family:var(--mono);color:var(--green)">${m.qa_score}</td>
+    <td style="font-family:var(--mono);color:var(--purple)">${m.lrdi_score}</td>
+    <td style="font-family:var(--mono);font-weight:700;font-size:16px">${m.total_score}</td>
+    <td style="font-family:var(--mono)">${m.percentile?m.percentile+'%':''}</td>
+    <td style="font-size:10px;color:var(--red)">${[m.stop_1,m.stop_2].filter(Boolean).join(' · ')||'—'}</td>
+    <td style="font-size:10px;color:var(--green)">${[m.start_1,m.start_2].filter(Boolean).join(' · ')||'—'}</td>
+  </tr>`;}).join('')}</table>`;
+
+  const full = sorted.filter(m=>m.mock_type==='Full Mock');
+  if(full.length>=2) {
+    document.getElementById('trend-card').style.display='block';
+    const mx = Math.max(...full.map(m=>m.total_score),1);
+    document.getElementById('trend-body').innerHTML = full.map((m,i)=>{const w=Math.round(m.total_score/mx*100);return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font-size:10px;min-width:40px;color:var(--text3);font-family:var(--mono)">M${i+1}</span><div style="flex:1;height:14px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="width:${w}%;height:100%;background:var(--green);border-radius:2px;display:flex;align-items:center;padding-left:4px"><span style="font-size:9px;color:#000;font-weight:700">${m.total_score}</span></div></div>${m.percentile?`<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${m.percentile}%ile</span>`:''}</div>`;}).join('');
+  }
+}
+
+function renderReattemptFull() {
+  const today_str = today();
+  const due = cache.errors.filter(e => e.status==='Pending' && e.reattempt_date && e.reattempt_date <= today_str);
+  const el = document.getElementById('reattempt-full-list');
+  if(!due.length){el.innerHTML='<div class="empty">No reattempts pending. Keep logging errors.</div>';return;}
+  el.innerHTML = due.map(e=>`<div class="queue-item urgent"><div class="queue-dot red"></div><div class="queue-body"><div class="queue-title">${e.section} — ${e.topic||'—'} <span class="badge badge-red">${e.master_error_type||'—'}</span></div><div class="queue-meta">PDF: ${e.pdf_name||'—'} · Q: ${e.question_no||'—'} · Due: ${e.reattempt_date}</div><div class="queue-meta" style="color:var(--amber);margin-top:3px">Fix: ${e.fix_action||'—'}</div></div><button class="btn btn-green btn-sm" onclick="markDone(${e.id})">Mark Done</button></div>`).join('');
+}
+
+async function markDone(id) {
+  try { await sbUpdate('errors', id, {status:'Done'}); toast('✓ Marked done!'); await loadAll(); renderAll(); renderReattemptFull(); }
+  catch(e) { toast('Error: '+e.message,'err'); }
+}
+
+function renderWeaknessFull() {
+  const weak = cache.errors.filter(e => (e.repeat_count||1) >= 2 || e.master_error_type === 'Decision').sort((a,b)=>(b.repeat_count||1)-(a.repeat_count||1));
+  const el = document.getElementById('weakness-full-list');
+  if(!weak.length){el.innerHTML='<div class="empty">No patterns yet. Keep logging errors.</div>';return;}
+  el.innerHTML = weak.map(e=>`<div class="queue-item ${e.master_error_type==='Decision'?'urgent':''}"><div class="queue-dot ${e.master_error_type==='Decision'?'red':'amber'}"></div><div class="queue-body"><div class="queue-title">${e.section} — ${e.topic||'—'} <span class="badge ${e.master_error_type==='Decision'?'badge-red':'badge-amber'}">${e.master_error_type}</span> <span class="badge badge-gray">${e.trap_type||'—'}</span></div><div class="queue-meta">Repeated ${e.repeat_count||1}x · PDF: ${e.pdf_name||'—'} Q${e.question_no||'—'}</div><div class="queue-meta" style="color:var(--amber);margin-top:3px">Fix: ${e.fix_action||'—'}</div></div></div>`).join('');
+}
+
+function renderKillListHistory() {
+  const el = document.getElementById('killist-history');
+  if(!cache.killist.length){el.innerHTML='<div class="empty">No kill lists yet.</div>';return;}
+  el.innerHTML = cache.killist.map(k=>`<div class="card" style="margin-bottom:10px"><div style="font-size:11px;font-weight:600;color:var(--green);font-family:var(--mono);margin-bottom:8px">${k.week}</div>${[k.weakness_1,k.weakness_2,k.weakness_3].filter(Boolean).map((w,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px"><span style="color:var(--red);font-family:var(--mono)">${i+1}.</span>${w}</div>`).join('')}${k.notes?`<div style="font-size:11px;color:var(--text3);margin-top:6px">${k.notes}</div>`:''}</div>`).join('');
+}
+
+function updateBadges() {
+  const today_str = today();
+  const due = cache.errors.filter(e => e.status==='Pending' && e.reattempt_date && e.reattempt_date <= today_str).length;
+  const queueEl = document.getElementById('badge-queue'); if(queueEl) queueEl.textContent = due;
+  const reEl = document.getElementById('badge-reattempt'); if(reEl) reEl.textContent = due;
+}
+
+// ── PDF TRACKER — ALL DATA FROM SUPABASE ─────────────────
+// pdfProg is loaded from Supabase on boot: { key: { questions:{n:'done'/'some'/'cant'}, priority:'medium', revision:'' } }
+
+async function savePDFToSupabase(key) {
+  const parts = key.split('_');
+  const tier = parts[0]; // active or later
+  const section = parts[1]; // QA / LRDI / VARC
+  const idx = parseInt(parts[2]);
+  const pdfList = PDFS[tier]?.[section];
+  if (!pdfList) return;
+  const pdf = pdfList[idx];
+  if (!pdf) return;
+  const d = pdfProg[key] || { questions:{}, priority:'medium', revision:'' };
+  try {
+    // upsert by pdf_name+section+tier
+    const existing = await sbGet('pdf_tracker', `?pdf_name=eq.${encodeURIComponent(pdf.name)}&section=eq.${encodeURIComponent(section)}&tier=eq.${encodeURIComponent(tier)}`);
+    const payload = {
+      pdf_name: pdf.name, section, tier,
+      total_questions: pdf.total,
+      questions_data: d.questions || {},
+      priority: d.priority || 'medium',
+      next_revision_date: d.revision || null,
+      updated_at: new Date().toISOString()
+    };
+    if (existing && existing.length > 0) {
+      await sbPatch('pdf_tracker', `?id=eq.${existing[0].id}`, payload);
+    } else {
+      await sbPost('pdf_tracker', payload);
+    }
+  } catch(e) { console.warn('PDF save error:', e.message); }
+}
+
+function renderPDFs() {
+  ['active','later'].forEach(tier=>{
+    const container = document.getElementById(tier==='active'?'pdf-active':'pdf-later-inner');
+    if(!container) return; container.innerHTML='';
+    Object.entries(PDFS[tier]).forEach(([section,pdfs])=>{
+      const sd=document.createElement('div'); sd.className='card';
+      sd.innerHTML=`<div class="card-title">${section}</div>`;
+      pdfs.forEach((pdf,idx)=>{
+        const key=`${tier}_${section}_${idx}`;
+        if(!pdfProg[key]) pdfProg[key]={questions:{},priority:'medium',revision:''};
+        const d=pdfProg[key];
+        const qs=d.questions||{};
+        const done=Object.values(qs).filter(v=>v==='done').length;
+        const some=Object.values(qs).filter(v=>v==='some').length;
+        const cant=Object.values(qs).filter(v=>v==='cant').length;
+        const pct=Math.round((done+some+cant)/pdf.total*100);
+        const priority=d.priority||'medium';
+        const item=document.createElement('div'); item.className='pdf-item';
+        item.innerHTML=`
+        <div class="pdf-hdr" onclick="togglePDF('pb-${key}')">
+          <div class="pdf-nm">${pdf.name}</div>
+          <div style="display:flex;gap:4px;align-items:center">
+            ${done?`<span class="badge b-ok">✓${done}</span>`:''}
+            ${some?`<span class="badge b-warn">~${some}</span>`:''}
+            ${cant?`<span class="badge b-bad">✗${cant}</span>`:''}
+            <span style="font-size:10px;color:var(--ink3);font-family:monospace;margin-left:3px">${pct}%</span>
+            <span style="margin-left:4px">${priority==='Weak'?'🔴':priority==='Strong'?'🟢':'🟡'}</span>
+            <span style="color:var(--ink3);margin-left:3px">▾</span>
+          </div>
+        </div>
+        <div class="pdf-body" id="pb-${key}">
+          <div style="display:flex;gap:5px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px">
+            <div><div style="font-size:9px;color:var(--ink3);font-family:monospace;margin-bottom:2px">FROM Q</div>
+              <input class="mini" id="r1-${key}" type="number" min="1" max="${pdf.total}" placeholder="1" style="width:52px;padding:4px 6px;border:1px solid var(--bd2);border-radius:4px;font-family:monospace;font-size:11px;outline:none"></div>
+            <div><div style="font-size:9px;color:var(--ink3);font-family:monospace;margin-bottom:2px">TO Q</div>
+              <input class="mini" id="r2-${key}" type="number" min="1" max="${pdf.total}" placeholder="${Math.min(30,pdf.total)}" style="width:52px;padding:4px 6px;border:1px solid var(--bd2);border-radius:4px;font-family:monospace;font-size:11px;outline:none"></div>
+            <div><div style="font-size:9px;color:var(--ink3);font-family:monospace;margin-bottom:2px">TAG</div>
+              <select id="rt-${key}" style="padding:4px 6px;border:1px solid var(--bd2);border-radius:4px;font-size:11px;outline:none">
+                <option value="done">✓ Done</option><option value="some">~ Some mistakes</option><option value="cant">✗ Couldn't do</option>
+              </select></div>
+            <button class="btn btn-sm" style="background:var(--ink);color:#fff;border-color:var(--ink);margin-top:auto" onclick="logRange('${key}',${pdf.total})">Log Range</button>
+            <div><div style="font-size:9px;color:var(--ink3);font-family:monospace;margin-bottom:2px">Priority</div>
+              <select style="padding:4px 6px;border:1px solid var(--bd2);border-radius:4px;font-size:11px;outline:none" onchange="setPriority('${key}',this.value)">
+                <option value="Weak" ${priority==='Weak'?'selected':''}>🔴 Weak</option>
+                <option value="Medium" ${priority==='Medium'?'selected':''}>🟡 Medium</option>
+                <option value="Strong" ${priority==='Strong'?'selected':''}>🟢 Strong</option>
+              </select></div>
+            <div><div style="font-size:9px;color:var(--ink3);font-family:monospace;margin-bottom:2px">Next Revision</div>
+              <input type="date" value="${d.revision||''}" style="padding:4px 6px;border:1px solid var(--bd2);border-radius:4px;font-size:11px;outline:none" onchange="setRevision('${key}',this.value)"></div>
+          </div>
+          <div style="font-size:9px;color:var(--ink3);font-family:monospace;margin-bottom:4px">Click any Q to cycle: untouched → ✓ done → ~ mistakes → ✗ can't</div>
+          <div class="q-grid" id="qg-${key}">${buildQGrid(key,pdf.total)}</div>
+        </div>`;
+        sd.appendChild(item);
+      });
+      container.appendChild(sd);
+    });
+  });
+}
+
+function buildQGrid(key,total){
+  const qs=(pdfProg[key]||{}).questions||{};
+  let h='';
+  for(let i=1;i<=total;i++){
+    const st=qs[i]||'';
+    h+=`<div class="qn ${st}" onclick="cycleQ('${key}',${i})" title="Q${i}">${st==='done'?'✓':st==='some'?'~':st==='cant'?'✗':i}</div>`;
+  }
+  return h;
+}
+
+function togglePDF(id){const b=document.getElementById(id);if(b)b.classList.toggle('open');}
+
+async function cycleQ(key,num){
+  if(!pdfProg[key]) pdfProg[key]={questions:{},priority:'medium',revision:''};
+  if(!pdfProg[key].questions) pdfProg[key].questions={};
+  const cur=pdfProg[key].questions[num]||'';
+  const next=cur===''?'done':cur==='done'?'some':cur==='some'?'cant':'';
+  if(next==='') delete pdfProg[key].questions[num]; else pdfProg[key].questions[num]=next;
+  // Update UI immediately without full re-render
+  const qg=document.getElementById('qg-'+key);
+  if(qg){const divs=qg.querySelectorAll('.qn');if(divs[num-1]){divs[num-1].className='qn'+(next?' '+next:'');divs[num-1].textContent=next==='done'?'✓':next==='some'?'~':next==='cant'?'✗':num;}}
+  await savePDFToSupabase(key);
+}
+
+async function logRange(key,totalQ){
+  const r1=parseInt(document.getElementById('r1-'+key)?.value)||1;
+  const r2=parseInt(document.getElementById('r2-'+key)?.value)||1;
+  const tag=document.getElementById('rt-'+key)?.value||'done';
+  if(!pdfProg[key]) pdfProg[key]={questions:{},priority:'medium',revision:''};
+  if(!pdfProg[key].questions) pdfProg[key].questions={};
+  for(let i=r1;i<=Math.min(r2,totalQ);i++) pdfProg[key].questions[i]=tag;
+  await savePDFToSupabase(key);
+  renderPDFs();
+  toast('✓ Range saved to cloud');
+}
+
+async function setPriority(key,val){
+  if(!pdfProg[key]) pdfProg[key]={questions:{},priority:'medium',revision:''};
+  pdfProg[key].priority=val;
+  await savePDFToSupabase(key);
+  toast('✓ Priority saved');
+}
+
+async function setRevision(key,val){
+  if(!pdfProg[key]) pdfProg[key]={questions:{},priority:'medium',revision:''};
+  pdfProg[key].revision=val;
+  await savePDFToSupabase(key);
+  toast('✓ Revision date saved');
+}
+
+// ── LOAD PDF DATA FROM SUPABASE ──────────────────────────
+async function loadPDFData(){
+  try {
+    const rows = await sbGet('pdf_tracker','');
+    rows.forEach(r => {
+      // Reconstruct key from pdf_name+section+tier
+      const tier = r.tier?.toLowerCase();
+      const section = r.section;
+      const pdfList = PDFS[tier]?.[section];
+      if (!pdfList) return;
+      const idx = pdfList.findIndex(p => p.name === r.pdf_name);
+      if (idx === -1) return;
+      const key = `${tier}_${section}_${idx}`;
+      pdfProg[key] = {
+        questions: r.questions_data || {},
+        priority: r.priority || 'medium',
+        revision: r.next_revision_date || ''
+      };
+    });
+  } catch(e) { console.warn('loadPDFData:', e); }
+}
+
+// ── LOAD TOPIC META FROM SUPABASE ────────────────────────
+async function loadProgressMeta(){
+  try {
+    const rows = await sbGet('progress_meta','');
+    rows.forEach(r => {
+      if(r.key==='arith_topics') topicP.arith = parseInt(r.value)||0;
+      if(r.key==='alg_topics')   topicP.alg   = parseInt(r.value)||0;
+    });
+  } catch(e) { console.warn('loadProgressMeta:', e); }
+}
+
+// ── INIT ──────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  const t = today();
+  ['log-date','m-date'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=t;});
+  updateDates();
+  setInterval(updateDates, 30000);
+
+  // Show loading
+  const overlay = document.getElementById('loading-overlay');
+  if(overlay) overlay.style.display='flex';
+
+  // Load everything from Supabase
+  await Promise.all([loadAll(), loadPDFData(), loadProgressMeta()]);
+
+  // Restore topic inputs
+  const ae = document.getElementById('q-arith'); if(ae) ae.value = topicP.arith || 0;
+  const alge = document.getElementById('q-alg'); if(alge) alge.value = topicP.alg || 0;
+
+  if(overlay) overlay.style.display='none';
+  renderAll();
+  toast('✓ All data loaded from cloud');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHASE 1 - CAT Prep Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Phase 1 Audit Tool</h1>
+            <p class="subtitle">Track your progress from 26 Apr to 9 May</p>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Days Complete</div>
+                <div class="stat-value" id="days-stat">0/14</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">QA Approx</div>
+                <div class="stat-value" id="qa-stat">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">LRDI Sets</div>
+                <div class="stat-value" id="lrdi-stat">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">RCs Done</div>
+                <div class="stat-value" id="rc-stat">0</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="tracker-table">
+                <thead>
+                    <tr>
+                        <th width="50">Status</th>
+                        <th width="120">Day</th>
+                        <th>QA Work</th>
+                        <th>LRDI Work</th>
+                        <th>VARC Work</th>
+                        <th>Test</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Row injection via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="submit-box">
+            <div class="submit-header">
+                <h3>Final Report Generator</h3>
+                <button class="btn" onclick="generateReport()">Generate Reply Text</button>
+            </div>
+            <textarea id="output" readonly placeholder="Click generate to see your results..."></textarea>
+            <p style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-dim);">
+                Copy this text and paste it into our chat.
+            </p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

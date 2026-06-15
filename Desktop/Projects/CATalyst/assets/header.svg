@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 210" width="900" height="210">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#050810"/>
+      <stop offset="100%" stop-color="#080D1C"/>
+    </linearGradient>
+    <radialGradient id="glowBlue" cx="25%" cy="55%" r="55%">
+      <stop offset="0%" stop-color="#2E5BFF" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#2E5BFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowRed" cx="75%" cy="30%" r="35%">
+      <stop offset="0%" stop-color="#EF4444" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#EF4444" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="scan" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="white" stop-opacity="0"/>
+      <stop offset="50%"  stop-color="white" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <style>
+      @keyframes sweep { 0% { transform:translateX(-900px); } 100% { transform:translateX(1800px); } }
+      @keyframes blink { 0%,100% { opacity:.3; } 50% { opacity:1; } }
+      @keyframes ring  { 0% { r:5; opacity:.9; } 100% { r:16; opacity:0; } }
+      @keyframes up    { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+      @keyframes glow  { 0%,100% { filter:drop-shadow(0 0 4px rgba(46,91,255,.35)); } 50% { filter:drop-shadow(0 0 18px rgba(46,91,255,.75)); } }
+      @keyframes pop   { from { opacity:0; transform:scale(.8); } to { opacity:1; transform:scale(1); } }
+      @keyframes p1pulse { 0%,100%{opacity:.7;} 50%{opacity:1;} }
+      @keyframes p2pulse { 0%,100%{opacity:.7;} 50%{opacity:1;} }
+      .sweep  { animation: sweep 6s linear infinite; }
+      .dot    { animation: blink 2s ease-in-out infinite; }
+      .ring   { animation: ring  2s ease-out  infinite; }
+      .name   { animation: up .65s ease-out .1s both, glow 5s ease-in-out .8s infinite; }
+      .sub    { animation: up .65s ease-out .25s both; }
+      .badge  { animation: up .65s ease-out 0s both; }
+      .stat   { animation: pop .5s cubic-bezier(.34,1.56,.64,1) .3s both; }
+      .p1tag  { animation: up .65s ease-out .4s both, p1pulse 3s ease-in-out infinite; }
+      .p2tag  { animation: up .65s ease-out .5s both, p2pulse 3s ease-in-out 1.5s infinite; }
+    </style>
+  </defs>
+
+  <rect width="900" height="210" fill="url(#bg)"/>
+  <rect width="900" height="210" fill="url(#glowBlue)"/>
+  <rect width="900" height="210" fill="url(#glowRed)"/>
+  <rect class="sweep" x="-900" y="0" width="900" height="210" fill="url(#scan)"/>
+
+  <!-- Left accent -->
+  <rect x="0" y="0" width="4" height="210" fill="#2E5BFF" opacity=".8"/>
+
+  <!-- Top / bottom hairlines -->
+  <rect x="0" y="0"   width="900" height="1" fill="#1A1E2A"/>
+  <rect x="0" y="209" width="900" height="1" fill="#1A1E2A"/>
+
+  <!-- Vertical divider -->
+  <line x1="810" y1="48" x2="810" y2="170" stroke="#1A1E2A" stroke-width="1"/>
+
+  <!-- LIVE badge -->
+  <circle class="ring" cx="52" cy="52" r="5" fill="none" stroke="#4ADE80" stroke-width="1.2" opacity="0"/>
+  <circle class="dot"  cx="52" cy="52" r="4" fill="#4ADE80"/>
+  <text class="badge" x="66" y="57" font-family="Courier New,monospace" font-size="10" fill="#4ADE80" letter-spacing=".2em">LIVE · PAYING USERS</text>
+
+  <!-- Name -->
+  <text class="name" x="38" y="128" font-family="Georgia,'Times New Roman',serif" font-size="58" font-weight="700" fill="#E9E5DC" letter-spacing="-2">CATalyst</text>
+  <text class="name" x="462" y="128" font-family="Georgia,serif" font-size="58" fill="#2E5BFF">⚡</text>
+
+  <!-- Subtitle -->
+  <text class="sub" x="40" y="156" font-family="Courier New,monospace" font-size="12" fill="#8A8FA3" letter-spacing=".10em">MISTAKE-FIXING SYSTEM  ·  CAT EXAM ASPIRANTS  ·  VANILLA JS SPA</text>
+
+  <!-- Phase tags -->
+  <rect class="p1tag" x="40" y="170" width="110" height="22" rx="4" fill="rgba(239,68,68,.12)" stroke="#EF4444" stroke-width=".8" stroke-opacity=".5"/>
+  <text class="p1tag" x="95" y="185" font-family="Courier New,monospace" font-size="9.5" fill="#EF4444" text-anchor="middle" letter-spacing=".12em">PHASE 1 · FIX</text>
+
+  <rect class="p2tag" x="162" y="170" width="110" height="22" rx="4" fill="rgba(46,91,255,.12)" stroke="#2E5BFF" stroke-width=".8" stroke-opacity=".5"/>
+  <text class="p2tag" x="217" y="185" font-family="Courier New,monospace" font-size="9.5" fill="#2E5BFF" text-anchor="middle" letter-spacing=".12em">PHASE 2 · DRILL</text>
+
+  <!-- Right stat -->
+  <text class="stat" x="855" y="110" font-family="Georgia,serif" font-size="42" font-weight="700" fill="#2E5BFF" text-anchor="middle">794</text>
+  <text class="stat" x="855" y="128" font-family="Courier New,monospace" font-size="9" fill="#8A8FA3" text-anchor="middle" letter-spacing=".12em">QUESTIONS</text>
+  <text class="stat" x="855" y="142" font-family="Courier New,monospace" font-size="9" fill="#8A8FA3" text-anchor="middle" letter-spacing=".12em">IN PROD</text>
+</svg>

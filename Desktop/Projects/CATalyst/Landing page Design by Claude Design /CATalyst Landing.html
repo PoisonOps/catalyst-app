@@ -1,0 +1,2148 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>CATalyst — Stop Practicing. Start Fixing.</title>
+<meta name="description" content="The first CAT prep app built around what you got wrong — not what you got right." />
+<meta name="theme-color" content="#0A0A0F" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<style>
+/* =============================================================
+   CATalyst Landing v2
+   Glassmorphic · scroll-pinned Loop · parallax · mobile-first
+   ============================================================= */
+
+:root {
+  /* dark theme defaults */
+  --bg:           #0A0A0F;
+  --bg-elev:      #0D0D14;
+  --surface:      rgba(255,255,255,0.04);
+  --surface-2:    rgba(255,255,255,0.06);
+  --surface-3:    rgba(255,255,255,0.10);
+  --border:       rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.16);
+  --text:         #FFFFFF;
+  --text-2:       rgba(255,255,255,0.72);
+  --text-3:       rgba(255,255,255,0.52);
+  --text-4:       rgba(255,255,255,0.32);
+
+  --primary:      #5B3BF5;
+  --primary-soft: #7B5FFF;
+  --primary-glow: rgba(91,59,245,0.45);
+  --primary-bg:   rgba(91,59,245,0.12);
+  --primary-border:rgba(91,59,245,0.32);
+
+  --red:          #FF4D4D;
+  --red-soft:     #FF6E6E;
+  --red-glow:     rgba(255,77,77,0.45);
+  --red-bg:       rgba(255,77,77,0.10);
+  --red-border:   rgba(255,77,77,0.32);
+
+  --green:        #22C55E;
+  --green-bg:     rgba(34,197,94,0.10);
+  --green-border: rgba(34,197,94,0.32);
+  --amber:        #F59E0B;
+
+  --r-sm:  10px;
+  --r-md:  14px;
+  --r-lg:  20px;
+  --r-xl:  28px;
+  --r-2xl: 36px;
+  --r-pill:999px;
+
+  --container: 1240px;
+  --nav-h: 64px;
+}
+
+[data-theme="light"] {
+  --bg:           #F6F6F9;
+  --bg-elev:      #FFFFFF;
+  --surface:      rgba(255,255,255,0.7);
+  --surface-2:    rgba(255,255,255,0.85);
+  --surface-3:    rgba(10,10,30,0.05);
+  --border:       rgba(10,10,30,0.08);
+  --border-strong:rgba(10,10,30,0.14);
+  --text:         #0F0F1E;
+  --text-2:       rgba(15,15,30,0.74);
+  --text-3:       rgba(15,15,30,0.56);
+  --text-4:       rgba(15,15,30,0.36);
+  --primary-bg:   rgba(91,59,245,0.08);
+  --red-bg:       rgba(255,77,77,0.08);
+  --green-bg:     rgba(34,197,94,0.08);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+  transition: background 320ms ease, color 320ms ease;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; padding: 0; }
+img, svg { display: block; max-width: 100%; }
+::selection { background: var(--primary); color: #fff; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
+
+.container { width: 100%; max-width: var(--container); margin: 0 auto; padding: 0 20px; }
+@media (min-width: 720px) { .container { padding: 0 32px; } }
+
+/* ─── Background layers (fixed, parallax) ────────────────────── */
+.bg-layers {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  overflow: hidden;
+}
+.bg-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 30%, transparent 75%);
+  opacity: 0.4;
+}
+.orb {
+  position: absolute; border-radius: 50%;
+  filter: blur(120px);
+  will-change: transform;
+}
+.orb-1 { width: 60vmax; height: 60vmax; background: var(--primary); top: -20vmax;  left: -20vmax; opacity: 0.45; }
+.orb-2 { width: 50vmax; height: 50vmax; background: var(--red);     top: 8vmax;    right: -20vmax; opacity: 0.30; }
+.orb-3 { width: 70vmax; height: 70vmax; background: var(--primary); top: 80vmax;   right: -28vmax; opacity: 0.22; }
+.orb-4 { width: 60vmax; height: 60vmax; background: var(--red);     top: 160vmax;  left: -25vmax;  opacity: 0.22; }
+[data-theme="light"] .orb { opacity: 0.14; }
+
+.particles {
+  position: absolute; inset: 0; overflow: hidden;
+}
+.particle {
+  position: absolute; width: 2px; height: 2px; border-radius: 50%;
+  background: var(--text);
+  animation: twinkle 4s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.08; transform: scale(0.6); }
+  50%      { opacity: 0.55; transform: scale(1.2); }
+}
+
+main, header, footer { position: relative; z-index: 1; }
+
+/* ─── Type ──────────────────────────────────────────────────── */
+.display {
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  font-size: clamp(44px, 10vw, 104px);
+  margin: 0;
+}
+.h1 {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.04;
+  font-size: clamp(34px, 6vw, 64px);
+  margin: 0;
+}
+.h2 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-size: clamp(22px, 2.6vw, 30px);
+  margin: 0;
+}
+.eyebrow {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.22em;
+  color: var(--text-3);
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.eyebrow::before {
+  content: ''; width: 24px; height: 1px; background: var(--text-3);
+}
+.lead {
+  font-size: clamp(15px, 1.4vw, 19px);
+  color: var(--text-2);
+  line-height: 1.6;
+  max-width: 56ch;
+  margin: 0;
+}
+.text-grad {
+  background: linear-gradient(135deg, var(--primary-soft) 0%, var(--red-soft) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.italic-display {
+  font-style: italic;
+  /* Italic glyphs slant past their bounding box; combined with background-clip:text
+     this clips the right edge. Pad + inline-block prevents the cut-off. */
+  display: inline-block;
+  padding-right: 0.08em;
+}
+
+/* ─── Glass primitive ───────────────────────────────────────── */
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.02) inset,
+    0 1px 0 rgba(255,255,255,0.06) inset,
+    0 24px 60px -28px rgba(0,0,0,0.6);
+}
+[data-theme="light"] .glass {
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.5) inset,
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 24px 60px -28px rgba(10,10,30,0.18);
+}
+
+/* ─── Buttons ───────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 22px;
+  border-radius: var(--r-md);
+  font-weight: 600; font-size: 15px;
+  border: 1px solid transparent;
+  transition: transform 220ms cubic-bezier(.22,1,.36,1),
+              box-shadow 220ms ease, background 220ms ease, border-color 220ms ease;
+  white-space: nowrap;
+  position: relative;
+  isolation: isolate;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset,
+              0 12px 30px -10px var(--primary-glow);
+}
+.btn-primary::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent 40%);
+  z-index: -1; opacity: 0.7;
+}
+.btn-primary:hover {
+  background: var(--primary-soft);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset,
+              0 18px 40px -10px var(--primary-glow);
+}
+.btn-ghost {
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.btn-ghost:hover { background: var(--surface-2); }
+.btn-sm { padding: 10px 16px; font-size: 14px; }
+.arrow { transition: transform 220ms ease; }
+.btn:hover .arrow { transform: translateX(4px); }
+
+/* ─── Navbar ────────────────────────────────────────────────── */
+.nav {
+  position: sticky; top: 0; z-index: 100;
+  height: var(--nav-h);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: color-mix(in oklab, var(--bg) 65%, transparent);
+  border-bottom: 1px solid transparent;
+  transition: border-color 240ms ease;
+}
+.nav.scrolled { border-bottom-color: var(--border); }
+.nav-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 100%;
+}
+.logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.02em; font-size: 17px; }
+.logo-bolt {
+  width: 26px; height: 26px;
+  display: inline-grid; place-items: center;
+  filter: drop-shadow(0 0 10px rgba(123,95,255,0.6));
+}
+.logo-bolt svg { width: 22px; height: 22px; }
+.nav-actions { display: flex; align-items: center; gap: 8px; }
+.theme-toggle {
+  width: 38px; height: 38px;
+  display: grid; place-items: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  background: var(--surface);
+  transition: color 200ms ease, background 200ms ease;
+}
+.theme-toggle:hover { color: var(--text); background: var(--surface-2); }
+.theme-toggle svg { width: 16px; height: 16px; }
+.theme-toggle .sun { display: none; }
+[data-theme="light"] .theme-toggle .sun { display: block; }
+[data-theme="light"] .theme-toggle .moon { display: none; }
+
+/* ─── Hero ──────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  padding: 72px 0 80px;
+  overflow: visible;
+}
+@media (min-width: 880px) {
+  .hero { padding: 96px 0 120px; }
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+  align-items: center;
+}
+@media (min-width: 880px) {
+  .hero-grid { grid-template-columns: 1.05fr 1fr; gap: 56px; }
+}
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 6px 6px 6px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  font-size: 12.5px; color: var(--text-2);
+  margin-bottom: 24px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.hero-badge .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 12px var(--green);
+  animation: dotpulse 2.4s ease-in-out infinite;
+}
+@keyframes dotpulse {
+  0%, 100% { box-shadow: 0 0 4px var(--green); }
+  50%      { box-shadow: 0 0 16px var(--green); }
+}
+.hero-badge .pill {
+  padding: 3px 10px; font-size: 10.5px; font-weight: 700;
+  background: var(--primary-bg); color: var(--primary-soft);
+  border-radius: var(--r-pill);
+  letter-spacing: 0.06em;
+}
+
+/* Word-stagger headline */
+.hero h1 .word {
+  display: inline-block;
+  margin-right: 0.2em;
+}
+.hero h1 .word:last-child { margin-right: 0; }
+.hero h1 .word > span {
+  display: inline-block;
+}
+
+.hero-sub {
+  margin: 22px 0 30px;
+  font-size: clamp(15px, 1.3vw, 18px);
+  color: var(--text-2);
+  line-height: 1.6;
+  max-width: 52ch;
+}
+.hero-sub strong { color: var(--text); font-weight: 600; }
+
+.hero-ctas { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.hero-trust {
+  margin-top: 24px;
+  display: flex; align-items: center; gap: 16px;
+  color: var(--text-3); font-size: 12.5px;
+  flex-wrap: wrap;
+}
+.hero-trust .sep { width: 1px; height: 12px; background: var(--border-strong); }
+.hero-trust strong { color: var(--text); font-weight: 600; }
+
+/* ─── iPhone mockup ─────────────────────────────────────────── */
+.phone-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  perspective: 1200px;
+}
+@media (min-width: 880px) {
+  .phone-wrap { max-width: 340px; }
+}
+.phone {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 320 / 660;
+  border-radius: 48px;
+  padding: 9px;
+  background: linear-gradient(140deg, #1a1a25 0%, #0a0a0f 50%, #1a1a25 100%);
+  box-shadow:
+    0 0 0 1.5px rgba(255,255,255,0.06) inset,
+    0 0 0 6px rgba(0,0,0,0.6),
+    0 40px 100px -20px rgba(0,0,0,0.8),
+    0 0 80px 0 var(--primary-glow);
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+.phone-screen {
+  width: 100%; height: 100%;
+  background: #07070C;
+  border-radius: 40px;
+  overflow: hidden;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+  display: flex; flex-direction: column;
+}
+/* Dynamic Island */
+.phone-island {
+  position: absolute;
+  top: 12px; left: 50%; transform: translateX(-50%);
+  width: 96px; height: 28px;
+  background: #000;
+  border-radius: 999px;
+  z-index: 5;
+}
+.phone-status {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 28px 8px;
+  font-size: 13px; font-weight: 600;
+  color: #fff;
+  position: relative; z-index: 1;
+}
+.phone-status .right { display: inline-flex; gap: 4px; align-items: center; opacity: 0.95; }
+.phone-status svg { width: 16px; height: 16px; }
+
+.phone-app {
+  flex: 1; padding: 36px 18px 18px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  gap: 12px;
+  color: #fff;
+}
+/* App chips */
+.app-chips { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.app-chip {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  padding: 4px 8px; border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  white-space: nowrap;
+}
+.app-chip.mono { font-family: 'JetBrains Mono', monospace; }
+.app-chip.blue { background: var(--primary-bg); color: var(--primary-soft); border-color: var(--primary-border); }
+.app-chip.amber{ background: rgba(245,158,11,0.12); color: var(--amber); border-color: rgba(245,158,11,0.32); }
+.app-timer { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; opacity: 0.8; }
+
+.app-passage {
+  font-size: 11px; line-height: 1.5;
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.app-options { display: flex; flex-direction: column; gap: 6px; }
+.app-opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1.2px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; letter-spacing: 0.04em;
+  transition: all 280ms cubic-bezier(.22,1,.36,1);
+}
+.app-opt .ltr {
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  display: grid; place-items: center;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  font-weight: 700; font-size: 11px;
+}
+.app-opt .tag { margin-left: auto; font-family: 'Inter', sans-serif; font-size: 9.5px; font-weight: 600; opacity: 0; transition: opacity 240ms ease; }
+.app-opt.wrong {
+  border-color: var(--red-border);
+  background: var(--red-bg);
+  color: var(--red-soft);
+  box-shadow: 0 0 24px -2px var(--red-glow);
+}
+.app-opt.wrong .ltr { background: var(--red); color: #fff; }
+.app-opt.wrong .tag { color: var(--red); opacity: 1; }
+.app-opt.shake { animation: shake 380ms cubic-bezier(.65,0,.35,1) both; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+.app-opt.correct {
+  border-color: var(--green-border);
+  background: var(--green-bg);
+  color: var(--green);
+  box-shadow: 0 0 24px -4px rgba(34,197,94,0.5);
+}
+.app-opt.correct .ltr { background: var(--green); color: #fff; }
+.app-opt.correct .tag { color: var(--green); opacity: 1; }
+
+/* Wrong banner */
+.app-banner {
+  margin-top: auto;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11.5px;
+}
+.app-banner .x { color: var(--red); font-weight: 800; font-size: 14px; }
+.app-banner strong { color: var(--red); font-weight: 700; }
+
+/* Tag panel (state 2 of loop) */
+.app-tagpanel {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.app-tagpanel .label {
+  font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: rgba(255,255,255,0.55); font-weight: 700;
+  margin-bottom: 10px;
+}
+.app-tagchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.app-tagchip {
+  font-size: 11px; font-weight: 600;
+  padding: 7px 10px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.78);
+  display: inline-flex; align-items: center; gap: 5px;
+  transition: all 220ms ease;
+}
+.app-tagchip.active {
+  border-color: var(--red-border);
+  background: var(--red-bg);
+  color: var(--red);
+}
+
+/* Floating stat badges */
+.stat-badge {
+  position: absolute;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  font-size: 12.5px; font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 24px 60px -20px rgba(0,0,0,0.6);
+  z-index: 3;
+  will-change: transform;
+}
+.stat-badge .ico {
+  width: 18px; height: 18px; display: grid; place-items: center;
+  font-size: 14px;
+}
+.stat-badge .lbl { color: var(--text-3); font-size: 11px; font-weight: 500; }
+.stat-badge .val { color: var(--text); font-weight: 700; }
+.badge-1 {
+  top: 6%; left: -8%;
+  animation: floatA 5.5s ease-in-out infinite;
+}
+.badge-2 {
+  bottom: 14%; right: -10%;
+  animation: floatB 6.5s ease-in-out infinite;
+}
+.badge-1 .val { color: var(--red); }
+.badge-2 .val { color: var(--green); }
+@media (max-width: 600px) {
+  .badge-1 { left: 0; top: -10px; }
+  .badge-2 { right: 0; bottom: -10px; }
+}
+@keyframes floatA { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes floatB { 0%,100%{transform:translateY(0)} 50%{transform:translateY(10px)} }
+
+/* ─── Marquee strip (under hero) ────────────────────────────── */
+.marquee-strip {
+  margin-top: 0;
+  padding: 28px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+  position: relative;
+  mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+}
+.marquee-track {
+  display: flex; gap: 56px; align-items: center;
+  width: max-content;
+  animation: marquee 38s linear infinite;
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.marquee-track .item {
+  display: inline-flex; align-items: center; gap: 10px;
+  color: var(--text-2);
+  font-size: 14px; font-weight: 500;
+  white-space: nowrap;
+}
+.marquee-track .item .dot { color: var(--red); font-weight: 700; }
+.marquee-track .item .pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: var(--r-pill);
+  background: var(--red-bg); border: 1px solid var(--red-border);
+  color: var(--red); font-weight: 600; font-size: 12.5px;
+}
+
+/* ─── Section base ──────────────────────────────────────────── */
+section { padding: 80px 0; position: relative; }
+@media (min-width: 720px) { section { padding: 120px 0; } }
+.section-head { text-align: center; margin-bottom: 56px; max-width: 760px; margin-left: auto; margin-right: auto; padding: 0 8px; }
+.section-head .eyebrow { margin-bottom: 18px; }
+.section-head .lead { margin: 18px auto 0; }
+
+/* ─── The Loop (scroll-pinned) ──────────────────────────────── */
+.loop-section {
+  position: relative;
+  /* On desktop we'll set height via JS-friendly fallback; default keeps content. */
+  height: 380vh;
+}
+@media (max-width: 879px) {
+  .loop-section { height: auto; padding: 80px 0; }
+}
+.loop-pin {
+  position: sticky; top: var(--nav-h);
+  height: calc(100vh - var(--nav-h));
+  min-height: 600px;
+  display: flex; align-items: center;
+  overflow: hidden;
+}
+@media (max-width: 879px) {
+  .loop-pin { position: static; height: auto; min-height: 0; overflow: visible; }
+}
+.loop-inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 36px;
+  align-items: center;
+  width: 100%;
+}
+@media (min-width: 880px) {
+  .loop-inner { grid-template-columns: 1fr 1fr; gap: 64px; }
+}
+
+.loop-text { display: flex; flex-direction: column; gap: 24px; }
+.loop-text .eyebrow { margin-bottom: 4px; }
+
+.loop-states {
+  display: flex; flex-direction: column; gap: 14px;
+  margin-top: 8px;
+}
+.loop-state {
+  display: flex; gap: 16px; align-items: flex-start;
+  padding: 16px 18px;
+  border-radius: var(--r-md);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background 380ms ease, border-color 380ms ease, opacity 380ms ease;
+  opacity: 0.45;
+}
+.loop-state.active {
+  background: var(--surface);
+  border-color: var(--border);
+  opacity: 1;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.loop-state .num {
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 700;
+  flex-shrink: 0;
+}
+.loop-state.active .num {
+  background: var(--primary); color: #fff;
+  box-shadow: 0 0 24px var(--primary-glow);
+}
+.loop-state h4 { margin: 0 0 4px; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.loop-state p  { margin: 0; font-size: 14px; color: var(--text-2); line-height: 1.55; }
+
+/* Loop phone wrapper */
+.loop-phone-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+/* States of the loop phone — controlled by .state-X class on .phone */
+.phone[data-state="0"] .app-cursor { opacity: 1; transform: translate(0, 0); }
+.phone[data-state="1"] .app-banner,
+.phone[data-state="1"] .app-opt.wrong .tag { opacity: 1; }
+.phone[data-state="2"] .app-tagpanel { opacity: 1; transform: translateY(0); }
+.phone[data-state="2"] .app-tagchip[data-key="calc"] { border-color: var(--red-border); background: var(--red-bg); color: var(--red); }
+.phone[data-state="3"] .app-success { opacity: 1; transform: translateY(0); }
+
+/* Loop phone sub-components */
+.app-cursor {
+  position: absolute; z-index: 6;
+  width: 24px; height: 28px;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+}
+.app-success {
+  position: absolute;
+  inset: auto 0 0 0;
+  margin: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  color: var(--green);
+  font-size: 12.5px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+  opacity: 0; transform: translateY(20px);
+  transition: all 380ms cubic-bezier(.22,1,.36,1);
+}
+
+/* Mobile + Tablet (<880px): phone sticks at top, steps scroll under it */
+@media (max-width: 879px) {
+  .loop-section { padding: 80px 0 40px; }
+  .loop-pin { padding: 0; }
+  .loop-inner { display: flex; flex-direction: column; gap: 24px; align-items: stretch; }
+  .loop-phone-wrap {
+    order: 0;
+    position: sticky;
+    top: calc(var(--nav-h) + 12px);
+    z-index: 5;
+    max-width: 240px;
+    margin: 0 auto;
+    padding: 8px;
+  }
+  .loop-text { order: 1; gap: 16px; }
+  .loop-states { margin-top: 4px; gap: 12px; }
+  .loop-state {
+    padding: 22px 18px;
+    min-height: 140px;
+  }
+  .loop-state h4 { font-size: 16px; }
+  .loop-state p  { font-size: 13.5px; }
+  .phone { transform: scale(0.92); transform-origin: top center; }
+}
+@media (max-width: 480px) {
+  .loop-phone-wrap { max-width: 220px; }
+  .phone { transform: scale(0.86); }
+}
+
+/* ─── Solution structure ────────────────────────────────────── */
+.sol-wrap { max-width: 920px; margin: 0 auto; }
+.sol-card {
+  padding: 32px;
+  position: relative;
+}
+@media (min-width: 720px) { .sol-card { padding: 44px; } }
+.sol-q {
+  font-size: clamp(15px, 1.4vw, 17px);
+  line-height: 1.55;
+  color: var(--text-2);
+  padding-bottom: 24px;
+  border-bottom: 1px dashed var(--border-strong);
+  margin-bottom: 28px;
+}
+.sol-q .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-3);
+  display: block; margin-bottom: 8px;
+  letter-spacing: 0.06em;
+}
+.sol-row + .sol-row { margin-top: 22px; }
+.sol-row {
+  display: grid; grid-template-columns: 1fr; gap: 14px;
+  align-items: start;
+}
+@media (min-width: 720px) {
+  .sol-row { grid-template-columns: 160px 1fr; gap: 28px; }
+}
+.sol-tag {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.12em;
+  padding: 8px 12px; border-radius: var(--r-sm);
+  display: inline-flex; align-items: center; gap: 6px;
+  width: fit-content;
+  text-transform: uppercase;
+  height: fit-content;
+}
+.sol-tag.trap   { background: var(--red-bg);    color: var(--red);          border: 1px solid var(--red-border); }
+.sol-tag.insight{ background: var(--primary-bg);color: var(--primary-soft); border: 1px solid var(--primary-border); }
+.sol-tag.fix    { background: var(--green-bg);  color: var(--green);        border: 1px solid var(--green-border); }
+.sol-text { color: var(--text); font-size: clamp(14px, 1.2vw, 16px); line-height: 1.65; }
+.sol-text strong { color: var(--text); font-weight: 700; }
+
+/* ─── Solution lens stage (animated) ─────────────────── */
+.lens-stage {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 32px;
+  margin-top: 28px;
+}
+@media (max-width: 879px) {
+  .lens-stage { grid-template-columns: 1fr; gap: 18px; margin-top: 20px; }
+}
+
+.lens-rail {
+  display: flex; flex-direction: column;
+  gap: 10px;
+}
+@media (max-width: 879px) {
+  .lens-rail { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+}
+
+.lens-chip {
+  display: flex; align-items: center; gap: 14px;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  transition: background 280ms ease, border-color 280ms ease, transform 220ms ease;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+.lens-chip:hover { transform: translateY(-1px); background: var(--surface); }
+.lens-chip.active {
+  background: var(--surface);
+  border-color: var(--border-strong);
+}
+.lens-chip.is-trap.active    { box-shadow: 0 0 0 1px var(--red-border) inset, 0 8px 30px -10px var(--red-glow, rgba(255,77,77,0.5)); }
+.lens-chip.is-insight.active { box-shadow: 0 0 0 1px var(--primary-border) inset, 0 8px 30px -10px var(--primary-glow, rgba(91,59,245,0.5)); }
+.lens-chip.is-fix.active     { box-shadow: 0 0 0 1px var(--green-border) inset, 0 8px 30px -10px var(--green-glow, rgba(34,197,94,0.45)); }
+.lens-num {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-3);
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  background: var(--surface-3);
+  flex-shrink: 0;
+  transition: background 280ms ease, color 280ms ease;
+}
+.lens-chip.is-trap.active    .lens-num { background: var(--red);          color: #fff; }
+.lens-chip.is-insight.active .lens-num { background: var(--primary);      color: #fff; }
+.lens-chip.is-fix.active     .lens-num { background: var(--green);        color: #fff; }
+.lens-meta { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.lens-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: 0.14em; }
+.lens-eyebrow.trap    { color: var(--red); }
+.lens-eyebrow.insight { color: var(--primary-soft); }
+.lens-eyebrow.fix     { color: var(--green); }
+.lens-title { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lens-progress {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2px; background: transparent;
+  pointer-events: none;
+}
+.lens-progress > i {
+  display: block; height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-soft));
+}
+.lens-chip.is-trap.active    .lens-progress > i { background: linear-gradient(90deg, var(--red), #ff8585); }
+.lens-chip.is-fix.active     .lens-progress > i { background: linear-gradient(90deg, var(--green), #6fe69d); }
+.lens-chip.active .lens-progress > i { animation: lensFill var(--lens-cycle, 6.2s) linear forwards; }
+@keyframes lensFill { from { width: 0%; } to { width: 100%; } }
+
+@media (max-width: 879px) {
+  .lens-chip { padding: 10px 10px 12px; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .lens-num { width: 22px; height: 22px; font-size: 10px; }
+  .lens-title { font-size: 11.5px; white-space: normal; }
+  .lens-eyebrow { font-size: 9px; letter-spacing: 0.10em; }
+  .lens-meta { gap: 2px; }
+}
+
+/* Panels */
+.lens-panels { position: relative; }
+.lens-panel { display: none; flex-direction: column; gap: 22px; }
+.lens-panel.active {
+  display: flex;
+  animation: lensPanelIn 480ms cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes lensPanelIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.lens-visual {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 36px 28px;
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+  min-height: 220px;
+  justify-content: center;
+}
+.trap-visual    { border-color: var(--red-border);     background: radial-gradient(ellipse at 50% 0%, rgba(255,77,77,0.10), transparent 60%), var(--surface-2); }
+.insight-visual { border-color: var(--primary-border); background: radial-gradient(ellipse at 50% 0%, rgba(91,59,245,0.10), transparent 60%), var(--surface-2); }
+.fix-visual     { border-color: var(--green-border);   background: radial-gradient(ellipse at 50% 0%, rgba(34,197,94,0.10), transparent 60%), var(--surface-2); }
+
+.lens-stage-eyebrow {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.18em;
+}
+.lens-stage-eyebrow.trap    { color: var(--red); }
+.lens-stage-eyebrow.insight { color: var(--primary-soft); }
+.lens-stage-eyebrow.fix     { color: var(--green); }
+
+.math-line {
+  display: inline-flex; align-items: center; gap: 14px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(20px, 2.6vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  position: relative;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 8px 4px;
+}
+.m-tok { color: var(--text); }
+.m-op  { color: var(--text-3); font-size: 0.78em; font-weight: 500; }
+
+/* TRAP: wrong-math strike-through */
+.wrong-math .m-result { color: var(--red); }
+.wrong-math .strike {
+  position: absolute;
+  top: 50%; left: 0;
+  height: 3px; width: 0;
+  background: var(--red);
+  border-radius: 2px;
+  transform: translateY(-50%) rotate(-1.5deg);
+  box-shadow: 0 0 14px rgba(255,77,77,0.7);
+  pointer-events: none;
+}
+.lens-panel.active .wrong-math .strike {
+  animation: strikeIn 700ms 650ms cubic-bezier(.65,.05,.36,1) forwards;
+}
+@keyframes strikeIn { from { width: 0; } to { width: 100%; } }
+
+/* INSIGHT: tokens build up */
+.build-math .m-build { opacity: 0; transform: translateY(8px); display: inline-block; }
+.build-math .m-op    { opacity: 0; }
+.lens-panel.active .build-math .m-build:nth-child(1) { animation: tokIn 380ms 100ms cubic-bezier(.22,1,.36,1) forwards; }
+.lens-panel.active .build-math .m-op:nth-child(2)    { animation: tokIn 280ms 280ms ease-out forwards; }
+.lens-panel.active .build-math .m-build:nth-child(3) { animation: tokIn 380ms 360ms cubic-bezier(.22,1,.36,1) forwards; }
+.lens-panel.active .build-math .m-op:nth-child(4)    { animation: tokIn 280ms 540ms ease-out forwards; }
+.lens-panel.active .build-math .m-build:nth-child(5) { animation: tokIn 380ms 620ms cubic-bezier(.22,1,.36,1) forwards; }
+.lens-panel.active .build-math .m-op:nth-child(6)    { animation: tokIn 280ms 820ms ease-out forwards; }
+.lens-panel.active .build-math .m-build:nth-child(7) { animation: finalPop 520ms 900ms cubic-bezier(.34,1.56,.64,1) forwards; }
+@keyframes tokIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes finalPop {
+  0%   { opacity: 0; transform: scale(0.8); }
+  60%  { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.m-mark  { color: var(--primary-soft); }
+.m-disc  { color: var(--primary-soft); }
+.m-final {
+  color: var(--green);
+  background: var(--green-bg);
+  padding: 4px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--green-border);
+}
+
+/* FIX: rule card */
+.rule-card {
+  position: relative;
+  background: linear-gradient(140deg, rgba(34,197,94,0.10), var(--surface));
+  border: 1px solid var(--green-border);
+  border-radius: 16px;
+  padding: 26px 36px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  min-width: min(320px, 100%);
+  box-shadow: 0 0 60px -10px rgba(34,197,94,0.35);
+}
+.lens-panel.active .rule-card { animation: ruleIn 540ms cubic-bezier(.22,1,.36,1) both; }
+@keyframes ruleIn {
+  from { opacity: 0; transform: scale(0.92) rotate(-1deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0); }
+}
+.rule-stamp {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.18em;
+  color: var(--green);
+  padding: 4px 10px;
+  border: 1px dashed var(--green-border);
+  border-radius: 999px;
+}
+.rule-formula {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(26px, 3.6vw, 38px);
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.rule-when { color: var(--text-2); font-size: 13px; max-width: 30ch; }
+.rule-check {
+  position: absolute; top: -14px; right: -14px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  display: grid; place-items: center;
+  font-weight: 800; font-size: 16px;
+  box-shadow: 0 8px 20px -4px rgba(34,197,94,0.6);
+}
+.lens-panel.active .rule-check { animation: rulePop 480ms 460ms cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes rulePop {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.lens-tag-line {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; font-weight: 600;
+  color: var(--text-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 999px;
+  max-width: 100%;
+  text-align: left;
+}
+.lens-x    { color: var(--red); font-weight: 800; }
+.lens-bolt { color: var(--primary-soft); }
+
+.lens-text {
+  color: var(--text-2);
+  font-size: clamp(14px, 1.2vw, 16px);
+  line-height: 1.65;
+  margin: 0;
+  max-width: 62ch;
+}
+.lens-text strong { color: var(--text); font-weight: 600; }
+.lens-text em { font-style: italic; color: var(--text); }
+
+@media (max-width: 600px) {
+  .lens-visual { padding: 26px 18px; min-height: 200px; }
+  .math-line { gap: 8px; font-size: clamp(18px, 5vw, 24px); }
+  .lens-tag-line { font-size: 11.5px; padding: 5px 12px; }
+}
+
+/* ─── Features Bento ────────────────────────────────────────── */
+.bento {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 720px) {
+  .bento { grid-template-columns: repeat(6, 1fr); gap: 20px; }
+}
+.bcard {
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 280ms cubic-bezier(.22,1,.36,1), border-color 280ms ease;
+}
+.bcard:hover { transform: translateY(-3px); border-color: var(--border-strong); }
+@media (min-width: 720px) {
+  .bcard.big   { grid-column: span 4; min-height: 280px; }
+  .bcard.small { grid-column: span 2; min-height: 280px; }
+  .bcard.wide  { grid-column: span 6; min-height: 220px; }
+  .bcard.third { grid-column: span 2; min-height: 220px; }
+}
+.bcard h3 { margin: 0 0 8px; font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+.bcard p  { margin: 0; color: var(--text-2); font-size: 14.5px; line-height: 1.6; }
+.bcard .ico {
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border-radius: var(--r-md);
+  background: var(--primary-bg);
+  border: 1px solid var(--primary-border);
+  color: var(--primary-soft);
+  margin-bottom: 18px;
+}
+
+/* Bento mockup widgets */
+.bento-error-log {
+  margin-top: 18px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.bel-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.bel-row .tag {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
+  padding: 3px 8px; border-radius: 999px;
+}
+.bel-row .tag.red { background: var(--red-bg); color: var(--red); }
+.bel-row .tag.amber { background: rgba(245,158,11,0.12); color: var(--amber); }
+.bel-row .tag.green { background: var(--green-bg); color: var(--green); }
+.bel-row .name { font-size: 13px; color: var(--text); font-weight: 500; }
+.bel-row .count { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; }
+.bel-row .count.red { color: var(--red); }
+.bel-row .count.amber { color: var(--amber); }
+.bel-row .count.green { color: var(--green); }
+
+.heatmap { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; margin-top: 18px; }
+.hm { aspect-ratio: 1; border-radius: 4px; background: var(--surface-3); }
+.hm.l1 { background: rgba(255,77,77,0.18); }
+.hm.l2 { background: rgba(255,77,77,0.35); }
+.hm.l3 { background: rgba(255,77,77,0.55); }
+.hm.l4 { background: rgba(255,77,77,0.78); }
+.hm.l5 { background: var(--red); box-shadow: 0 0 12px var(--red-glow); }
+.hm.g1 { background: rgba(34,197,94,0.32); }
+.hm.g2 { background: rgba(34,197,94,0.56); }
+
+.streak {
+  margin-top: 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
+}
+.streak .num {
+  font-size: clamp(48px, 7vw, 64px); font-weight: 800;
+  letter-spacing: -0.04em; line-height: 1;
+  background: linear-gradient(135deg, var(--primary-soft), var(--red-soft));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.streak .num-label { font-size: 12px; color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 6px; }
+
+/* ─── Testimonials (marquee) ────────────────────────────────── */
+.tests {
+  padding: 80px 0;
+  overflow: hidden;
+  position: relative;
+}
+.tests-mask {
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  overflow: hidden;
+}
+.tests-track {
+  display: flex; gap: 20px;
+  width: max-content;
+  animation: tmarquee 50s linear infinite;
+}
+.tests-track:hover { animation-play-state: paused; }
+@keyframes tmarquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.tcard {
+  width: 360px; flex-shrink: 0;
+  padding: 22px;
+  position: relative;
+}
+.tcard .quote {
+  color: var(--text);
+  font-size: 15.5px;
+  line-height: 1.55;
+  font-weight: 500;
+  margin: 0 0 18px;
+  letter-spacing: -0.005em;
+}
+.tcard .author { display: flex; align-items: center; gap: 12px; }
+.tcard .avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--red));
+  display: grid; place-items: center;
+  color: #fff; font-weight: 700; font-size: 14px;
+}
+.tcard .name { font-weight: 600; font-size: 14px; }
+.tcard .meta { font-size: 12px; color: var(--text-3); }
+.tcard .qmark {
+  position: absolute; top: 14px; right: 18px;
+  font-size: 48px; line-height: 0.6;
+  color: var(--primary);
+  opacity: 0.2;
+  font-family: Georgia, serif;
+}
+
+/* ─── Final CTA ─────────────────────────────────────────────── */
+.final-cta {
+  text-align: center;
+  padding: 72px 24px;
+  border-radius: var(--r-2xl);
+  position: relative;
+  overflow: hidden;
+}
+.final-cta::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(91,59,245,0.22), transparent 60%),
+    radial-gradient(ellipse at 70% 70%, rgba(255,77,77,0.18), transparent 60%);
+  z-index: -1;
+}
+.final-cta h2 {
+  font-size: clamp(32px, 5.5vw, 60px);
+  font-weight: 800; letter-spacing: -0.03em; line-height: 1.04;
+  margin: 0 0 18px;
+}
+.final-cta p { color: var(--text-2); font-size: 16.5px; margin: 0 auto 28px; max-width: 50ch; }
+
+/* ─── Footer ────────────────────────────────────────────────── */
+.footer {
+  padding: 48px 0 32px;
+  border-top: 1px solid var(--border);
+  margin-top: 32px;
+}
+.footer-inner {
+  display: flex; justify-content: space-between; align-items: center; gap: 24px;
+  flex-wrap: wrap;
+}
+.footer .tagline { color: var(--text-2); font-size: 14px; max-width: 38ch; }
+.footer-bottom {
+  margin-top: 24px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--text-3); font-size: 12.5px;
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+}
+
+/* ─── Reveal — rAF-throttle-immune via IntersectionObserver + CSS transitions ─── */
+html.js-ready .reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(.22,1,.36,1),
+              transform 0.8s cubic-bezier(.22,1,.36,1);
+  will-change: opacity, transform;
+}
+html.js-ready .reveal.revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .marquee-track, .tests-track { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Backdrop layers (fixed, parallaxed) -->
+<div class="bg-layers" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div class="orb orb-1" data-parallax="0.30"></div>
+  <div class="orb orb-2" data-parallax="0.18"></div>
+  <div class="orb orb-3" data-parallax="0.42"></div>
+  <div class="orb orb-4" data-parallax="0.25"></div>
+  <div class="particles" id="particles"></div>
+</div>
+
+<!-- ─── Navbar ─────────────────────────────────────────────── -->
+<header class="nav" id="nav">
+  <div class="container nav-inner">
+    <a href="#" class="logo" aria-label="CATalyst home">
+      <span class="logo-bolt">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="bolt-g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#7B5FFF"/>
+              <stop offset="1" stop-color="#FF4D4D"/>
+            </linearGradient>
+          </defs>
+          <path d="M13 2 L4 14 H11 L10 22 L20 9 H13 L13 2 Z" fill="url(#bolt-g)"/>
+        </svg>
+      </span>
+      <span>CATalyst</span>
+    </a>
+    <div class="nav-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <a class="btn btn-primary btn-sm" href="https://catalyst-app-six.vercel.app/" target="_blank" rel="noopener">
+        Start free <span class="arrow">→</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ─── Hero ─────────────────────────────────────────────────── -->
+<section class="hero" id="hero">
+  <div class="container hero-grid">
+    <div class="hero-text">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        <span>Built for CAT 2026 aspirants</span>
+        <span class="pill">PRIVATE BETA</span>
+      </div>
+      <h1 class="display" id="heroH1" aria-label="Stop Practicing. Start Fixing.">
+        <span class="word"><span>Stop</span></span>
+        <span class="word"><span>Practicing.</span></span>
+        <br />
+        <span class="word"><span class="text-grad italic-display">Start</span></span>
+        <span class="word"><span class="text-grad italic-display">Fixing.</span></span>
+      </h1>
+      <p class="hero-sub">
+        The first CAT prep app built around what you got <strong>wrong</strong> — not what you got right.
+        Every mistake tagged, tracked, and re-served until it sticks.
+      </p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="https://catalyst-app-six.vercel.app/" target="_blank" rel="noopener">
+          Start 3-day free trial <span class="arrow">→</span>
+        </a>
+        <a class="btn btn-ghost" href="#loop">
+          See it in motion
+        </a>
+      </div>
+      <div class="hero-trust">
+        <span><strong>No card needed</strong></span>
+        <span class="sep"></span>
+        <span><strong>Full access</strong></span>
+        <span class="sep"></span>
+        <span><strong>Mobile + Desktop</strong></span>
+      </div>
+    </div>
+
+    <!-- iPhone mockup -->
+    <div class="phone-wrap" id="heroPhone">
+      <div class="stat-badge badge-1">
+        <span class="ico">🔥</span>
+        <span>
+          <span class="lbl">PENDING</span><br />
+          <span class="val">26 mistakes</span>
+        </span>
+      </div>
+      <div class="stat-badge badge-2">
+        <span class="ico">⚡</span>
+        <span>
+          <span class="lbl">ONCE FIXED</span><br />
+          <span class="val">+12 marks</span>
+        </span>
+      </div>
+      <div class="phone" id="phoneHero" data-state="1">
+        <div class="phone-screen">
+          <div class="phone-island"></div>
+          <div class="phone-status">
+            <span>9:41</span>
+            <span class="right">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 13.5l2-2 2 2v-3.5l2-2 2 2v-3.5l2-2 2 2V8.5l2-2 2 2V12l2-2 2 2v8H1z"/></svg>
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5C7 5 2.7 8.1 1 12.5c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5C21.3 8.1 17 5 12 5zm0 12c-2.5 0-4.5-2-4.5-4.5S9.5 8 12 8s4.5 2 4.5 4.5S14.5 17 12 17zm0-7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>
+              <svg viewBox="0 0 26 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="0.5" y="0.5" width="22" height="13" rx="3.5"/><rect x="2" y="2" width="15" height="10" rx="2" fill="currentColor"/><path d="M24 4.5v5" stroke-linecap="round"/></svg>
+            </span>
+          </div>
+          <div class="phone-app">
+            <div class="app-chips">
+              <span class="app-chip mono">Q 14 / 25</span>
+              <span class="app-chip blue">VARC</span>
+              <span class="app-chip blue">VA</span>
+              <span class="app-chip amber">MED</span>
+              <span class="app-timer">0:29</span>
+            </div>
+            <div class="app-passage">
+              Arrange B, C, D, E in logical order to form a coherent paragraph after A. Choose the best option.
+            </div>
+            <div class="app-options">
+              <div class="app-opt wrong">
+                <span class="ltr">A</span><span>CBDE</span><span class="tag">your answer</span>
+              </div>
+              <div class="app-opt"><span class="ltr">B</span><span>BCDE</span></div>
+              <div class="app-opt correct"><span class="ltr">C</span><span>CBED</span><span class="tag">correct</span></div>
+              <div class="app-opt"><span class="ltr">D</span><span>DBCE</span></div>
+            </div>
+            <div class="app-banner">
+              <span class="x">✕</span>
+              <span><strong>You got this wrong</strong> — −3 marks</span>
+            </div>
+            <div class="app-tagpanel" style="margin-top: 4px;">
+              <div class="label">Why did this happen?</div>
+              <div class="app-tagchips">
+                <span class="app-tagchip"><span>🧠</span> Concept</span>
+                <span class="app-tagchip active"><span>🔢</span> Calculation</span>
+                <span class="app-tagchip"><span>👁</span> Misread</span>
+                <span class="app-tagchip"><span>🎲</span> Guess</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Marquee strip — "the gaps you have right now" ──────── -->
+<div class="marquee-strip" aria-hidden="true">
+  <div class="marquee-track" id="marquee">
+    <!-- duplicated in JS for seamless loop -->
+    <span class="item"><span class="pill">🧠 Concept</span></span>
+    <span class="item">Para-jumbles <span class="dot">·</span> 7 unresolved</span>
+    <span class="item"><span class="pill">🔢 Calculation</span></span>
+    <span class="item">Successive percentages <span class="dot">·</span> 5 unresolved</span>
+    <span class="item"><span class="pill">👁 Misread</span></span>
+    <span class="item">Negation in critical reasoning <span class="dot">·</span> 4 unresolved</span>
+    <span class="item"><span class="pill">🎲 Guess</span></span>
+    <span class="item">Inequalities <span class="dot">·</span> 3 unresolved</span>
+    <span class="item"><span class="pill">🧠 Concept</span></span>
+    <span class="item">Time, speed &amp; distance <span class="dot">·</span> 6 unresolved</span>
+    <span class="item"><span class="pill">🔢 Calculation</span></span>
+    <span class="item">Geometry triangles <span class="dot">·</span> 4 unresolved</span>
+  </div>
+</div>
+
+<!-- ─── The Loop (scroll-pinned animation) ─────────────────── -->
+<section class="loop-section" id="loop">
+  <div class="loop-pin">
+    <div class="container loop-inner">
+
+      <div class="loop-text">
+        <span class="eyebrow">The Loop</span>
+        <h2 class="h1">Watch a mistake <span class="text-grad italic-display">turn into a fix.</span></h2>
+        <p class="lead">Every wrong answer goes through the same four-step loop. Solve. Confront. Tag. Fix. By the time you sit for CAT, the gap is closed.</p>
+
+        <div class="loop-states" id="loopStates">
+          <div class="loop-state" data-step="0">
+            <span class="num">01</span>
+            <div>
+              <h4>Solve under timer.</h4>
+              <p>You attempt a real CAT question. Section, topic, difficulty — all tagged automatically.</p>
+            </div>
+          </div>
+          <div class="loop-state" data-step="1">
+            <span class="num">02</span>
+            <div>
+              <h4>Get it wrong, in your face.</h4>
+              <p>Red highlight. The exact option you chose. No quiet "incorrect" — a confrontation.</p>
+            </div>
+          </div>
+          <div class="loop-state" data-step="2">
+            <span class="num">03</span>
+            <div>
+              <h4>Tag why it happened.</h4>
+              <p>Concept gap? Calculation slip? Misread? Guess? One tap. Saved to your error log forever.</p>
+            </div>
+          </div>
+          <div class="loop-state" data-step="3">
+            <span class="num">04</span>
+            <div>
+              <h4>Re-solve in Fix Mode.</h4>
+              <p>Days later, the same gap returns — alone, under pressure. You solve it. The pattern dies.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Animated loop phone -->
+      <div class="loop-phone-wrap">
+        <div class="phone" id="phoneLoop" data-state="0">
+          <div class="phone-screen">
+            <div class="phone-island"></div>
+            <div class="phone-status">
+              <span>9:41</span>
+              <span class="right">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 13.5l2-2 2 2v-3.5l2-2 2 2v-3.5l2-2 2 2V8.5l2-2 2 2V12l2-2 2 2v8H1z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5C7 5 2.7 8.1 1 12.5c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5C21.3 8.1 17 5 12 5zm0 12c-2.5 0-4.5-2-4.5-4.5S9.5 8 12 8s4.5 2 4.5 4.5S14.5 17 12 17z"/></svg>
+                <svg viewBox="0 0 26 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="0.5" y="0.5" width="22" height="13" rx="3.5"/><rect x="2" y="2" width="15" height="10" rx="2" fill="currentColor"/></svg>
+              </span>
+            </div>
+            <div class="phone-app">
+              <div class="app-chips">
+                <span class="app-chip mono">Q 14 / 25</span>
+                <span class="app-chip blue">QA</span>
+                <span class="app-chip blue">ARITH</span>
+                <span class="app-chip amber">MED</span>
+                <span class="app-timer" id="loopTimer">0:42</span>
+              </div>
+              <div class="app-passage">
+                A shopkeeper marks goods 40% above cost, then offers a 20% discount. Find net profit %.
+              </div>
+              <div class="app-options" id="loopOptions">
+                <div class="app-opt" id="optA">
+                  <span class="ltr">A</span><span>20%</span><span class="tag">your answer</span>
+                </div>
+                <div class="app-opt" id="optB"><span class="ltr">B</span><span>14%</span></div>
+                <div class="app-opt" id="optC"><span class="ltr">C</span><span>12%</span><span class="tag">correct</span></div>
+                <div class="app-opt" id="optD"><span class="ltr">D</span><span>8%</span></div>
+              </div>
+
+              <div class="app-banner" id="loopBanner" style="opacity:0; transform: translateY(8px); transition: all 380ms cubic-bezier(.22,1,.36,1);">
+                <span class="x">✕</span>
+                <span><strong>You got this wrong</strong> — −3 marks</span>
+              </div>
+
+              <div class="app-tagpanel" id="loopTagPanel" style="opacity:0; transform: translateY(8px); transition: all 380ms cubic-bezier(.22,1,.36,1); margin-top: 4px;">
+                <div class="label">Why did this happen?</div>
+                <div class="app-tagchips">
+                  <span class="app-tagchip"><span>🧠</span> Concept</span>
+                  <span class="app-tagchip" data-key="calc"><span>🔢</span> Calculation</span>
+                  <span class="app-tagchip"><span>👁</span> Misread</span>
+                  <span class="app-tagchip"><span>🎲</span> Guess</span>
+                </div>
+              </div>
+
+              <div class="app-success" id="loopSuccess">
+                <span style="font-size: 16px;">✓</span>
+                <span>Mistake fixed. <strong>+8 marks recovered.</strong></span>
+              </div>
+            </div>
+
+            <!-- Animated cursor -->
+            <svg class="app-cursor" id="loopCursor" viewBox="0 0 24 28" style="left: 60%; top: 38%; opacity: 0;">
+              <path d="M2 2 L2 22 L7 18 L10 26 L13 25 L10 17 L17 17 Z" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─── Solution structure ─────────────────────────────────── -->
+<section id="solution">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Why solutions stick</span>
+      <h2 class="h1">Every solution, the <span class="text-grad italic-display">same three lenses.</span></h2>
+      <p class="lead">A solution that says "the answer is C" teaches nothing. We break every question into the trap you fell into, the insight you missed, and the exact method to use next time.</p>
+    </div>
+
+    <div class="sol-wrap reveal">
+      <div class="sol-card glass" id="solStage">
+        <div class="sol-q">
+          <span class="num">Q 14 · QA · ARITHMETIC · MEDIUM</span>
+          A shopkeeper marks his goods 40% above cost, then gives a 20% discount.
+          What is his net profit percentage?
+        </div>
+
+        <div class="lens-stage">
+          <!-- Lens rail (chips) -->
+          <div class="lens-rail" role="tablist" aria-label="Solution lenses">
+            <button class="lens-chip is-trap active" data-lens="0" role="tab" aria-selected="true">
+              <span class="lens-num">01</span>
+              <span class="lens-meta">
+                <span class="lens-eyebrow trap">⚠ TRAP</span>
+                <span class="lens-title">Where you fell</span>
+              </span>
+              <span class="lens-progress"><i></i></span>
+            </button>
+            <button class="lens-chip is-insight" data-lens="1" role="tab" aria-selected="false">
+              <span class="lens-num">02</span>
+              <span class="lens-meta">
+                <span class="lens-eyebrow insight">💡 KEY INSIGHT</span>
+                <span class="lens-title">What you missed</span>
+              </span>
+              <span class="lens-progress"><i></i></span>
+            </button>
+            <button class="lens-chip is-fix" data-lens="2" role="tab" aria-selected="false">
+              <span class="lens-num">03</span>
+              <span class="lens-meta">
+                <span class="lens-eyebrow fix">✓ HOW TO FIX</span>
+                <span class="lens-title">The rule to keep</span>
+              </span>
+              <span class="lens-progress"><i></i></span>
+            </button>
+          </div>
+
+          <!-- Lens stage panels -->
+          <div class="lens-panels">
+            <!-- TRAP -->
+            <div class="lens-panel active" data-lens="0">
+              <div class="lens-visual trap-visual">
+                <span class="lens-stage-eyebrow trap">YOUR THINKING</span>
+                <div class="math-line wrong-math">
+                  <span class="m-tok">40%</span>
+                  <span class="m-op">−</span>
+                  <span class="m-tok">20%</span>
+                  <span class="m-op">=</span>
+                  <span class="m-tok m-result">20% profit</span>
+                  <span class="strike"></span>
+                </div>
+                <div class="lens-tag-line trap-line">
+                  <span class="lens-x">✕</span> The discount isn't on cost—it's on the marked price
+                </div>
+              </div>
+              <p class="lens-text">
+                You subtracted <strong>20% from 40%</strong> and called it 20% profit. The discount applies to the <em>marked price</em>, not the cost — that's the whole game.
+              </p>
+            </div>
+
+            <!-- INSIGHT -->
+            <div class="lens-panel" data-lens="1">
+              <div class="lens-visual insight-visual">
+                <span class="lens-stage-eyebrow insight">THE REAL MATH</span>
+                <div class="math-line build-math">
+                  <span class="m-build m-cp">CP</span>
+                  <span class="m-op m-fade">×</span>
+                  <span class="m-build m-mark">1.4</span>
+                  <span class="m-op m-fade">×</span>
+                  <span class="m-build m-disc">0.8</span>
+                  <span class="m-op m-fade">=</span>
+                  <span class="m-build m-final">1.12 × CP</span>
+                </div>
+                <div class="lens-tag-line insight-line">
+                  <span class="lens-bolt">⚡</span> Successive percentages <em>compound</em>, they don't add
+                </div>
+              </div>
+              <p class="lens-text">
+                Marked = <strong>1.4 × CP</strong>. Selling = <strong>0.8 × Marked</strong> = <strong>1.12 × CP</strong>. That's exactly <strong>12% profit</strong> — not 20.
+              </p>
+            </div>
+
+            <!-- FIX -->
+            <div class="lens-panel" data-lens="2">
+              <div class="lens-visual fix-visual">
+                <span class="lens-stage-eyebrow fix">LOCK IT IN</span>
+                <div class="rule-card">
+                  <span class="rule-stamp">RULE · LOCKED</span>
+                  <div class="rule-formula">(1 + x)(1 − y)</div>
+                  <div class="rule-when">when you see “marked up X%, discount Y%”</div>
+                  <span class="rule-check">✓</span>
+                </div>
+              </div>
+              <p class="lens-text">
+                Write the multiplier <strong>before</strong> you read the question again. Don't reason in words — reason in <strong>multipliers</strong>. Locked in your error log forever.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Features Bento ─────────────────────────────────────── -->
+<section id="features">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">What's inside</span>
+      <h2 class="h1">Four tools. <span class="text-grad italic-display">One job.</span></h2>
+      <p class="lead">No leaderboards. No streaks-for-streaks-sake. Just the loop that closes the gap.</p>
+    </div>
+
+    <div class="ftour reveal" id="ftour">
+      <!-- Guided tabs strip -->
+      <div class="ftour-tabs" role="tablist" aria-label="Features">
+        <button class="ftour-tab active" data-f="0" role="tab" aria-selected="true">
+          <span class="ft-num">01</span>
+          <span class="ft-name">Error Log</span>
+          <span class="ft-bar"><i></i></span>
+        </button>
+        <button class="ftour-tab" data-f="1" role="tab" aria-selected="false">
+          <span class="ft-num">02</span>
+          <span class="ft-name">Fix Mode</span>
+          <span class="ft-bar"><i></i></span>
+        </button>
+        <button class="ftour-tab" data-f="2" role="tab" aria-selected="false">
+          <span class="ft-num">03</span>
+          <span class="ft-name">Pattern Detection</span>
+          <span class="ft-bar"><i></i></span>
+        </button>
+        <button class="ftour-tab" data-f="3" role="tab" aria-selected="false">
+          <span class="ft-num">04</span>
+          <span class="ft-name">Topic Heatmap</span>
+          <span class="ft-bar"><i></i></span>
+        </button>
+      </div>
+
+      <!-- Stage panel -->
+      <div class="ftour-stages glass">
+
+        <!-- 01 Error Log -->
+        <div class="ftour-stage active" data-f="0">
+          <div class="ftour-visual">
+            <div class="errlog">
+              <div class="el-row" style="--d:0.05s">
+                <span class="el-tag red">PENDING</span>
+                <span class="el-name">Para-jumbles · VA</span>
+                <span class="el-count red">7</span>
+              </div>
+              <div class="el-row" style="--d:0.25s">
+                <span class="el-tag amber">RECURRING</span>
+                <span class="el-name">Geometry · QA</span>
+                <span class="el-count amber">5</span>
+              </div>
+              <div class="el-row" style="--d:0.45s">
+                <span class="el-tag green">FIXED</span>
+                <span class="el-name">Tables · LR</span>
+                <span class="el-count green">12</span>
+              </div>
+            </div>
+          </div>
+          <div class="ftour-meta">
+            <span class="ft-stage-eyebrow">01 / 04</span>
+            <h3>The Error Log</h3>
+            <p>Every wrong answer tagged by type, topic, and difficulty. Always one tap away — never lost.</p>
+          </div>
+        </div>
+
+        <!-- 02 Fix Mode -->
+        <div class="ftour-stage" data-f="1">
+          <div class="ftour-visual">
+            <div class="fixmode">
+              <div class="fm-head">
+                <span class="fm-eyebrow">⚡ FIX MODE</span>
+                <span class="fm-count"><span class="fm-cur">7</span> / 12 mistakes</span>
+              </div>
+              <div class="fm-bar"><i></i></div>
+              <div class="fm-q">Q 16 · You got this wrong before</div>
+              <div class="fm-tags">
+                <span class="fm-pill">no hints</span>
+                <span class="fm-pill">timed</span>
+                <span class="fm-pill">distraction-free</span>
+              </div>
+            </div>
+          </div>
+          <div class="ftour-meta">
+            <span class="ft-stage-eyebrow">02 / 04</span>
+            <h3>Fix Mode</h3>
+            <p>Focused sessions of <em>only</em> your past mistakes. Re-solve under timer until the pattern breaks.</p>
+          </div>
+        </div>
+
+        <!-- 03 Pattern Detection -->
+        <div class="ftour-stage" data-f="2">
+          <div class="ftour-visual">
+            <div class="pattern">
+              <div class="p-row p-old"><span class="p-time">3d ago</span><span class="p-name">Successive % — wrong</span><span class="p-x">✕</span></div>
+              <div class="p-row p-old"><span class="p-time">1d ago</span><span class="p-name">Successive % — wrong</span><span class="p-x">✕</span></div>
+              <div class="p-row p-new"><span class="p-time">today</span><span class="p-name">Successive % — wrong</span><span class="p-x">✕</span></div>
+              <div class="p-badge">
+                <span class="p-dot"></span> PATTERN — same trap, 3rd time
+              </div>
+            </div>
+          </div>
+          <div class="ftour-meta">
+            <span class="ft-stage-eyebrow">03 / 04</span>
+            <h3>Pattern Detection</h3>
+            <p>The three mistakes costing you 30 marks surface automatically. Not what's wrong — what's <em>recurring</em>.</p>
+          </div>
+        </div>
+
+        <!-- 04 Heatmap -->
+        <div class="ftour-stage" data-f="3">
+          <div class="ftour-visual">
+            <div class="hmap">
+              <div class="hcell l1" style="--d:0.04s"></div><div class="hcell l3" style="--d:0.07s"></div><div class="hcell l5" style="--d:0.10s"></div><div class="hcell l2" style="--d:0.13s"></div>
+              <div class="hcell l4" style="--d:0.16s"></div><div class="hcell l5" style="--d:0.19s"></div><div class="hcell l1" style="--d:0.22s"></div><div class="hcell l2" style="--d:0.25s"></div>
+              <div class="hcell l2" style="--d:0.28s"></div><div class="hcell l5" style="--d:0.31s"></div><div class="hcell l3" style="--d:0.34s"></div><div class="hcell l4" style="--d:0.37s"></div>
+              <div class="hcell l1" style="--d:0.40s"></div><div class="hcell l4" style="--d:0.43s"></div><div class="hcell l2" style="--d:0.46s"></div><div class="hcell l1" style="--d:0.49s"></div>
+            </div>
+            <div class="hmap-legend">
+              <span class="hcell l1"></span><span class="hcell l2"></span><span class="hcell l3"></span><span class="hcell l4"></span><span class="hcell l5"></span>
+              <span class="hmap-legend-label">cold → hot</span>
+            </div>
+          </div>
+          <div class="ftour-meta">
+            <span class="ft-stage-eyebrow">04 / 04</span>
+            <h3>Topic Heatmap</h3>
+            <p>Section-wise gaps in colour. The hot squares are where your next <strong>30 marks</strong> live.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Testimonials marquee ───────────────────────────────── -->
+<section class="tests" id="testimonials">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Aspirants speak</span>
+      <h2 class="h1">Built with — and for — the <span class="text-grad italic-display">people taking CAT.</span></h2>
+    </div>
+  </div>
+
+  <div class="tests-mask">
+    <div class="tests-track" id="testsTrack">
+      <!-- card set 1 -->
+      <div class="tcard glass">
+        <span class="qmark">"</span>
+        <p class="quote">You've made a solution to the problem. Genuinely loved it.</p>
+        <div class="author"><div class="avatar">H</div><div><div class="name">Hitarth J.</div><div class="meta">CAT 2026 aspirant</div></div></div>
+      </div>
+      <div class="tcard glass">
+        <span class="qmark">"</span>
+        <p class="quote">Something very different. Will highly recommend to friends.</p>
+        <div class="author"><div class="avatar">M</div><div><div class="name">Manjari S.</div><div class="meta">CAT 2026 aspirant</div></div></div>
+      </div>
+      <div class="tcard glass">
+        <span class="qmark">"</span>
+        <p class="quote">Ya it's worth it. Keeps all errors so students won't need Excel.</p>
+        <div class="author"><div class="avatar">S</div><div><div class="name">Srishti</div><div class="meta">CAT 2026 aspirant</div></div></div>
+      </div>
+      <div class="tcard glass">
+        <span class="qmark">"</span>
+        <p class="quote">The application was extraordinary and user friendly.</p>
+        <div class="author"><div class="avatar">S</div><div><div class="name">Sasanth</div><div class="meta">CAT 2026 aspirant</div></div></div>
+      </div>
+      <div class="tcard glass">
+        <span class="qmark">"</span>
+        <p class="quote">It's amazing. This will actually help.</p>
+        <div class="author"><div class="avatar">H</div><div><div class="name">Hafiz</div><div class="meta">CAT 2026 aspirant</div></div></div>
+      </div>
+      <!-- duplicate set 2 (for seamless marquee) -->
+      <div class="tcard glass" aria-hidden="true">
+        <span class="qmark">"</span>
+        <p class="quote">You've made a solution to the problem. Genuinely loved it.</p>
+        <div class="author"><div class="avatar">H</div><div><div class="name">Hitarth J.</div><div class="meta">CAT 2026 aspirant</div></div></div>
+      </div>
+      <div class="tcard glass" aria-hidden="true">
+        <span class="qmark">"</span>
+        <p class="quote">Something very different. Will highly recommend to friends.</p>
+        <div class="author"><div class="avatar">M</div><div><div class="name">Manjari S.</div><div class="meta">CAT 2026 aspirant</div></div></div>
+      </div>
+      <div class="tcard glass" aria-hidden="true">
+        <span class="qmark">"</span>
+        <p class="quote">Ya it's worth it. Keeps all errors so students won't need Excel.</p>
+        <div class="author"><div class="avatar">S</div><div><div class="name">Srishti</div><div class="meta">CAT 2026 aspirant</div></div></div>
+      </div>
+      <div class="tcard glass" aria-hidden="true">
+        <span class="qmark">"</span>
+        <p class="quote">The application was extraordinary and user friendly.</p>
+        <div class="author"><div class="avatar">S</div><div><div class="name">Sasanth</div><div class="meta">CAT 2026 aspirant</div></div></div>
+      </div>
+      <div class="tcard glass" aria-hidden="true">
+        <span class="qmark">"</span>
+        <p class="quote">It's amazing. This will actually help.</p>
+        <div class="author"><div class="avatar">H</div><div><div class="name">Hafiz</div><div class="meta">CAT 2026 aspirant</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Final CTA ─────────────────────────────────────────── -->
+<section style="padding-top: 40px;">
+  <div class="container">
+    <div class="final-cta glass reveal">
+      <h2>Your mistakes are <span class="text-grad italic-display">already costing you marks.</span></h2>
+      <p>Spend three days tagging them. See if it works. The downside is your time. The upside is your shortlist.</p>
+      <a class="btn btn-primary" href="https://catalyst-app-six.vercel.app/" target="_blank" rel="noopener">
+        Start your free trial <span class="arrow">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ─── Footer ─────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <div class="logo" style="margin-bottom: 12px;">
+          <span class="logo-bolt">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M13 2 L4 14 H11 L10 22 L20 9 H13 L13 2 Z" fill="url(#bolt-g)"/>
+            </svg>
+          </span>
+          <span>CATalyst</span>
+        </div>
+        <div class="tagline">A mistake-correction system for CAT 2026 aspirants. Fix what's costing you marks — before the exam does.</div>
+      </div>
+      <a class="btn btn-ghost btn-sm" href="https://catalyst-app-six.vercel.app/" target="_blank" rel="noopener">Launch app <span class="arrow">→</span></a>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 CATalyst · Built for aspirants, by an aspirant.</div>
+      <div>Made in India 🇮🇳</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* Mark js-ready so .reveal initial states only apply when we can animate */
+document.documentElement.classList.add('js-ready');
+
+/* ───────────── Theme toggle ───────────── */
+const html = document.documentElement;
+const themeBtn = document.getElementById('themeToggle');
+const stored = localStorage.getItem('cat-theme');
+if (stored) html.dataset.theme = stored;
+themeBtn.addEventListener('click', () => {
+  const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+  html.dataset.theme = next;
+  localStorage.setItem('cat-theme', next);
+});
+
+/* ───────────── Particles ───────────── */
+const pcontainer = document.getElementById('particles');
+const N = window.matchMedia('(max-width: 720px)').matches ? 24 : 48;
+for (let i = 0; i < N; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.left = Math.random() * 100 + '%';
+  p.style.top = Math.random() * 100 + '%';
+  p.style.animationDelay = (Math.random() * 4) + 's';
+  p.style.animationDuration = (3 + Math.random() * 4) + 's';
+  pcontainer.appendChild(p);
+}
+
+/* ───────────── Nav scrolled state ───────────── */
+const nav = document.getElementById('nav');
+const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 8);
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+
+/* ───────────── Hero headline stagger (CSS keyframes only after rAF check) ─────── */
+{
+  const t0 = performance.now();
+  requestAnimationFrame(() => {
+    if (performance.now() - t0 < 80) {
+      // rAF is responsive — safe to animate
+      const words = document.querySelectorAll('#heroH1 .word > span');
+      words.forEach((w, i) => {
+        w.animate(
+          [
+            { opacity: 0, transform: 'translateY(36px)' },
+            { opacity: 1, transform: 'translateY(0)' },
+          ],
+          { duration: 900, delay: 80 + i * 90, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'both' }
+        );
+      });
+      // Hero badge, sub, ctas, trust
+      const seq = [
+        document.querySelector('.hero-badge'),
+        document.querySelector('.hero-sub'),
+        document.querySelector('.hero-ctas'),
+        document.querySelector('.hero-trust'),
+      ];
+      seq.forEach((el, i) => {
+        if (!el) return;
+        el.animate(
+          [{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'translateY(0)' }],
+          { duration: 700, delay: 100 + i * 120, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'both' }
+        );
+      });
+      // Phone reveal
+      const phone = document.getElementById('heroPhone');
+      if (phone) {
+        phone.animate(
+          [{ opacity: 0, transform: 'translateY(40px) scale(0.96)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }],
+          { duration: 1100, delay: 360, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'both' }
+        );
+      }
+    }
+  });
+}
+
+/* ───────────── Mouse-parallax tilt on hero phone (desktop only) ─────── */
+const heroPhoneEl = document.getElementById('phoneHero');
+const heroPhoneWrap = document.getElementById('heroPhone');
+if (heroPhoneEl && window.matchMedia('(min-width: 880px) and (hover: hover)').matches) {
+  let rx = 0, ry = 0, tx = 0, ty = 0;
+  const wrap = heroPhoneWrap.getBoundingClientRect();
+  document.addEventListener('mousemove', (e) => {
+    const r = heroPhoneWrap.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    tx = ((e.clientX - cx) / window.innerWidth) * 14;
+    ty = ((e.clientY - cy) / window.innerHeight) * 14;
+  });
+  const loop = () => {
+    rx += (tx - rx) * 0.08;
+    ry += (ty - ry) * 0.08;
+    heroPhoneEl.style.transform = `rotateY(${rx}deg) rotateX(${-ry}deg)`;
+    requestAnimationFrame(loop);
+  };
+  loop();
+}
+
+/* ───────────── GSAP scroll wiring ───────────── */
+gsap.registerPlugin(ScrollTrigger);
+gsap.ticker.lagSmoothing(0);
+
+// Parallax orbs — different rates
+gsap.utils.toArray('.orb').forEach((orb) => {
+  const speed = parseFloat(orb.dataset.parallax || '0.2');
+  gsap.to(orb, {
+    yPercent: -100 * speed,
+    ease: 'none',
+    scrollTrigger: { trigger: document.body, start: 'top top', end: 'bottom top', scrub: true },
+  });
+});
+
+// Generic reveal — IntersectionObserver-based (independent of rAF ticker)
+{
+  const revealItems = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+    revealItems.forEach((el) => io.observe(el));
+  } else {
+    revealItems.forEach((el) => el.classList.add('revealed'));
+  }
+}
+
+/* ───────────── The Loop — scrubbed states ─────────────
+   Section is 380vh tall. Pin contains 4 states (0,1,2,3).
+   Map scroll progress to state index, update DOM. */
+{
+  const loopSection = document.getElementById('loop');
+  const phoneEl = document.getElementById('phoneLoop');
+  const optA = document.getElementById('optA');
+  const banner = document.getElementById('loopBanner');
+  const tagPanel = document.getElementById('loopTagPanel');
+  const success = document.getElementById('loopSuccess');
+  const cursor = document.getElementById('loopCursor');
+  const stateRows = document.querySelectorAll('#loopStates .loop-state');
+  const tagChip = tagPanel ? tagPanel.querySelector('[data-key="calc"]') : null;
+  const optC = document.getElementById('optC');
+  const timer = document.getElementById('loopTimer');
+
+  // Reset to step 0 baseline
+  function setStep(step) {
+    phoneEl.dataset.state = step;
+    stateRows.forEach((r, i) => r.classList.toggle('active', i === step));
+
+    // Reset
+    optA.classList.remove('wrong', 'shake');
+    optC.classList.remove('correct');
+    banner.style.opacity = 0; banner.style.transform = 'translateY(8px)';
+    tagPanel.style.opacity = 0; tagPanel.style.transform = 'translateY(8px)';
+    success.style.opacity = 0; success.style.transform = 'translateY(20px)';
+    if (tagChip) tagChip.classList.remove('active');
+    cursor.style.opacity = 0;
+
+    if (step === 0) {
+      // Cursor approaches option A
+      cursor.style.opacity = 1;
+      cursor.style.left = '20%';
+      cursor.style.top  = '48%';
+      timer.textContent = '0:42';
+    }
+    if (step === 1) {
+      // Click happened — wrong shake, banner up
+      optA.classList.add('wrong', 'shake');
+      banner.style.opacity = 1; banner.style.transform = 'translateY(0)';
+      cursor.style.opacity = 0;
+      timer.textContent = '0:00';
+    }
+    if (step === 2) {
+      // Banner stays, tag panel slides in, Calc tag highlighted
+      optA.classList.add('wrong');
+      banner.style.opacity = 1; banner.style.transform = 'translateY(0)';
+      tagPanel.style.opacity = 1; tagPanel.style.transform = 'translateY(0)';
+      if (tagChip) tagChip.classList.add('active');
+    }
+    if (step === 3) {
+      // Re-solve: correct answer green, success banner
+      optC.classList.add('correct');
+      optA.classList.remove('wrong');
+      banner.style.opacity = 0;
+      tagPanel.style.opacity = 0;
+      success.style.opacity = 1; success.style.transform = 'translateY(0)';
+      timer.textContent = '0:18';
+    }
+  }
+
+  // Initial state
+  setStep(0);
+
+  // Below 880px: phone is sticky, IntersectionObserver drives state.
+  // 880px and up: GSAP ScrollTrigger scrubs through 380vh.
+  const useMobileLoop = window.matchMedia('(max-width: 879px)').matches;
+
+  if (!useMobileLoop) {
+    ScrollTrigger.create({
+      trigger: loopSection,
+      start: 'top top+=' + 64,
+      end: 'bottom bottom',
+      scrub: 0.6,
+      onUpdate: (self) => {
+        const p = self.progress;
+        let step;
+        if (p < 0.22) step = 0;
+        else if (p < 0.5) step = 1;
+        else if (p < 0.78) step = 2;
+        else step = 3;
+        if (parseInt(phoneEl.dataset.state, 10) !== step) {
+          setStep(step);
+        }
+      },
+    });
+  } else if ('IntersectionObserver' in window) {
+    // Each step row, when its centre crosses the trigger band, becomes active.
+    const io = new IntersectionObserver((entries) => {
+      let best = null; let bestRatio = 0;
+      entries.forEach((e) => {
+        if (e.isIntersecting && e.intersectionRatio > bestRatio) {
+          best = e.target;
+          bestRatio = e.intersectionRatio;
+        }
+      });
+      if (best) {
+        const step = parseInt(best.dataset.step, 10);
+        if (!isNaN(step) && parseInt(phoneEl.dataset.state, 10) !== step) {
+          setStep(step);
+        }
+      }
+    }, {
+      // Trigger band: middle ~30% of viewport
+      rootMargin: '-35% 0px -35% 0px',
+      threshold: [0, 0.25, 0.5, 0.75, 1],
+    });
+    stateRows.forEach((r) => io.observe(r));
+
+    // Tap a step row to jump the phone to it
+    stateRows.forEach((r) => {
+      r.addEventListener('click', () => {
+        const step = parseInt(r.dataset.step, 10);
+        if (!isNaN(step)) setStep(step);
+      });
+      r.style.cursor = 'pointer';
+    });
+  }
+}
+
+/* ───────────── Safety net: force-reveal anything still hidden after 2.5s ─────── */
+setTimeout(() => {
+  document.querySelectorAll('.reveal').forEach((el) => {
+    if (!el.classList.contains('revealed')) el.classList.add('revealed');
+  });
+}, 2500);
+</script>
+</body>
+</html>

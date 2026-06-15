@@ -1,0 +1,49 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="darkreader-lock"><link rel="stylesheet" href="../colors_and_type.css"><link rel="stylesheet" href="_base.css">
+<style>
+  .icon-btn {
+    width:44px;height:44px;background:var(--bg-2);
+    border:1px solid var(--line-2);border-radius:12px;
+    color:var(--fg-2);cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;
+    transition: background 180ms, color 180ms, border-color 180ms;
+  }
+  .icon-btn:hover { background:var(--bg-3); color:var(--fg-1); border-color:var(--line-3); }
+  .icon-btn svg { width:18px; height:18px; stroke-width:2; stroke:currentColor; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+  .icon-btn.amber { color:var(--cat-amber); }
+  .icon-btn.red   { color:var(--cat-red); }
+</style>
+</head><body>
+<div class="card">
+  <div class="row" style="gap:10px;">
+    <!-- Bookmark -->
+    <button class="icon-btn" title="Bookmark">
+      <svg viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+    </button>
+    <!-- Flag -->
+    <button class="icon-btn amber" title="Flag">
+      <svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+    </button>
+    <!-- Note / edit -->
+    <button class="icon-btn" title="Note">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    </button>
+    <!-- Report / alert -->
+    <button class="icon-btn red" title="Report">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </button>
+    <!-- Hint / lightbulb -->
+    <button class="icon-btn" title="Hint">
+      <svg viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+    </button>
+    <!-- Calculator -->
+    <button class="icon-btn" title="Calculator">
+      <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="11" x2="8" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="16" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="8" y2="15"/><line x1="12" y1="15" x2="12" y2="15"/><line x1="16" y1="15" x2="16" y2="15"/><line x1="8" y1="19" x2="16" y2="19"/></svg>
+    </button>
+    <div style="margin-left:auto;background:var(--bg-2);border:1px solid var(--line-2);border-radius:12px;padding:0 16px;font-family:var(--font-mono);font-size:15px;color:var(--fg-1);height:44px;display:inline-flex;align-items:center;gap:8px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--fg-3)"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      0:29
+    </div>
+  </div>
+  <div class="tag">Bookmark · Flag · Note · Report · Hint · Calculator · Timer (Lucide line icons, 18px @ 2px stroke)</div>
+</div>
+</body></html>
