@@ -266,6 +266,20 @@ const App = {
     }
   },
 
+  // Called after Razorpay payment completes to update all trial UI without a full reload
+  _refreshTrialUI() {
+    this._renderTrialBanner();
+    // Hide sidebar upgrade button if now paid
+    const upgradeBtn = document.getElementById('sidebar-upgrade-btn');
+    if (upgradeBtn && DB.isPaid()) upgradeBtn.style.display = 'none';
+    // If currently on a gated page, allow it now
+    const current = document.querySelector('.page.active');
+    if (current) {
+      const page = current.id.replace('page-', '');
+      if (['practice', 'errorlog'].includes(page)) this.navigate(page);
+    }
+  },
+
   // ── PAYWALL ────────────────────────────────────────────────────
   _pendingCount: 0,
 

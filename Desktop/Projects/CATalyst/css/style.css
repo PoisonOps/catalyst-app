@@ -3907,6 +3907,94 @@ body {
   line-height: 1.4;
 }
 
+/* ── Tier tabs ─────────────────────────────────────────── */
+.upgrade-tier-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  background: var(--bg2);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+}
+
+.upgrade-tier-tab {
+  flex: 1;
+  padding: 0.45rem 0.75rem;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--text2);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.upgrade-tier-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.tier-soon-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  background: rgba(255,255,255,0.2);
+  color: inherit;
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.upgrade-tier-tab:not(.active) .tier-soon-badge {
+  background: var(--bg3, rgba(91,122,245,0.15));
+  color: var(--accent);
+}
+
+/* ── Pay now button ─────────────────────────────────────── */
+.btn-pay-now {
+  display: block;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: opacity 0.15s, transform 0.1s;
+  letter-spacing: -0.01em;
+}
+
+.btn-pay-now:hover { opacity: 0.9; }
+.btn-pay-now:active { transform: scale(0.98); }
+.btn-pay-now:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.btn-pay-now.btn-notify {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+/* ── Max coming-soon section ────────────────────────────── */
+.max-coming-icon {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.upgrade-plans-dim .upgrade-plan {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: default;
+}
+
+/* ── Trust line ─────────────────────────────────────────── */
 .upgrade-trust {
   font-size: 0.75rem;
   color: var(--text3);

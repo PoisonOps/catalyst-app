@@ -881,77 +881,84 @@
   <!-- UPGRADE MODAL -->
   <div id="upgrade-modal" class="modal-overlay hidden">
     <div class="modal-box upgrade-box">
-      <div class="upgrade-hero">
-        <div class="upgrade-icon">⚡</div>
-        <h3>CATalyst Pro</h3>
-        <p class="upgrade-founders">Everything you need to fix your mistakes before CAT 2026.</p>
+
+      <!-- Tier switcher -->
+      <div class="upgrade-tier-tabs">
+        <button class="upgrade-tier-tab active" id="tab-pro" onclick="switchUpgradeTier('pro')">CATalyst Pro</button>
+        <button class="upgrade-tier-tab" id="tab-max" onclick="switchUpgradeTier('max')">CATalyst Max <span class="tier-soon-badge">Soon</span></button>
       </div>
 
-      <div class="upgrade-features">
-        <div class="upgrade-feat">✅ Unlimited question bank</div>
-        <div class="upgrade-feat">✅ Full mistake tracking</div>
-        <div class="upgrade-feat">✅ Fix My Mistakes loop</div>
-        <div class="upgrade-feat">✅ Sync across devices</div>
-      </div>
-
-      <div class="upgrade-founder-note">
-        🔒 Founder's pricing — first 20 users only. Price increases after.
-      </div>
-
-      <div class="upgrade-plans">
-        <div class="upgrade-plan" id="plan-monthly" onclick="selectPlan('monthly')">
-          <div class="plan-badge plan-badge-amber">Monthly</div>
-          <div class="plan-amount">₹99<span>/mo</span></div>
-          <div class="plan-desc">Locked forever<br>Pay month by month</div>
+      <!-- PRO TIER -->
+      <div id="upgrade-tier-pro">
+        <div class="upgrade-hero">
+          <h3>CATalyst Pro</h3>
+          <p class="upgrade-founders">Everything you need to fix your mistakes before CAT 2026.</p>
         </div>
-        <div class="upgrade-plan plan-selected" id="plan-onetime" onclick="selectPlan('onetime')">
-          <div class="plan-badge plan-badge-blue">Best Value</div>
-          <div class="plan-amount">₹489</div>
-          <div class="plan-desc">Till CAT 2026<br>One time · No renewals</div>
+        <div class="upgrade-features">
+          <div class="upgrade-feat">✅ Unlimited question bank</div>
+          <div class="upgrade-feat">✅ Full mistake tracking + Fix Mode</div>
+          <div class="upgrade-feat">✅ Sync across all devices</div>
+          <div class="upgrade-feat">✅ Access till CAT 2026</div>
         </div>
-      </div>
-
-      <div class="upgrade-pay">
-        <div class="pay-step">
-          <span class="pay-step-num">1</span>
-          <div style="flex:1">
-            <div class="pay-step-label" id="pay-label">Pay ₹489 — tap to open UPI app</div>
-            <div class="pay-upi-row">
-              <a class="pay-upi" id="pay-upi-link" href="upi://pay?pa=7080442040@pthdfc&pn=CATalyst&am=489&cu=INR&tn=CATalyst%20Pro">7080442040@pthdfc</a>
-              <button class="pay-copy-btn" onclick="copyUPI()" id="pay-copy-btn">Copy</button>
-            </div>
+        <div class="upgrade-founder-note">🔒 Founder's pricing — first 20 users only</div>
+        <div class="upgrade-plans">
+          <div class="upgrade-plan" id="plan-monthly" onclick="selectPlan('monthly')">
+            <div class="plan-badge plan-badge-amber">Auto-renews</div>
+            <div class="plan-amount">₹99<span>/mo</span></div>
+            <div class="plan-desc">Cancel anytime<br>Auto-pay monthly</div>
+          </div>
+          <div class="upgrade-plan plan-selected" id="plan-onetime" onclick="selectPlan('onetime')">
+            <div class="plan-badge plan-badge-blue">Best Value</div>
+            <div class="plan-amount">₹489</div>
+            <div class="plan-desc">Till CAT 2026<br>One time · No renewals</div>
           </div>
         </div>
-        <div class="pay-step">
-          <span class="pay-step-num">2</span>
-          <div>
-            <div class="pay-step-label">Send screenshot to WhatsApp</div>
-            <a href="https://wa.me/917080442040" target="_blank" class="pay-whatsapp">📱 +91 70804 42040</a>
-          </div>
-        </div>
-        <div class="pay-step">
-          <span class="pay-step-num">3</span>
-          <div>
-            <div class="pay-step-label">Account activated within 1 hour</div>
-          </div>
-        </div>
+        <button class="btn-pay-now" id="modal-pay-btn" onclick="initiatePayment('modal')">Pay ₹489 — Secure Checkout</button>
+        <p class="upgrade-trust">🔒 Secured by Razorpay · UPI · Cards · Net banking</p>
       </div>
 
-      <p class="upgrade-trust">🔒 No auto-billing · No hidden fees · Manual activation</p>
-      <button class="btn-skip" id="close-upgrade-btn" style="margin:0.75rem auto;display:block">Maybe later</button>
+      <!-- MAX TIER (coming soon) -->
+      <div id="upgrade-tier-max" class="hidden">
+        <div class="upgrade-hero">
+          <div class="max-coming-icon">🚀</div>
+          <h3>CATalyst Max</h3>
+          <p class="upgrade-founders">AI counselling → Personal roadmap → Adaptive daily DPPs → Weekly reviews.</p>
+        </div>
+        <div class="upgrade-features">
+          <div class="upgrade-feat">🎯 AI counselling interview (feels like therapy)</div>
+          <div class="upgrade-feat">📅 Personal weekly roadmap with reasoning</div>
+          <div class="upgrade-feat">📝 Adaptive daily practice from real PYQs</div>
+          <div class="upgrade-feat">📊 Weekly AI review — adjusts your plan</div>
+          <div class="upgrade-feat">✅ Everything in Pro</div>
+        </div>
+        <div class="upgrade-plans upgrade-plans-dim">
+          <div class="upgrade-plan">
+            <div class="plan-badge plan-badge-amber">Roadmap Week</div>
+            <div class="plan-amount">₹99</div>
+            <div class="plan-desc">1-week trial<br>Full counselling + DPPs</div>
+          </div>
+          <div class="upgrade-plan">
+            <div class="plan-badge plan-badge-blue">Max Plan</div>
+            <div class="plan-amount">₹799</div>
+            <div class="plan-desc">Till CAT 2026<br>Full Max access</div>
+          </div>
+        </div>
+        <button class="btn-pay-now btn-notify" onclick="notifyMaxLaunch()">Notify me when Max launches →</button>
+        <p class="upgrade-trust">Coming soon — building now</p>
+      </div>
+
+      <button class="btn-skip" id="close-upgrade-btn">Maybe later</button>
     </div>
   </div>
 
   <!-- PAYWALL — shown when trial expires, no close button -->
   <div id="paywall-overlay" class="paywall-overlay hidden">
     <div class="paywall-box">
-
       <div class="paywall-header">
         <div class="paywall-icon">⏰</div>
         <h2 class="paywall-title">Your free trial has ended</h2>
         <p class="paywall-desc">Your mistakes are saved. Upgrade to keep fixing them.</p>
       </div>
-
       <div class="paywall-stat-block">
         <div class="paywall-stat">
           <span class="paywall-stat-num" id="pw-mistake-count">—</span>
@@ -959,27 +966,22 @@
         </div>
         <div class="paywall-stat-divider"></div>
         <div class="paywall-stat">
-          <span class="paywall-stat-num">3</span>
+          <span class="paywall-stat-num">7</span>
           <span class="paywall-stat-label">days of data saved</span>
         </div>
       </div>
-
       <div class="paywall-locked">
         <div class="paywall-locked-title">Now locked</div>
         <div class="paywall-locked-row">🔒 Practice Questions</div>
         <div class="paywall-locked-row">🔒 My Error Log</div>
         <div class="paywall-locked-row">🔒 Fix My Mistakes loop</div>
       </div>
-
-      <div class="upgrade-founder-note" style="margin-bottom:1rem">
-        🔒 Founder's pricing — first 20 users only. Price increases after.
-      </div>
-
+      <div class="upgrade-founder-note" style="margin-bottom:1rem">🔒 Founder's pricing — first 20 users only</div>
       <div class="upgrade-plans" style="margin-bottom:1rem">
         <div class="upgrade-plan" id="pw-plan-monthly" onclick="pwSelectPlan('monthly')">
-          <div class="plan-badge plan-badge-amber">Monthly</div>
+          <div class="plan-badge plan-badge-amber">Auto-renews</div>
           <div class="plan-amount">₹99<span>/mo</span></div>
-          <div class="plan-desc">Locked forever<br>Pay month by month</div>
+          <div class="plan-desc">Cancel anytime<br>Auto-pay monthly</div>
         </div>
         <div class="upgrade-plan plan-selected" id="pw-plan-onetime" onclick="pwSelectPlan('onetime')">
           <div class="plan-badge plan-badge-blue">Best Value</div>
@@ -987,32 +989,8 @@
           <div class="plan-desc">Till CAT 2026<br>One time · No renewals</div>
         </div>
       </div>
-
-      <div class="upgrade-pay">
-        <div class="pay-step">
-          <span class="pay-step-num">1</span>
-          <div style="flex:1">
-            <div class="pay-step-label" id="pw-pay-label">Pay ₹489 — tap to open UPI app</div>
-            <div class="pay-upi-row">
-              <a class="pay-upi" id="pw-upi-link" href="upi://pay?pa=7080442040@pthdfc&pn=CATalyst&am=489&cu=INR&tn=CATalyst%20Pro">7080442040@pthdfc</a>
-              <button class="pay-copy-btn" id="pw-copy-btn" onclick="pwCopyUPI()">Copy</button>
-            </div>
-          </div>
-        </div>
-        <div class="pay-step">
-          <span class="pay-step-num">2</span>
-          <div>
-            <div class="pay-step-label">Send screenshot to WhatsApp</div>
-            <a href="https://wa.me/917080442040" target="_blank" class="pay-whatsapp">📱 +91 70804 42040</a>
-          </div>
-        </div>
-        <div class="pay-step">
-          <span class="pay-step-num">3</span>
-          <div><div class="pay-step-label">Account activated within 1 hour</div></div>
-        </div>
-      </div>
-
-      <p class="upgrade-trust">🔒 No auto-billing · No hidden fees · Manual activation</p>
+      <button class="btn-pay-now" id="pw-pay-btn" onclick="initiatePayment('paywall')">Pay ₹489 — Secure Checkout</button>
+      <p class="upgrade-trust">🔒 Secured by Razorpay · UPI · Cards · Net banking</p>
       <p class="paywall-already-paid">Already paid? <a href="https://wa.me/917080442040" target="_blank" class="pay-whatsapp" style="font-size:0.8rem">Message us on WhatsApp ↗</a></p>
       <button class="paywall-back-btn" onclick="document.getElementById('paywall-overlay').classList.add('hidden'); document.body.style.overflow=''; App.navigate('dashboard');">← Back to Dashboard</button>
     </div>
@@ -1026,42 +1004,194 @@
   <div id="toast" class="toast hidden"></div>
 
   <script>
+    // ── Payment state ──────────────────────────────────────────────
+    let _activePlan    = 'onetime'; // 'monthly' | 'onetime'
+    let _activePwPlan  = 'onetime';
+    let _activeTier    = 'pro';     // 'pro' | 'max'
+
+    // ── Tier switcher ──────────────────────────────────────────────
+    function switchUpgradeTier(tier) {
+      _activeTier = tier;
+      document.getElementById('tab-pro').classList.toggle('active', tier === 'pro');
+      document.getElementById('tab-max').classList.toggle('active', tier === 'max');
+      document.getElementById('upgrade-tier-pro').classList.toggle('hidden', tier !== 'pro');
+      document.getElementById('upgrade-tier-max').classList.toggle('hidden', tier !== 'max');
+    }
+
+    // ── Plan selection (modal) ─────────────────────────────────────
     function selectPlan(plan) {
+      _activePlan = plan;
       const isMonthly = plan === 'monthly';
       document.getElementById('plan-monthly').classList.toggle('plan-selected', isMonthly);
       document.getElementById('plan-onetime').classList.toggle('plan-selected', !isMonthly);
-      const amount = isMonthly ? '99' : '489';
-      document.getElementById('pay-label').textContent = isMonthly ? 'Pay ₹99/month — tap to open UPI app' : 'Pay ₹489 — tap to open UPI app';
-      document.getElementById('pay-upi-link').href = `upi://pay?pa=7080442040@pthdfc&pn=CATalyst&am=${amount}&cu=INR&tn=CATalyst%20Pro`;
+      const btn = document.getElementById('modal-pay-btn');
+      btn.textContent = isMonthly ? 'Pay ₹99/mo — Secure Checkout' : 'Pay ₹489 — Secure Checkout';
     }
 
-    function copyUPI() {
-      navigator.clipboard.writeText('7080442040@pthdfc').then(() => {
-        const btn = document.getElementById('pay-copy-btn');
-        btn.textContent = 'Copied!';
-        btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
-      });
-    }
-
+    // ── Plan selection (paywall) ───────────────────────────────────
     function pwSelectPlan(plan) {
+      _activePwPlan = plan;
       const isMonthly = plan === 'monthly';
       document.getElementById('pw-plan-monthly').classList.toggle('plan-selected', isMonthly);
       document.getElementById('pw-plan-onetime').classList.toggle('plan-selected', !isMonthly);
-      const amount = isMonthly ? '99' : '489';
-      document.getElementById('pw-pay-label').textContent = isMonthly ? 'Pay ₹99/month — tap to open UPI app' : 'Pay ₹489 — tap to open UPI app';
-      document.getElementById('pw-upi-link').href = `upi://pay?pa=7080442040@pthdfc&pn=CATalyst&am=${amount}&cu=INR&tn=CATalyst%20Pro`;
+      const btn = document.getElementById('pw-pay-btn');
+      btn.textContent = isMonthly ? 'Pay ₹99/mo — Secure Checkout' : 'Pay ₹489 — Secure Checkout';
     }
 
-    function pwCopyUPI() {
-      navigator.clipboard.writeText('7080442040@pthdfc').then(() => {
-        const btn = document.getElementById('pw-copy-btn');
-        btn.textContent = 'Copied!';
-        btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
-      });
+    // ── Max notify ─────────────────────────────────────────────────
+    function notifyMaxLaunch() {
+      const userId = (typeof Auth !== 'undefined' && Auth.currentUser) ? Auth.currentUser.id : null;
+      if (typeof DB !== 'undefined' && userId) DB.logEvent('max_notify_interest', userId);
+      showToast('Got it! We\'ll notify you when Max launches.', 'success');
+    }
+
+    // ── Razorpay payment ───────────────────────────────────────────
+    async function initiatePayment(context) {
+      const plan = context === 'paywall' ? _activePwPlan : _activePlan;
+      const userId = (typeof Auth !== 'undefined' && Auth.currentUser) ? Auth.currentUser.id : null;
+      const email  = (typeof Auth !== 'undefined' && Auth.currentUser) ? Auth.currentUser.email : '';
+      if (!userId) { showToast('Please log in first.', 'error'); return; }
+
+      const btn = document.getElementById(context === 'paywall' ? 'pw-pay-btn' : 'modal-pay-btn');
+      btn.disabled = true;
+      btn.textContent = 'Opening payment...';
+
+      try {
+        if (plan === 'monthly') {
+          // Recurring subscription
+          const res  = await fetch('/api/create-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId }),
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+
+          const rzp = new Razorpay({
+            key:             data.key_id,
+            subscription_id: data.subscription_id,
+            name:            'CATalyst',
+            description:     'CATalyst Pro — ₹99/month',
+            image:           '/icon-192.png',
+            prefill:         { email },
+            theme:           { color: '#5b7af5' },
+            handler: async (response) => {
+              await _activateSubscription(response, userId, context);
+            },
+          });
+          rzp.on('payment.failed', () => {
+            showToast('Payment failed. Please try again.', 'error');
+            _resetPayBtn(btn, plan);
+          });
+          rzp.open();
+
+        } else {
+          // One-time order
+          const res  = await fetch('/api/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plan: 'onetime', userId }),
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+
+          const rzp = new Razorpay({
+            key:         data.key_id,
+            order_id:    data.order_id,
+            amount:      data.amount,
+            currency:    data.currency,
+            name:        'CATalyst',
+            description: 'CATalyst Pro — Till CAT 2026',
+            image:       '/icon-192.png',
+            prefill:     { email },
+            theme:       { color: '#5b7af5' },
+            handler: async (response) => {
+              await _verifyAndActivate(response, 'onetime', userId, context);
+            },
+          });
+          rzp.on('payment.failed', () => {
+            showToast('Payment failed. Please try again.', 'error');
+            _resetPayBtn(btn, plan);
+          });
+          rzp.open();
+        }
+
+      } catch (err) {
+        console.error('[payment]', err);
+        showToast('Something went wrong. Please try again.', 'error');
+        _resetPayBtn(btn, plan);
+      }
+    }
+
+    async function _verifyAndActivate(response, plan, userId, context) {
+      showLoading('Activating your account...');
+      try {
+        const res = await fetch('/api/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_order_id:   response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature:  response.razorpay_signature,
+            plan,
+            userId,
+          }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error('Verification failed');
+        await _onPaymentSuccess(plan, context);
+      } catch (err) {
+        hideLoading();
+        console.error('[verify]', err);
+        showToast('Payment received but activation failed. WhatsApp us: +91 70804 42040', 'error');
+      }
+    }
+
+    async function _activateSubscription(response, userId, context) {
+      // Verify subscription first payment signature
+      showLoading('Activating your account...');
+      try {
+        const res = await fetch('/api/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_payment_id:     response.razorpay_payment_id,
+            razorpay_subscription_id: response.razorpay_subscription_id,
+            razorpay_signature:       response.razorpay_signature,
+            plan: 'monthly',
+            userId,
+          }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error('Verification failed');
+        await _onPaymentSuccess('monthly', context);
+      } catch (err) {
+        hideLoading();
+        console.error('[subscription verify]', err);
+        showToast('Payment received but activation failed. WhatsApp us: +91 70804 42040', 'error');
+      }
+    }
+
+    async function _onPaymentSuccess(plan, context) {
+      // Sync paid status from Supabase so local state is accurate
+      if (typeof DB !== 'undefined' && typeof Auth !== 'undefined' && Auth.currentUser)
+        await DB.syncTrialFromSupabase(Auth.currentUser.id);
+      hideLoading();
+      // Close whichever modal is open
+      document.getElementById('upgrade-modal').classList.add('hidden');
+      document.getElementById('paywall-overlay').classList.add('hidden');
+      document.body.style.overflow = '';
+      if (typeof App !== 'undefined') App._refreshTrialUI();
+      showToast('🎉 Welcome to CATalyst Pro! Access unlocked.', 'success');
+    }
+
+    function _resetPayBtn(btn, plan) {
+      btn.disabled = false;
+      const isMonthly = plan === 'monthly';
+      btn.textContent = isMonthly ? 'Pay ₹99/mo — Secure Checkout' : 'Pay ₹489 — Secure Checkout';
     }
   </script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=4"></script>
   <script src="js/db.js?v=8"></script>

@@ -3,6 +3,7 @@
   "private": true,
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",
+    "razorpay": "^2.9.6",
     "web-push": "^3.6.7"
   }
 }
