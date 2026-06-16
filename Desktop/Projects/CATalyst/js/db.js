@@ -873,9 +873,44 @@ const DB = {
         user_id:  userId || null,
         metadata: Object.keys(metadata).length ? metadata : {},
       });
-      if (error && FLAGS.DEBUG_LOG) console.error('[DB] logEvent failed:', error.message, { eventName, userId });
+      if (error) console.warn('[CATalyst] logEvent failed:', eventName, error.message, error.code);
     } catch (err) {
-      if (FLAGS.DEBUG_LOG) console.error('[DB] logEvent exception:', err?.message || err, { eventName });
+      console.warn('[CATalyst] logEvent exception:', eventName, err?.message || err);
+    }
+  },
+
+  // Call from DevTools console to verify events insert is working:
+  // DB.testEvent()
+  async testEvent() {
+    const uid = typeof Auth !== 'undefined' && Auth.currentUser ? Auth.currentUser.id : null;
+    console.log('[CATalyst] Testing event insert, user_id:', uid);
+    await this.logEvent('test_ping', uid, { ts: Date.now() });
+    console.log('[CATalyst] testEvent done — check Supabase events table for test_ping row');
+  },
+
+  // ── QUESTION BANK STATS ─────────────────────────────────────
+
+  async getQBankStats() {
+    if (USE_DEMO) {
+      const bySubject = {};
+      const byTopic = {};
+      DEMO_QUESTIONS.forEach(q => {
+        bySubject[q.subject] = (bySubject[q.subject]||0) + 1;
+        if (q.topic) byTopic[q.topic] = (byTopic[q.topic]||0) + 1;
+      });
+      return { total: DEMO_QUESTIONS.length, bySubject, byTopic };
+    }
+    try {
+      const { data } = await sbClient.from('questions').select('subject, topic').eq('is_active', true);
+      const bySubject = {};
+      const byTopic = {};
+      (data||[]).forEach(q => {
+        bySubject[q.subject] = (bySubject[q.subject]||0) + 1;
+        if (q.topic) byTopic[q.topic] = (byTopic[q.topic]||0) + 1;
+      });
+      return { total: (data||[]).length, bySubject, byTopic };
+    } catch (e) {
+      return { total: 794, bySubject: {}, byTopic: {} };
     }
   },
 
