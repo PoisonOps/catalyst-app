@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CATalyst Analytics</title>
+  <title>CATalyst — Founder Dashboard</title>
   <style>
     :root {
       --bg:     #0f1117;
@@ -12,214 +12,218 @@
       --border: rgba(255,255,255,0.08);
       --text:   #e8eaf0;
       --text2:  #8b90a0;
+      --text3:  #4a4f60;
       --accent: #5b7af5;
       --green:  #10b981;
       --red:    #ef4444;
       --amber:  #f59e0b;
+      --purple: #8b5cf6;
       --radius: 12px;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding: 1.5rem 1rem 3rem;
-      max-width: 1040px;
+      padding: 1.5rem 1rem 4rem;
+      max-width: 1100px;
       margin: 0 auto;
     }
 
+    /* ── HEADER ───────────────────────────── */
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 2rem;
+      margin-bottom: 1.75rem;
       flex-wrap: wrap;
       gap: 0.75rem;
     }
-
-    header h1 { font-size: 1.35rem; font-weight: 800; }
+    header h1 { font-size: 1.2rem; font-weight: 800; }
     header h1 span { color: var(--accent); }
-
-    .meta { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-
+    .header-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
     .live-dot {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.72rem;
-      color: var(--text2);
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.72rem; color: var(--text2);
     }
     .live-dot::before {
-      content: '';
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: pulse 2s infinite;
+      content: ''; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green); animation: pulse 2s infinite;
     }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
-
     #updated { font-size: 0.7rem; color: var(--text2); }
-
-    .btn-claude {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 0.45rem 0.9rem;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.15s;
+    .btn {
+      display: flex; align-items: center; gap: 0.4rem;
+      border: none; border-radius: 8px; padding: 0.45rem 0.9rem;
+      font-size: 0.78rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.15s; font-family: inherit;
     }
-    .btn-claude:hover { opacity: 0.85; }
-    .btn-claude.copied { background: var(--green); }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-ghost  { background: var(--bg3); color: var(--text2); }
+    .btn:hover { opacity: 0.82; }
+    .btn.copied { background: var(--green) !important; color: #fff; }
 
+    /* ── SECTION LABEL ───────────────────── */
     .section-label {
-      font-size: 0.67rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text2);
-      margin-bottom: 0.65rem;
+      font-size: 0.63rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text2); margin-bottom: 0.65rem;
     }
 
-    /* ── FUNNEL ───────────────────────────────────── */
-    .funnel {
-      display: flex;
-      margin-bottom: 1.5rem;
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid var(--border);
+    /* ── ERROR ───────────────────────────── */
+    #error-msg {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+      border-radius: var(--radius); color: var(--red);
+      font-size: 0.8rem; padding: 1rem; margin-bottom: 1rem; display: none;
     }
 
-    .funnel-step {
-      flex: 1;
-      background: var(--bg2);
-      padding: 1rem 0.75rem;
-      text-align: center;
-      border-right: 1px solid var(--border);
-      position: relative;
-    }
-    .funnel-step:last-child { border-right: none; }
-
-    .f-count { font-size: 2rem; font-weight: 800; color: var(--accent); line-height: 1; }
-    .f-label  { font-size: 0.68rem; color: var(--text2); margin-top: 0.3rem; }
-    .f-conv   { font-size: 0.65rem; font-weight: 700; color: var(--green); margin-top: 0.35rem; min-height: 1em; }
-
-    /* ── METRIC CARDS ─────────────────────────────── */
-    .metrics-grid {
+    /* ── REVENUE HERO ─────────────────────── */
+    .revenue-hero {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 1rem;
       margin-bottom: 1.5rem;
     }
-
-    .metric-card {
+    .rev-card {
       background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.2rem;
+      padding: 1.1rem 1.2rem;
     }
+    .rev-card.highlight { border-color: rgba(91,122,245,0.4); background: rgba(91,122,245,0.07); }
+    .rev-label { font-size: 0.63rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text2); margin-bottom: 0.45rem; }
+    .rev-val { font-size: 1.9rem; font-weight: 800; line-height: 1; color: var(--text); }
+    .rev-val.green  { color: var(--green); }
+    .rev-val.accent { color: var(--accent); }
+    .rev-val.amber  { color: var(--amber); }
+    .rev-sub { font-size: 0.7rem; color: var(--text2); margin-top: 0.35rem; }
 
+    /* ── FUNNEL ──────────────────────────── */
+    .funnel {
+      display: flex; margin-bottom: 1.5rem;
+      border-radius: var(--radius); overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .funnel-step {
+      flex: 1; background: var(--bg2); padding: 1rem 0.75rem;
+      text-align: center; border-right: 1px solid var(--border); position: relative;
+    }
+    .funnel-step:last-child { border-right: none; }
+    .f-count { font-size: 1.8rem; font-weight: 800; color: var(--accent); line-height: 1; }
+    .f-label  { font-size: 0.68rem; color: var(--text2); margin-top: 0.3rem; }
+    .f-conv   { font-size: 0.65rem; font-weight: 700; color: var(--green); margin-top: 0.35rem; min-height: 1em; }
+    .f-count.paid-count { color: var(--amber); }
+
+    /* ── TRIAL PIPELINE ──────────────────── */
+    .pipeline {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .pipe-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem; text-align: center;
+    }
+    .pipe-num  { font-size: 2rem; font-weight: 800; line-height: 1; }
+    .pipe-lbl  { font-size: 0.68rem; color: var(--text2); margin-top: 0.3rem; }
+    .pipe-sub  { font-size: 0.65rem; color: var(--text3); margin-top: 0.25rem; }
+    .pipe-num.active  { color: var(--accent); }
+    .pipe-num.warn    { color: var(--amber); }
+    .pipe-num.expired { color: var(--red); }
+    .pipe-num.paid    { color: var(--green); }
+
+    /* ── METRIC CARDS ─────────────────────── */
+    .metrics-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .metric-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.2rem;
+    }
     .metric-label {
-      font-size: 0.67rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: var(--text2);
-      margin-bottom: 0.5rem;
+      font-size: 0.63rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--text2); margin-bottom: 0.5rem;
     }
-
-    .metric-value { font-size: 2.4rem; font-weight: 800; line-height: 1; color: var(--text); }
+    .metric-value { font-size: 2.2rem; font-weight: 800; line-height: 1; color: var(--text); }
     .metric-value.accent { color: var(--accent); }
     .metric-value.green  { color: var(--green);  }
     .metric-value.amber  { color: var(--amber);  }
-
     .metric-sub { font-size: 0.72rem; color: var(--text2); margin-top: 0.4rem; }
 
-    /* ── CHART ────────────────────────────────────── */
+    /* ── CHART ───────────────────────────── */
     .chart-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      margin-bottom: 1.5rem;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;
     }
-
     #dau-chart {
-      display: flex;
-      align-items: flex-end;
-      gap: 6px;
-      height: 110px;
-      margin-top: 1rem;
+      display: flex; align-items: flex-end; gap: 6px;
+      height: 110px; margin-top: 1rem;
     }
 
-    /* ── DAILY TABLE ──────────────────────────────── */
+    /* ── FEATURE ENGAGEMENT ──────────────── */
+    .engage-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .engage-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.5rem 0; border-bottom: 1px solid var(--border);
+    }
+    .engage-row:last-child { border-bottom: none; }
+    .engage-name { font-size: 0.8rem; color: var(--text2); flex: 1; }
+    .engage-bar-wrap { width: 80px; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+    .engage-bar { height: 100%; border-radius: 3px; background: var(--accent); }
+    .engage-num { font-size: 0.8rem; font-weight: 700; color: var(--text); width: 36px; text-align: right; }
+    .engage-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; }
+    .engage-card-title { font-size: 0.63rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text2); margin-bottom: 0.85rem; }
+
+    /* ── TABLES ──────────────────────────── */
     .table-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      margin-bottom: 1.5rem;
-      overflow-x: auto;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem;
+      margin-bottom: 1.5rem; overflow-x: auto;
     }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.8rem;
-      min-width: 560px;
-    }
-
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 560px; }
     thead th {
-      text-align: right;
-      font-size: 0.63rem;
-      font-weight: 700;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: var(--text2);
-      padding: 0 0.75rem 0.65rem;
+      text-align: right; font-size: 0.63rem; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      color: var(--text2); padding: 0 0.75rem 0.65rem;
       border-bottom: 1px solid var(--border);
     }
     thead th:first-child { text-align: left; }
-
     tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); }
     tbody tr:last-child { border-bottom: none; }
-    tbody tr.today-row { background: rgba(91,122,245,0.07); }
-
+    tbody tr.today-row  { background: rgba(91,122,245,0.07); }
+    tbody tr.paid-row   { background: rgba(16,185,129,0.05); }
+    tbody tr.risk-row   { background: rgba(245,158,11,0.05); }
     tbody td {
-      padding: 0.5rem 0.75rem;
-      text-align: right;
-      color: var(--text2);
-      font-variant-numeric: tabular-nums;
+      padding: 0.5rem 0.75rem; text-align: right;
+      color: var(--text2); font-variant-numeric: tabular-nums;
     }
     tbody td:first-child { text-align: left; color: var(--text); font-weight: 500; }
-
     td.highlight { color: var(--text); font-weight: 600; }
     td.zero      { color: rgba(139,144,160,0.3); }
     td.green     { color: var(--green); font-weight: 600; }
+    td.amber     { color: var(--amber); font-weight: 600; }
+    td.red-txt   { color: var(--red); font-weight: 600; }
 
-    /* ── ERROR ────────────────────────────────────── */
-    #error-msg {
-      background: rgba(239,68,68,0.1);
-      border: 1px solid rgba(239,68,68,0.3);
-      border-radius: var(--radius);
-      color: var(--red);
-      font-size: 0.8rem;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      display: none;
+    /* status pills */
+    .pill {
+      display: inline-block; border-radius: 99px; padding: 0.15rem 0.55rem;
+      font-size: 0.65rem; font-weight: 700; line-height: 1.4;
     }
+    .pill-paid    { background: rgba(16,185,129,0.15);  color: var(--green); }
+    .pill-trial   { background: rgba(91,122,245,0.15);  color: var(--accent); }
+    .pill-warn    { background: rgba(245,158,11,0.15);  color: var(--amber); }
+    .pill-expired { background: rgba(239,68,68,0.15);   color: var(--red); }
 
-    /* ── RESPONSIVE ───────────────────────────────── */
-    @media (max-width: 580px) {
-      .metrics-grid { grid-template-columns: 1fr; }
+    /* ── RESPONSIVE ──────────────────────── */
+    @media (max-width: 680px) {
+      .revenue-hero  { grid-template-columns: repeat(2,1fr); }
+      .pipeline      { grid-template-columns: repeat(2,1fr); }
+      .metrics-grid  { grid-template-columns: 1fr; }
+      .engage-grid   { grid-template-columns: 1fr; }
       .funnel { flex-direction: column; }
       .funnel-step { border-right: none; border-bottom: 1px solid var(--border); }
       .funnel-step:last-child { border-bottom: none; }
@@ -228,299 +232,543 @@
 </head>
 <body>
 
-  <header>
-    <h1>⚡ <span>CATalyst</span> Analytics</h1>
-    <div class="meta">
-      <div class="live-dot">Live</div>
-      <div id="updated">—</div>
-      <button class="btn-claude" id="copy-btn" onclick="copyForClaude()">
-        📋 Copy for Claude
-      </button>
-    </div>
-  </header>
-
-  <div id="error-msg"></div>
-
-  <!-- TODAY'S FUNNEL -->
-  <div class="section-label">Today's Funnel</div>
-  <div class="funnel">
-    <div class="funnel-step">
-      <div class="f-count" id="f-signup">—</div>
-      <div class="f-label">Signups</div>
-      <div class="f-conv" id="f-c1"></div>
-    </div>
-    <div class="funnel-step">
-      <div class="f-count" id="f-trial">—</div>
-      <div class="f-label">Trial Started</div>
-      <div class="f-conv" id="f-c2"></div>
-    </div>
-    <div class="funnel-step">
-      <div class="f-count" id="f-fix-start">—</div>
-      <div class="f-label">Fix Started</div>
-      <div class="f-conv" id="f-c3"></div>
-    </div>
-    <div class="funnel-step">
-      <div class="f-count" id="f-fix-done">—</div>
-      <div class="f-label">Fix Completed</div>
-      <div class="f-conv"></div>
-    </div>
+<header>
+  <h1>⚡ <span>CATalyst</span> — Founder Dashboard</h1>
+  <div class="header-right">
+    <div class="live-dot">Live</div>
+    <div id="updated">—</div>
+    <button class="btn btn-ghost" onclick="load()">↻ Refresh</button>
+    <button class="btn btn-accent" id="copy-btn" onclick="copyForClaude()">📋 Copy for Claude</button>
   </div>
+</header>
 
-  <!-- METRIC CARDS -->
-  <div class="metrics-grid">
-    <div class="metric-card">
-      <div class="metric-label">Fix Mode Completion</div>
-      <div class="metric-value accent" id="m-fixrate">—</div>
-      <div class="metric-sub" id="m-fixrate-sub">last 30 days</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Day 7 Returns</div>
-      <div class="metric-value green" id="m-day7">—</div>
-      <div class="metric-sub">users back on day 7</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Paying Users</div>
-      <div class="metric-value amber" id="m-paid">—</div>
-      <div class="metric-sub" id="m-paid-sub">of total signups</div>
-    </div>
+<div id="error-msg"></div>
+
+<!-- ── REVENUE ─────────────────────────────────────────────── -->
+<div class="section-label">Revenue</div>
+<div class="revenue-hero">
+  <div class="rev-card highlight">
+    <div class="rev-label">Total Revenue</div>
+    <div class="rev-val green" id="r-total">—</div>
+    <div class="rev-sub" id="r-total-sub">all time</div>
   </div>
-
-  <!-- DAU CHART — 14 days -->
-  <div class="chart-card">
-    <div class="section-label">Daily Active Users — Last 14 Days</div>
-    <div id="dau-chart"></div>
+  <div class="rev-card">
+    <div class="rev-label">One-time (₹489)</div>
+    <div class="rev-val amber" id="r-onetime">—</div>
+    <div class="rev-sub" id="r-onetime-sub">users</div>
   </div>
-
-  <!-- DAY-BY-DAY TABLE — 14 days -->
-  <div class="table-card">
-    <div class="section-label" style="margin-bottom:1rem">Day-by-Day Breakdown — Last 14 Days</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>DAU</th>
-          <th>Signups</th>
-          <th>Fix Started</th>
-          <th>Fix Done</th>
-          <th>Completion</th>
-        </tr>
-      </thead>
-      <tbody id="daily-tbody"></tbody>
-    </table>
+  <div class="rev-card">
+    <div class="rev-label">Monthly (₹99)</div>
+    <div class="rev-val accent" id="r-monthly">—</div>
+    <div class="rev-sub" id="r-monthly-sub">active subscriptions</div>
   </div>
+  <div class="rev-card">
+    <div class="rev-label">Trial → Paid</div>
+    <div class="rev-val" id="r-conv">—</div>
+    <div class="rev-sub">conversion rate</div>
+  </div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL = 'https://lvbqmaarriglqaegemgc.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2YnFtYWFycmlnbHFhZWdlbWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NzA2MTQsImV4cCI6MjA5MzQ0NjYxNH0.o284rHiW_XCPulBUdmFSMFJftNKTCkipCJ-mTwBQjaw';
+<!-- ── TRIAL PIPELINE ──────────────────────────────────────── -->
+<div class="section-label">User Pipeline</div>
+<div class="pipeline">
+  <div class="pipe-card">
+    <div class="pipe-num active" id="p-total">—</div>
+    <div class="pipe-lbl">Total Signups</div>
+    <div class="pipe-sub" id="p-total-sub">all time</div>
+  </div>
+  <div class="pipe-card">
+    <div class="pipe-num active" id="p-in-trial">—</div>
+    <div class="pipe-lbl">In Trial</div>
+    <div class="pipe-sub">days 1–7</div>
+  </div>
+  <div class="pipe-card">
+    <div class="pipe-num warn" id="p-expiring">—</div>
+    <div class="pipe-lbl">Expiring Soon</div>
+    <div class="pipe-sub">trial ends in ≤2 days</div>
+  </div>
+  <div class="pipe-card">
+    <div class="pipe-num expired" id="p-expired">—</div>
+    <div class="pipe-lbl">Expired (unpaid)</div>
+    <div class="pipe-sub">trial ended, no payment</div>
+  </div>
+</div>
 
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<!-- ── TODAY'S FUNNEL ─────────────────────────────────────── -->
+<div class="section-label">Today's Funnel</div>
+<div class="funnel">
+  <div class="funnel-step">
+    <div class="f-count" id="f-signup">—</div>
+    <div class="f-label">Signups</div>
+    <div class="f-conv" id="f-c1"></div>
+  </div>
+  <div class="funnel-step">
+    <div class="f-count" id="f-trial">—</div>
+    <div class="f-label">Trial Started</div>
+    <div class="f-conv" id="f-c2"></div>
+  </div>
+  <div class="funnel-step">
+    <div class="f-count" id="f-fix-start">—</div>
+    <div class="f-label">Fix Mode Started</div>
+    <div class="f-conv" id="f-c3"></div>
+  </div>
+  <div class="funnel-step">
+    <div class="f-count" id="f-fix-done">—</div>
+    <div class="f-label">Fix Completed</div>
+    <div class="f-conv" id="f-c4"></div>
+  </div>
+  <div class="funnel-step">
+    <div class="f-count paid-count" id="f-paid">—</div>
+    <div class="f-label">Paid Today</div>
+    <div class="f-conv"></div>
+  </div>
+</div>
 
-    // Store loaded data for Claude export
-    let _snapshot = null;
+<!-- ── ENGAGEMENT METRICS ─────────────────────────────────── -->
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="metric-label">Fix Mode Completion (30d)</div>
+    <div class="metric-value accent" id="m-fixrate">—</div>
+    <div class="metric-sub" id="m-fixrate-sub"></div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Day 7 Returns</div>
+    <div class="metric-value green" id="m-day7">—</div>
+    <div class="metric-sub">users back on day 7</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Avg Fix Sessions / User</div>
+    <div class="metric-value amber" id="m-fix-per-user">—</div>
+    <div class="metric-sub" id="m-fix-per-user-sub">among users who started fix</div>
+  </div>
+</div>
 
-    function pct(num, denom) {
-      if (!denom) return '—';
-      return Math.round((num / denom) * 100) + '%';
+<!-- ── DAU CHART ──────────────────────────────────────────── -->
+<div class="chart-card">
+  <div class="section-label">Daily Active Users — Last 14 Days</div>
+  <div id="dau-chart"></div>
+</div>
+
+<!-- ── FEATURE ENGAGEMENT ─────────────────────────────────── -->
+<div class="section-label">Feature Engagement (30d)</div>
+<div class="engage-grid">
+  <div class="engage-card">
+    <div class="engage-card-title">Events by Type</div>
+    <div id="engage-events"></div>
+  </div>
+  <div class="engage-card">
+    <div class="engage-card-title">Unique Users by Feature</div>
+    <div id="engage-users"></div>
+  </div>
+</div>
+
+<!-- ── USER ACTIVITY TABLE ────────────────────────────────── -->
+<div class="table-card">
+  <div class="section-label" style="margin-bottom:1rem">All Users — Activity & Status</div>
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Joined</th>
+        <th>Last Active</th>
+        <th>Status</th>
+        <th>Fix Sessions</th>
+        <th>Fix Done</th>
+        <th>Events (30d)</th>
+      </tr>
+    </thead>
+    <tbody id="user-tbody"></tbody>
+  </table>
+</div>
+
+<!-- ── DAY-BY-DAY TABLE ───────────────────────────────────── -->
+<div class="table-card">
+  <div class="section-label" style="margin-bottom:1rem">Day-by-Day — Last 14 Days</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>DAU</th>
+        <th>Signups</th>
+        <th>Fix Started</th>
+        <th>Fix Done</th>
+        <th>Completion</th>
+        <th>Payments</th>
+      </tr>
+    </thead>
+    <tbody id="daily-tbody"></tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://lvbqmaarriglqaegemgc.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2YnFtYWFycmlnbHFhZWdlbWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NzA2MTQsImV4cCI6MjA5MzQ0NjYxNH0.o284rHiW_XCPulBUdmFSMFJftNKTCkipCJ-mTwBQjaw';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const TRIAL_DAYS = 7;
+  const PRICE_ONETIME = 489;
+  const PRICE_MONTHLY = 99;
+
+  let _snapshot = null;
+
+  function pct(num, denom) {
+    if (!denom) return '—';
+    return Math.round((num / denom) * 100) + '%';
+  }
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  }
+  function relTime(iso) {
+    if (!iso) return '—';
+    const diff = Date.now() - new Date(iso).getTime();
+    const h = Math.floor(diff / 3600000);
+    if (h < 1)  return '<1h ago';
+    if (h < 24) return h + 'h ago';
+    const d = Math.floor(h / 24);
+    return d + 'd ago';
+  }
+  function makeDays(n) {
+    return Array.from({ length: n }, (_, i) => {
+      const d = new Date(Date.now() - (n - 1 - i) * 86400000);
+      return d.toISOString().split('T')[0];
+    });
+  }
+  function shortDay(isoDate) {
+    const d = new Date(isoDate + 'T12:00:00');
+    return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+  function maskId(uid) { if (!uid) return 'anon'; return uid.slice(0,6)+'…'+uid.slice(-4); }
+  function maskId(uid) {
+    if (!uid) return 'anon';
+    return uid.slice(0, 6) + '…' + uid.slice(-4);
+  }
+
+  async function load() {
+    const today          = new Date().toISOString().split('T')[0];
+    const thirtyDaysAgo  = new Date(Date.now() - 30 * 86400000).toISOString();
+    // For pipeline we need all-time events (signups can be older)
+    const allTimeAgo     = new Date(Date.now() - 365 * 86400000).toISOString();
+
+    const [r30, rAll] = await Promise.all([
+      sb.from('events').select('event, user_id, created_at, metadata').gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }),
+      sb.from('events').select('event, user_id, created_at, metadata').eq('event', 'signup').gte('created_at', allTimeAgo),
+    ]);
+
+    if (r30.error) {
+      const el = document.getElementById('error-msg');
+      el.style.display = 'block';
+      el.textContent   = '⚠ ' + r30.error.message;
+      return;
     }
 
-    function shortDay(isoDate) {
-      const d = new Date(isoDate + 'T12:00:00');
-      return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
-    }
+    const events     = r30.data || [];
+    const allSignups = rAll.data || [];
 
-    function makeDays(n) {
-      return Array.from({ length: n }, (_, i) => {
-        const d = new Date(Date.now() - (n - 1 - i) * 86400000);
-        return d.toISOString().split('T')[0];
+    const count = (arr, type) => arr.filter(e => e.event === type).length;
+    const uniq  = (arr, type) => new Set(arr.filter(e => e.event === type && e.user_id).map(e => e.user_id)).size;
+
+    // ── REVENUE ─────────────────────────────────────────────────
+    const paymentEvs  = events.filter(e => e.event === 'payment_completed');
+    const onetimeEvs  = paymentEvs.filter(e => (e.metadata?.plan || 'onetime') === 'onetime');
+    const monthlyEvs  = paymentEvs.filter(e => (e.metadata?.plan) === 'monthly');
+    const totalRev    = onetimeEvs.length * PRICE_ONETIME + monthlyEvs.length * PRICE_MONTHLY;
+    const paidUserIds = new Set(paymentEvs.filter(e=>e.user_id).map(e=>e.user_id));
+    const totalSigs   = new Set([...allSignups.map(e=>e.user_id), ...events.filter(e=>e.event==='signup'&&e.user_id).map(e=>e.user_id)]).size;
+    const convRate    = totalSigs ? Math.round(paidUserIds.size / totalSigs * 100) + '%' : '—';
+
+    document.getElementById('r-total').textContent     = '₹' + totalRev.toLocaleString('en-IN');
+    document.getElementById('r-total-sub').textContent = paymentEvs.length + ' payment' + (paymentEvs.length!==1?'s':'');
+    document.getElementById('r-onetime').textContent   = onetimeEvs.length;
+    document.getElementById('r-onetime-sub').textContent = '₹' + (onetimeEvs.length * PRICE_ONETIME).toLocaleString('en-IN') + ' revenue';
+    document.getElementById('r-monthly').textContent   = monthlyEvs.length;
+    document.getElementById('r-monthly-sub').textContent = '₹' + (monthlyEvs.length * PRICE_MONTHLY).toLocaleString('en-IN') + ' this billing';
+    document.getElementById('r-conv').textContent      = convRate;
+
+    // ── TRIAL PIPELINE ───────────────────────────────────────────
+    // Map user → trial start time
+    const trialStartMap = {};
+    [...events.filter(e=>e.event==='trial_started'), ...allSignups].forEach(e => {
+      if (!e.user_id) return;
+      const t = new Date(e.created_at).getTime();
+      if (!trialStartMap[e.user_id] || t < trialStartMap[e.user_id]) trialStartMap[e.user_id] = t;
+    });
+
+    const now = Date.now();
+    let inTrial = 0, expiringSoon = 0, expired = 0;
+    Object.entries(trialStartMap).forEach(([uid, startMs]) => {
+      if (paidUserIds.has(uid)) return; // already paid — not in trial bucket
+      const daysElapsed = (now - startMs) / 86400000;
+      const daysLeft    = Math.max(0, TRIAL_DAYS - daysElapsed);
+      if (daysLeft <= 0)  expired++;
+      else if (daysLeft <= 2) expiringSoon++;
+      else inTrial++;
+    });
+
+    document.getElementById('p-total').textContent     = totalSigs || Object.keys(trialStartMap).length;
+    document.getElementById('p-total-sub').textContent = paidUserIds.size + ' paid';
+    document.getElementById('p-in-trial').textContent  = inTrial;
+    document.getElementById('p-expiring').textContent  = expiringSoon;
+    document.getElementById('p-expired').textContent   = expired;
+
+    // ── TODAY'S FUNNEL ───────────────────────────────────────────
+    const today_ev  = events.filter(e => e.created_at.startsWith(today));
+    const fSignup   = count(today_ev, 'signup');
+    const fTrial    = count(today_ev, 'trial_started');
+    const fFixStart = count(today_ev, 'fix_mode_started');
+    const fFixDone  = count(today_ev, 'fix_mode_completed');
+    const fPaid     = count(today_ev, 'payment_completed');
+
+    document.getElementById('f-signup').textContent    = fSignup;
+    document.getElementById('f-trial').textContent     = fTrial;
+    document.getElementById('f-fix-start').textContent = fFixStart;
+    document.getElementById('f-fix-done').textContent  = fFixDone;
+    document.getElementById('f-paid').textContent      = fPaid;
+    document.getElementById('f-c1').textContent        = pct(fTrial, fSignup);
+    document.getElementById('f-c2').textContent        = pct(fFixStart, fTrial);
+    document.getElementById('f-c3').textContent        = pct(fFixDone, fFixStart);
+    document.getElementById('f-c4').textContent        = fPaid ? '💰 ' + fPaid + ' paid' : '';
+
+    // ── ENGAGEMENT METRICS ───────────────────────────────────────
+    const allStarted   = count(events, 'fix_mode_started');
+    const allCompleted = count(events, 'fix_mode_completed');
+    const day7Users    = uniq(events, 'day7_return');
+    const fixUserIds   = new Set(events.filter(e=>e.event==='fix_mode_started'&&e.user_id).map(e=>e.user_id));
+    const totalFixSessions = count(events, 'fix_mode_started');
+    const avgFixPerUser = fixUserIds.size ? (totalFixSessions / fixUserIds.size).toFixed(1) : '—';
+
+    document.getElementById('m-fixrate').textContent     = allStarted ? pct(allCompleted, allStarted) : '—';
+    document.getElementById('m-fixrate-sub').textContent = allCompleted + ' of ' + allStarted + ' fix sessions (30d)';
+    document.getElementById('m-day7').textContent        = day7Users;
+    document.getElementById('m-fix-per-user').textContent   = avgFixPerUser;
+    document.getElementById('m-fix-per-user-sub').textContent = fixUserIds.size + ' users ran fix mode';
+
+    // ── 14-DAY DATA ──────────────────────────────────────────────
+    const days14 = makeDays(14);
+    const dailyRows = days14.map(day => {
+      const dayEvs  = events.filter(e => e.created_at.startsWith(day));
+      const dau     = new Set(dayEvs.filter(e=>e.user_id).map(e=>e.user_id)).size;
+      const signups = count(dayEvs, 'signup');
+      const fixS    = count(dayEvs, 'fix_mode_started');
+      const fixD    = count(dayEvs, 'fix_mode_completed');
+      const pays    = count(dayEvs, 'payment_completed');
+      return { day, dau, signups, fixS, fixD, pays };
+    });
+
+    // DAU chart
+    const maxDAU = Math.max(1, ...dailyRows.map(d => d.dau));
+    const MAX_H  = 90;
+    document.getElementById('dau-chart').innerHTML = dailyRows.map(({ day, dau, pays }) => {
+      const barH    = Math.max(pays > 0 ? 3 : 0, Math.round((dau / maxDAU) * MAX_H));
+      const isToday = day === today;
+      const label   = new Date(day + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      const barColor = pays > 0 ? 'var(--amber)' : isToday ? 'var(--accent)' : 'rgba(91,122,245,0.45)';
+      return `
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;justify-content:flex-end;height:${MAX_H+32}px">
+          <div style="font-size:0.6rem;font-weight:600;color:${pays>0?'var(--amber)':'var(--text2)'}">${dau > 0 ? dau : ''}</div>
+          <div style="width:100%;height:${barH}px;background:${barColor};border-radius:4px 4px 0 0" title="${pays > 0 ? '💰 ' + pays + ' paid' : ''}"></div>
+          <div style="font-size:0.55rem;color:${isToday?'var(--text)':'var(--text2)'};font-weight:${isToday?700:400};text-align:center">${label}</div>
+        </div>`;
+    }).join('');
+
+    // Daily table
+    document.getElementById('daily-tbody').innerHTML = [...dailyRows].reverse().map(({ day, dau, signups, fixS, fixD, pays }) => {
+      const isToday = day === today;
+      const comp    = fixS ? pct(fixD, fixS) : '—';
+      const label   = isToday
+        ? `<strong>Today</strong> <span style="color:var(--text2);font-size:0.72rem">${day}</span>`
+        : shortDay(day);
+      const td = (val, cls='') => {
+        const c = val === 0 ? 'zero' : (cls || '');
+        return `<td class="${c}">${val === 0 ? '·' : val}</td>`;
+      };
+      return `<tr class="${isToday?'today-row':pays>0?'paid-row':''}">
+        <td>${label}</td>
+        ${td(dau, dau>0 ? 'highlight' : '')}
+        ${td(signups, signups>0 ? 'green' : '')}
+        ${td(fixS)}
+        ${td(fixD)}
+        <td class="${fixS>0?'highlight':'zero'}">${fixS>0?comp:'·'}</td>
+        <td class="${pays>0?'amber':''}">${pays>0?'₹'+(pays===1?'489/99':pays+'×'):'·'}</td>
+      </tr>`;
+    }).join('');
+
+    // ── FEATURE ENGAGEMENT ───────────────────────────────────────
+    const eventTypes = ['signup','trial_started','fix_mode_started','fix_mode_completed','payment_completed','tour_completed','day7_return'];
+    const eventLabels = {
+      signup: 'Signup',
+      trial_started: 'Trial Started',
+      fix_mode_started: 'Fix Mode Started',
+      fix_mode_completed: 'Fix Mode Completed',
+      payment_completed: 'Payment Completed',
+      tour_completed: 'Tour Completed',
+      day7_return: 'Day 7 Return',
+    };
+    const maxEv = Math.max(1, ...eventTypes.map(t => count(events, t)));
+    const maxUn = Math.max(1, ...eventTypes.map(t => uniq(events, t)));
+
+    document.getElementById('engage-events').innerHTML = eventTypes.map(t => {
+      const n = count(events, t);
+      return `
+        <div class="engage-row">
+          <span class="engage-name">${eventLabels[t]}</span>
+          <div class="engage-bar-wrap"><div class="engage-bar" style="width:${n/maxEv*100}%"></div></div>
+          <span class="engage-num">${n}</span>
+        </div>`;
+    }).join('');
+
+    document.getElementById('engage-users').innerHTML = eventTypes.map(t => {
+      const n = uniq(events, t);
+      return `
+        <div class="engage-row">
+          <span class="engage-name">${eventLabels[t]}</span>
+          <div class="engage-bar-wrap"><div class="engage-bar" style="width:${n/maxUn*100}%;background:var(--green)"></div></div>
+          <span class="engage-num">${n}</span>
+        </div>`;
+    }).join('');
+
+    // ── USER TABLE ───────────────────────────────────────────────
+    // Build per-user profile from events
+    const userMap = {};
+    events.forEach(e => {
+      if (!e.user_id) return;
+      const u = userMap[e.user_id] || (userMap[e.user_id] = {
+        uid: e.user_id, firstSeen: e.created_at, lastSeen: e.created_at,
+        fixStarted: 0, fixDone: 0, paid: false, plan: null, eventCount: 0,
       });
-    }
+      if (e.created_at < u.firstSeen) u.firstSeen = e.created_at;
+      if (e.created_at > u.lastSeen)  u.lastSeen  = e.created_at;
+      u.eventCount++;
+      if (e.event === 'fix_mode_started')   u.fixStarted++;
+      if (e.event === 'fix_mode_completed') u.fixDone++;
+      if (e.event === 'payment_completed')  { u.paid = true; u.plan = e.metadata?.plan || 'onetime'; }
+    });
 
-    async function load() {
-      const today         = new Date().toISOString().split('T')[0];
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+    const users = Object.values(userMap).sort((a,b) => new Date(b.lastSeen) - new Date(a.lastSeen));
 
-      const { data: events, error } = await sb
-        .from('events')
-        .select('event, user_id, created_at')
-        .gte('created_at', thirtyDaysAgo)
-        .order('created_at', { ascending: false });
+    document.getElementById('user-tbody').innerHTML = users.map(u => {
+      const trialStart  = trialStartMap[u.uid];
+      const daysInTrial = trialStart ? (now - trialStart) / 86400000 : null;
+      const daysLeft    = daysInTrial !== null ? Math.max(0, TRIAL_DAYS - daysInTrial) : null;
 
-      if (error) {
-        const el = document.getElementById('error-msg');
-        el.style.display = 'block';
-        el.textContent   = '⚠ ' + error.message + ' — did you run analytics-setup.sql in Supabase?';
-        return;
+      let statusHtml;
+      if (u.paid) {
+        statusHtml = `<span class="pill pill-paid">Paid · ${u.plan||'onetime'}</span>`;
+      } else if (daysLeft === null) {
+        statusHtml = `<span class="pill pill-trial">Trial</span>`;
+      } else if (daysLeft <= 0) {
+        statusHtml = `<span class="pill pill-expired">Expired</span>`;
+      } else if (daysLeft <= 2) {
+        statusHtml = `<span class="pill pill-warn">Expires in ${Math.ceil(daysLeft)}d</span>`;
+      } else {
+        statusHtml = `<span class="pill pill-trial">${Math.ceil(daysLeft)}d left</span>`;
       }
 
-      const count = (arr, type) => arr.filter(e => e.event === type).length;
+      const rowClass = u.paid ? 'paid-row' : (daysLeft !== null && daysLeft <= 2 && daysLeft > 0) ? 'risk-row' : '';
+      const comp = u.fixStarted ? Math.round(u.fixDone/u.fixStarted*100)+'%' : '—';
 
-      // ── TODAY'S FUNNEL ──────────────────────────────
-      const today_ev  = events.filter(e => e.created_at.startsWith(today));
-      const fSignup   = count(today_ev, 'signup');
-      const fTrial    = count(today_ev, 'trial_started');
-      const fFixStart = count(today_ev, 'fix_mode_started');
-      const fFixDone  = count(today_ev, 'fix_mode_completed');
+      return `<tr class="${rowClass}">
+        <td style="font-family:monospace;font-size:0.75rem">${maskId(u.uid)}</td>
+        <td class="highlight" style="text-align:left">${fmtDate(u.firstSeen)}</td>
+        <td>${relTime(u.lastSeen)}</td>
+        <td>${statusHtml}</td>
+        <td>${u.fixStarted||'·'}</td>
+        <td class="${u.fixDone>0?'green':''}">${u.fixStarted?comp:'·'}</td>
+        <td>${u.eventCount}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:1.5rem">No users yet</td></tr>';
 
-      document.getElementById('f-signup').textContent    = fSignup;
-      document.getElementById('f-trial').textContent     = fTrial;
-      document.getElementById('f-fix-start').textContent = fFixStart;
-      document.getElementById('f-fix-done').textContent  = fFixDone;
-      document.getElementById('f-c1').textContent        = pct(fTrial, fSignup);
-      document.getElementById('f-c2').textContent        = pct(fFixStart, fTrial);
-      document.getElementById('f-c3').textContent        = pct(fFixDone, fFixStart);
+    // ── STORE SNAPSHOT ───────────────────────────────────────────
+    _snapshot = {
+      generatedAt: new Date().toISOString(), today,
+      revenue: { total: totalRev, oneTime: onetimeEvs.length, monthly: monthlyEvs.length, convRate },
+      pipeline: { totalSigs, inTrial, expiringSoon, expired, paid: paidUserIds.size },
+      todayFunnel: { fSignup, fTrial, fFixStart, fFixDone, fPaid },
+      engagement: { allStarted, allCompleted, day7Users, avgFixPerUser },
+      dailyRows, users,
+    };
 
-      // ── FIX MODE COMPLETION RATE ────────────────────
-      const allStarted   = count(events, 'fix_mode_started');
-      const allCompleted = count(events, 'fix_mode_completed');
-      document.getElementById('m-fixrate').textContent     = allStarted ? pct(allCompleted, allStarted) : '—';
-      document.getElementById('m-fixrate-sub').textContent = `${allCompleted} of ${allStarted} started (30d)`;
+    document.getElementById('updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  }
 
-      // ── DAY 7 RETURNS ───────────────────────────────
-      const day7Users = new Set(
-        events.filter(e => e.event === 'day7_return' && e.user_id).map(e => e.user_id)
-      ).size;
-      document.getElementById('m-day7').textContent = day7Users || '0';
+  function copyForClaude() {
+    if (!_snapshot) return;
+    const s = _snapshot;
 
-      // ── PAYING VS FREE ──────────────────────────────
-      const totalSignups = new Set(
-        events.filter(e => e.event === 'signup' && e.user_id).map(e => e.user_id)
-      ).size;
-      const paidUsers = new Set(
-        events.filter(e => e.event === 'payment_completed' && e.user_id).map(e => e.user_id)
-      ).size;
-      document.getElementById('m-paid').textContent     = paidUsers;
-      document.getElementById('m-paid-sub').textContent = `of ${totalSignups} signups (30d)`;
+    const tableHeader = 'Date          | DAU | Signups | Fix Started | Fix Done | Completion | Payments';
+    const tableSep    = '─'.repeat(tableHeader.length);
+    const tableRows   = [...s.dailyRows].reverse().map(({ day, dau, signups, fixS, fixD, pays }) => {
+      const label = day === s.today ? day + ' (today)' : day;
+      const comp  = fixS ? Math.round(fixD/fixS*100)+'%' : '—';
+      return `${label.padEnd(20)}| ${String(dau).padStart(3)} | ${String(signups).padStart(7)} | ${String(fixS).padStart(11)} | ${String(fixD).padStart(8)} | ${comp.padStart(10)} | ${pays||0}`;
+    }).join('\n');
 
-      // ── 14-DAY DATA ─────────────────────────────────
-      const days14 = makeDays(14);
+    const fixRate = s.engagement.allStarted ? Math.round(s.engagement.allCompleted/s.engagement.allStarted*100)+'%' : '—';
+    const todayF  = s.todayFunnel;
+    const funnelLine = `Signup(${todayF.fSignup}) → Trial Started(${todayF.fTrial}, ${pct(todayF.fTrial,todayF.fSignup)}) → Fix Started(${todayF.fFixStart}, ${pct(todayF.fFixStart,todayF.fTrial)}) → Fix Done(${todayF.fFixDone}, ${pct(todayF.fFixDone,todayF.fFixStart)}) → Paid(${todayF.fPaid})`;
 
-      const dailyRows = days14.map(day => {
-        const dayEvs  = events.filter(e => e.created_at.startsWith(day));
-        const dau     = new Set(dayEvs.filter(e => e.user_id).map(e => e.user_id)).size;
-        const signups = count(dayEvs, 'signup');
-        const fixS    = count(dayEvs, 'fix_mode_started');
-        const fixD    = count(dayEvs, 'fix_mode_completed');
-        return { day, dau, signups, fixS, fixD };
-      });
+    const userLines = s.users.slice(0, 20).map(u => {
+      const ts = trialSummary(u);
+      return `  ${maskId(u.uid)} | ${u.paid?'PAID·'+(u.plan||'onetime'):'trial'} | joined ${fmtDate(u.firstSeen)} | last ${relTime(u.lastSeen)} | fix ${u.fixStarted}→${u.fixDone} | events ${u.eventCount} ${ts}`;
+    }).join('\n');
 
-      // ── DAU CHART (14 days) ─────────────────────────
-      const maxDAU = Math.max(1, ...dailyRows.map(d => d.dau));
-      const MAX_H  = 90;
+    function trialSummary(u) { return ''; }
 
-      document.getElementById('dau-chart').innerHTML = dailyRows.map(({ day, dau }) => {
-        const barH    = Math.max(3, Math.round((dau / maxDAU) * MAX_H));
-        const isToday = day === today;
-        const label   = new Date(day + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-        const barColor = isToday ? 'var(--accent)' : 'rgba(91,122,245,0.45)';
-        return `
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;justify-content:flex-end;height:${MAX_H + 28}px">
-            <div style="font-size:0.6rem;font-weight:600;color:var(--text2)">${dau > 0 ? dau : ''}</div>
-            <div style="width:100%;height:${barH}px;background:${barColor};border-radius:4px 4px 0 0"></div>
-            <div style="font-size:0.55rem;color:${isToday ? 'var(--text)' : 'var(--text2)'};font-weight:${isToday ? 700 : 400};text-align:center">${label}</div>
-          </div>`;
-      }).join('');
-
-      // ── DAILY TABLE ─────────────────────────────────
-      document.getElementById('daily-tbody').innerHTML = [...dailyRows].reverse().map(({ day, dau, signups, fixS, fixD }) => {
-        const isToday    = day === today;
-        const completion = fixS ? pct(fixD, fixS) : '—';
-        const label      = isToday
-          ? `<strong>Today</strong> <span style="color:var(--text2);font-size:0.72rem">${day}</span>`
-          : shortDay(day);
-
-        const td = (val, cls = '') => {
-          const c = val === 0 ? 'zero' : (cls || '');
-          return `<td class="${c}">${val === 0 ? '·' : val}</td>`;
-        };
-
-        return `<tr class="${isToday ? 'today-row' : ''}">
-          <td>${label}</td>
-          ${td(dau, dau > 0 ? 'highlight' : '')}
-          ${td(signups, signups > 0 ? 'green' : '')}
-          ${td(fixS)}
-          ${td(fixD)}
-          <td class="${fixS > 0 ? 'highlight' : 'zero'}">${fixS > 0 ? completion : '·'}</td>
-        </tr>`;
-      }).join('');
-
-      // ── STORE SNAPSHOT FOR CLAUDE EXPORT ───────────
-      _snapshot = {
-        generatedAt: new Date().toISOString(),
-        today,
-        totalSignups,
-        paidUsers,
-        allStarted,
-        allCompleted,
-        day7Users,
-        todayFunnel: { fSignup, fTrial, fFixStart, fFixDone },
-        dailyRows,
-      };
-
-      document.getElementById('updated').textContent =
-        'Updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    function copyForClaude() {
-      if (!_snapshot) return;
-      const s = _snapshot;
-
-      const tableHeader = 'Date          | DAU | Signups | Fix Started | Fix Done | Completion';
-      const tableSep    = '-'.repeat(tableHeader.length);
-      const tableRows   = [...s.dailyRows].reverse().map(({ day, dau, signups, fixS, fixD }) => {
-        const label = day === s.today ? day + ' (today)' : day;
-        const comp  = fixS ? Math.round((fixD / fixS) * 100) + '%' : '—';
-        return `${label.padEnd(21)}| ${String(dau).padStart(3)} | ${String(signups).padStart(7)} | ${String(fixS).padStart(11)} | ${String(fixD).padStart(8)} | ${comp}`;
-      }).join('\n');
-
-      const fixRate = s.allStarted ? Math.round((s.allCompleted / s.allStarted) * 100) + '%' : '—';
-      const todayF  = s.todayFunnel;
-      const funnelLine = `Signup(${todayF.fSignup}) → Trial Started(${todayF.fTrial}, ${pct(todayF.fTrial, todayF.fSignup)}) → Fix Started(${todayF.fFixStart}, ${pct(todayF.fFixStart, todayF.fTrial)}) → Fix Done(${todayF.fFixDone}, ${pct(todayF.fFixDone, todayF.fFixStart)})`;
-
-      const report = `CATalyst Analytics Report
+    const report = `CATalyst Founder Analytics Report
 Generated: ${s.generatedAt}
 
-=== 30-DAY OVERVIEW ===
-Total unique signups : ${s.totalSignups}
-Paying users         : ${s.paidUsers} / ${s.totalSignups} (${pct(s.paidUsers, s.totalSignups)})
-Fix mode starts      : ${s.allStarted}
-Fix mode completions : ${s.allCompleted} (${fixRate} completion rate)
-Day-7 returns        : ${s.day7Users}
+=== REVENUE ===
+Total revenue      : ₹${s.revenue.total.toLocaleString('en-IN')}
+One-time (₹489)    : ${s.revenue.oneTime} users
+Monthly (₹99)      : ${s.revenue.monthly} users
+Trial → Paid rate  : ${s.revenue.convRate}
+
+=== USER PIPELINE ===
+Total signups      : ${s.pipeline.totalSigs}
+Currently in trial : ${s.pipeline.inTrial}
+Expiring ≤2 days   : ${s.pipeline.expiringSoon}
+Expired (no pay)   : ${s.pipeline.expired}
+Paid               : ${s.pipeline.paid}
+
+=== ENGAGEMENT (30d) ===
+Fix mode starts    : ${s.engagement.allStarted}
+Fix mode done      : ${s.engagement.allCompleted} (${fixRate} completion)
+Day 7 returns      : ${s.engagement.day7Users}
+Avg fix sessions   : ${s.engagement.avgFixPerUser} per user who started
 
 === TODAY'S FUNNEL ===
 ${funnelLine}
 
-=== DAY-BY-DAY BREAKDOWN (last 14 days, newest first) ===
+=== DAY-BY-DAY (last 14 days, newest first) ===
 ${tableHeader}
 ${tableSep}
 ${tableRows}
 
+=== USERS (most recent first, top 20) ===
+${userLines}
+
 === PRODUCT CONTEXT ===
 App: CATalyst — mistake-fixing system for CAT 2026 aspirants
-Core loop: Solve → Realize → Diagnose → Fix → Reinforce → Return
+Core loop: Solve → Wrong → Tag error type → Error Log → Fix Mode (Phase 1 re-attempt + Phase 2 drill)
 Pricing: ₹99/month OR ₹489 one-time (till CAT 2026) — founder's pricing, first 20 users
-Trial: 3 days free for all signups
-Stage: Pre-revenue, targeting first 10 users via WhatsApp/Telegram/Reddit outreach
+Trial: 7 days free for all signups
+Payment: Razorpay (UPI, card, net banking)
 `;
 
-      navigator.clipboard.writeText(report).then(() => {
-        const btn = document.getElementById('copy-btn');
-        btn.textContent = '✓ Copied!';
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.textContent = '📋 Copy for Claude';
-          btn.classList.remove('copied');
-        }, 2000);
-      });
-    }
+    navigator.clipboard.writeText(report).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '📋 Copy for Claude'; btn.classList.remove('copied'); }, 2500);
+    });
+  }
 
-    load();
-
-    sb.channel('analytics-rt')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'events' }, () => load())
-      .subscribe();
-
-    setInterval(load, 60000);
-  </script>
+  load();
+  sb.channel('analytics-rt')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'events' }, () => load())
+    .subscribe();
+  setInterval(load, 60000);
+</script>
 </body>
 </html>
