@@ -6,8 +6,9 @@
 
 <p align="center">
   <a href="https://catalyst-app-six.vercel.app"><img src="https://img.shields.io/badge/Live_App-catalyst--app--six.vercel.app-2E5BFF?style=flat-square&logoColor=white"/></a>
-  <img src="https://img.shields.io/badge/Trial-3_days_free-4ADE80?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Trial-7_days_free-4ADE80?style=flat-square"/>
   <img src="https://img.shields.io/badge/Price-%E2%82%B9489_one--time-E8820C?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Payments-Razorpay_Live-2B79C2?style=flat-square"/>
   <img src="https://img.shields.io/badge/Stack-Vanilla_JS_SPA-E9E5DC?style=flat-square"/>
   <img src="https://img.shields.io/badge/DB-Supabase_Postgres-3ECF8E?style=flat-square&logo=supabase&logoColor=white"/>
 </p>
@@ -187,6 +188,54 @@ npx serve .
 # → localhost:3000 auto-uses dev Supabase (config.js detects hostname)
 # No .env needed — dev credentials in js/config.js
 ```
+
+---
+
+## Payment Gateway
+
+Live payments via **Razorpay** — UPI, cards, net banking.
+
+Two plans:
+| Plan | Price | Notes |
+|---|---|---|
+| One-time (Best Value) | ₹489 | Access till CAT 2026 — `₹81/month · ₹21/week` |
+| Monthly | ₹99/month | Cancel anytime |
+
+Both are founder's pricing for the first 20 users.
+
+**Razorpay integration details:**
+- `initiatePayment(source)` — single function handles both the upgrade modal and the paywall, deduplicates double-clicks with a `_paymentInFlight` guard
+- `modal.ondismiss` callback resets the CTA button immediately when the user closes Razorpay without paying (prevents the "Opening payment…" stuck state)
+- `prefill: { email }` pre-fills user's email from `Auth.currentUser.email`
+- Brand logo: `icon-512-razorpay.png` (512×512 PNG, upscaled via `sips` from the original icon)
+
+---
+
+## Paywall & Upgrade Modal (v3)
+
+The payment UI was rebuilt from scratch with conversion-focused design:
+
+- **Hero**: Big red mistake count (`#ef4444`, 900-weight, `cdNumGlow` pulse) — user sees their own error count as the paywall hook
+- **Slot machine**: 10 rotating comparisons (Netflix appears 4× most frequently) — shows ₹489 is less than everyday purchases, rotates every 2600ms using Web Animations API
+- **Plan cards**: One-time (₹489) pre-selected; `:has()` selector dims the monthly card when one-time is selected
+- **Progress bar**: `@keyframes upv3BarGrow` + CSS `--bar-pct` variable — animates fresh on every modal open
+- **Urgency bar**: Live countdown to CAT 2026, slots remaining
+- **Trust row**: Razorpay lock icon + 7-day refund link → `/refund-policy.html`
+
+---
+
+## Refund Policy
+
+`/refund-policy.html` — standalone dark-themed page, linked from the payment modal.
+
+Visible promise: **7-day refund guarantee** (prominent blue highlight at top).
+
+Actual eligibility bar (all conditions required):
+1. Request within 7 calendar days of purchase
+2. Active usage on at least **5 separate calendar days** + **25 questions attempted** — multiple sessions on the same day don't qualify
+3. Registered email to verify purchase
+4. One refund per user
+5. Monthly plan: only the most recent charge is refundable
 
 ---
 
