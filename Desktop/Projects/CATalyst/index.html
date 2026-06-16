@@ -149,6 +149,9 @@
           <span class="nav-icon">❌</span><span>My Error Log</span>
           <span class="nav-badge" id="nav-error-count" style="display:none">0</span>
         </a>
+        <a href="#" class="nav-item" data-page="analytics" style="display:none">
+          <span class="nav-icon">📈</span><span>Analytics</span>
+        </a>
       </nav>
       <div class="sidebar-bottom">
         <!-- Mistakes fix bar — shown when pending > 0 -->
@@ -704,6 +707,127 @@
         </div>
       </div>
 
+      <!-- ANALYTICS -->
+      <div class="page" id="page-analytics">
+        <div class="page-header">
+          <h2 class="page-title">Analytics</h2>
+          <p class="page-sub">Your performance, dissected.</p>
+        </div>
+
+        <!-- Tab bar -->
+        <div class="an-tabs">
+          <button class="an-tab active" data-tab="overview">Overview</button>
+          <button class="an-tab" data-tab="deepdive">Deep Dive</button>
+          <button class="an-tab" data-tab="qbank">Question Bank</button>
+        </div>
+
+        <!-- ── TAB: OVERVIEW ─────────────────────────────────── -->
+        <div class="an-panel" id="an-panel-overview">
+          <!-- KPI cards -->
+          <div class="an-kpi-row" id="an-kpi-row"></div>
+
+          <!-- Activity heatmap -->
+          <div class="an-card">
+            <div class="an-card-header">
+              <span class="an-card-title">Activity — Last 8 Weeks</span>
+            </div>
+            <div id="an-heatmap"></div>
+          </div>
+
+          <!-- Trend + Donut row -->
+          <div class="an-two-col">
+            <div class="an-card">
+              <div class="an-card-header">
+                <span class="an-card-title">14-Day Accuracy Trend</span>
+              </div>
+              <div id="an-trend"></div>
+            </div>
+            <div class="an-card">
+              <div class="an-card-header">
+                <span class="an-card-title">Questions by Subject</span>
+              </div>
+              <div id="an-donut"></div>
+            </div>
+          </div>
+
+          <!-- Subject cards -->
+          <div class="an-card">
+            <div class="an-card-header">
+              <span class="an-card-title">Subject Performance</span>
+            </div>
+            <div class="an-sub-cards" id="an-subject-cards"></div>
+          </div>
+        </div>
+
+        <!-- ── TAB: DEEP DIVE ─────────────────────────────────── -->
+        <div class="an-panel an-panel-hidden" id="an-panel-deepdive">
+          <!-- Error pattern -->
+          <div class="an-card">
+            <div class="an-card-header">
+              <span class="an-card-title">Error Pattern Breakdown</span>
+              <span class="an-card-sub">volume · fix rate per type</span>
+            </div>
+            <div id="an-error-breakdown"></div>
+          </div>
+
+          <!-- Speed analysis -->
+          <div class="an-card">
+            <div class="an-card-header">
+              <span class="an-card-title">Speed Analysis</span>
+              <span class="an-card-sub">avg seconds per question</span>
+            </div>
+            <div id="an-speed"></div>
+          </div>
+
+          <!-- Topic heatmap -->
+          <div class="an-card">
+            <div class="an-card-header">
+              <span class="an-card-title">Topic Accuracy Heatmap</span>
+              <span class="an-card-sub">darker = more attempts · color = accuracy</span>
+            </div>
+            <div id="an-topic-heatmap"></div>
+          </div>
+        </div>
+
+        <!-- ── TAB: QUESTION BANK ─────────────────────────────── -->
+        <div class="an-panel an-panel-hidden" id="an-panel-qbank">
+          <!-- Coverage donut -->
+          <div class="an-card">
+            <div class="an-card-header">
+              <span class="an-card-title">Question Bank Coverage</span>
+            </div>
+            <div id="an-coverage"></div>
+          </div>
+
+          <!-- Topic coverage table -->
+          <div class="an-card">
+            <div class="an-card-header">
+              <span class="an-card-title">Coverage by Topic</span>
+              <span class="an-card-sub">sorted: weakest first</span>
+            </div>
+            <div id="an-topic-table"></div>
+          </div>
+
+          <!-- Blind spots -->
+          <div class="an-card">
+            <div class="an-card-header">
+              <span class="an-card-title">Blind Spots</span>
+              <span class="an-card-sub">topics you've never attempted</span>
+            </div>
+            <div id="an-blind-spots"></div>
+          </div>
+
+          <!-- Hard questions -->
+          <div class="an-card">
+            <div class="an-card-header">
+              <span class="an-card-title">Most Struggled</span>
+              <span class="an-card-sub">questions attempted 2+ times, lowest accuracy</span>
+            </div>
+            <div id="an-hard-qs"></div>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -1020,7 +1144,7 @@
       <div class="cd-pw-hook">
         <div class="cd-pw-num-wrap">
           <span class="cd-pw-num" id="pw-mistake-count">—</span>
-          <div class="cd-pw-num-label">mistakes found<br>in your 7-day trial</div>
+          <div class="cd-pw-num-label">mistakes found<br>in your 3-day trial</div>
         </div>
         <p class="cd-pw-sub">All saved. All waiting. Every unfixed mistake is a mark left behind on CAT day.</p>
       </div>
@@ -1360,6 +1484,7 @@
   <script src="js/practice.js?v=7"></script>
   <script src="js/test.js?v=2"></script>
   <script src="js/errorlog.js?v=5"></script>
+  <script src="js/analytics.js?v=1"></script>
   <script src="js/onboarding.js?v=13"></script>
   <script src="js/app.js?v=8"></script>
   <script>

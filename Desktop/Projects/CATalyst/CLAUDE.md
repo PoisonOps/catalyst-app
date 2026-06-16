@@ -43,7 +43,7 @@ There are no lint, test, or compile steps.
 **Current (live):**
 - First 20 users locked price: ₹99/month OR ₹489 till CAT. 19 slots remaining. Honored for existing users after the v2 launch.
 - Payment: manual UPI `7080442040@pthdfc` via WhatsApp `+91 70804 42040`. Razorpay integration is part of the Max v2 build (manual UPI doesn't scale past 20 users).
-- **Trial duration: 7 days** (`TRIAL_DAYS` in `db.js` — verify in code and align with any copy that says 3 days).
+- **Trial duration: 3 days** (`TRIAL_DAYS = 3` in `db.js`).
 
 ### Tier Structure (Max v2 — locked)
 
@@ -216,7 +216,7 @@ Card question text in the error log is stored on the element as `data-raw="${enc
 
 ### Trial & Payment System
 
-- Trial duration: **7 days** (`TRIAL_DAYS = 7` in `db.js → getTrialStatus()`) — verify in code
+- Trial duration: **3 days** (`TRIAL_DAYS = 3` in `db.js → getTrialStatus()`)
 - Trial state stored in localStorage as `cat_trial` → `{ started_at, is_paid }`
 - `DB.initTrial()` — called on signup; creates the trial record and fires `trial_started` event
 - `DB.isPaid()` / `DB.markAsPaid()` — reads/writes `is_paid` flag locally only

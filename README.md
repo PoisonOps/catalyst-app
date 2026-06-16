@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://catalyst-app-six.vercel.app"><img src="https://img.shields.io/badge/Live_App-catalyst--app--six.vercel.app-2E5BFF?style=flat-square&logoColor=white"/></a>
-  <img src="https://img.shields.io/badge/Trial-7_days_free-4ADE80?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Trial-3_days_free-4ADE80?style=flat-square"/>
   <img src="https://img.shields.io/badge/Price-%E2%82%B9489_one--time-E8820C?style=flat-square"/>
   <img src="https://img.shields.io/badge/Payments-Razorpay_Live-2B79C2?style=flat-square"/>
   <img src="https://img.shields.io/badge/Stack-Vanilla_JS_SPA-E9E5DC?style=flat-square"/>
