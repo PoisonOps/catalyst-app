@@ -42,15 +42,25 @@ You asked: *"will it just make the pdf pages into images?"* — **No.** Making i
 
 ---
 
-## 3. One-time setup (do this once)
+## 3. Two ways to run the preprocessor — pick one
 
-Open Terminal and run:
+### Option A — The app (no terminal, recommended) ⭐
+1. Double-click **`tools/extraction-app.html`** — it opens in your browser.
+2. **Drag your PDF onto it** (or click to choose).
+3. Click **Process PDF**, watch the progress bar.
+4. Click **Download ZIP** — you get a folder with `pages/`, `packages/`, `manifest.json`, `REPORT.txt`.
+5. Unzip it. That's the same output as the script. Now jump to **STEP 3** below (extract with the AI).
+
+Nothing installs, nothing uploads — it all runs in your browser. Best for most PDFs.
+
+### Option B — The script (terminal)
+One-time setup, then run per PDF (shown in §4). Slightly faster for huge PDFs (e.g. the 915-page PYQ paper).
 
 ```bash
 pip3 install PyMuPDF
 ```
 
-That installs the one library the preprocessor needs. Done forever.
+That installs the one library the script needs. Done forever.
 
 ---
 

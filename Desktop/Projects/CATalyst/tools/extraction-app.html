@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CATalyst — Extraction App</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1117;--bg2:#1a1d27;--bg3:#252836;--border:rgba(255,255,255,.08);
+    --text:#e8eaf0;--text2:#8b90a0;--text3:#4a4f60;
+    --accent:#5b7af5;--green:#10b981;--red:#ef4444;--amber:#f59e0b;--purple:#8b5cf6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);padding:1.5rem;max-width:900px;margin:0 auto}
+  h1{font-size:1.2rem;font-weight:800;margin-bottom:.25rem}
+  h1 span{color:var(--accent)}
+  .sub{font-size:.82rem;color:var(--text2);margin-bottom:1.5rem;line-height:1.5}
+  .drop{border:2px dashed var(--border);border-radius:14px;padding:2.5rem 1.5rem;text-align:center;transition:.15s;cursor:pointer;background:var(--bg2)}
+  .drop.over{border-color:var(--accent);background:rgba(91,122,245,.07)}
+  .drop .big{font-size:2.2rem;margin-bottom:.5rem}
+  .drop .t1{font-size:.95rem;font-weight:700;margin-bottom:.25rem}
+  .drop .t2{font-size:.78rem;color:var(--text2)}
+  #file{display:none}
+  .opts{display:flex;gap:1rem;align-items:center;margin:1rem 0;flex-wrap:wrap;font-size:.82rem;color:var(--text2)}
+  select,input[type=text]{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:.4rem .6rem;font-family:inherit;font-size:.82rem}
+  button{border:none;border-radius:9px;padding:.6rem 1.3rem;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn-go{background:var(--accent);color:#fff}
+  .btn-go:disabled{opacity:.5;cursor:not-allowed}
+  .btn-dl{background:var(--green);color:#fff;margin-top:1rem}
+  .progress{display:none;margin:1.25rem 0}
+  .bar{height:8px;background:var(--bg3);border-radius:99px;overflow:hidden}
+  .bar > div{height:100%;width:0;background:var(--accent);transition:width .2s}
+  .ptext{font-size:.78rem;color:var(--text2);margin-top:.5rem}
+  .report{display:none;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-top:1.25rem}
+  .report h3{font-size:.95rem;margin-bottom:.75rem}
+  .stat{display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.85rem}
+  .stat:last-child{border-bottom:none}
+  .stat .v{font-weight:700;font-variant-numeric:tabular-nums}
+  .flag{font-size:.8rem;padding:.5rem .7rem;border-radius:8px;margin-top:.5rem;line-height:1.5}
+  .flag.ok{background:rgba(16,185,129,.1);color:var(--green)}
+  .flag.warn{background:rgba(245,158,11,.1);color:var(--amber)}
+  .note{font-size:.75rem;color:var(--text3);margin-top:1rem;line-height:1.5}
+  code{background:var(--bg3);padding:.1rem .4rem;border-radius:4px;font-size:.78rem;color:var(--amber)}
+</style>
+</head>
+<body>
+
+<h1>⚡ <span>CATalyst</span> — Extraction App</h1>
+<div class="sub">Drop a Cracku "Top N" question PDF below. It renders the pages to images, strips the junk, splits the questions, maps the answer key, and groups the sets — then gives you a ZIP to feed to the AI. Everything runs here in your browser; nothing is uploaded anywhere.</div>
+
+<div class="drop" id="drop">
+  <div class="big">📄</div>
+  <div class="t1">Drop a PDF here, or click to choose</div>
+  <div class="t2">Cracku "Top N … Questions" PDFs work best</div>
+</div>
+<input type="file" id="file" accept="application/pdf" />
+
+<div class="opts">
+  <label>Image quality:
+    <select id="scale">
+      <option value="2">High (sharp math — bigger ZIP)</option>
+      <option value="1.5" selected>Medium (recommended)</option>
+      <option value="1.2">Low (fast, small ZIP)</option>
+    </select>
+  </label>
+  <button class="btn-go" id="go" disabled>Process PDF</button>
+</div>
+
+<div class="progress" id="progress">
+  <div class="bar"><div id="barfill"></div></div>
+  <div class="ptext" id="ptext">Starting…</div>
+</div>
+
+<div class="report" id="report">
+  <h3 id="rtitle">Report</h3>
+  <div id="rstats"></div>
+  <div id="rflags"></div>
+  <button class="btn-dl" id="download">⬇ Download ZIP (pages + packages + report)</button>
+  <div class="note">
+    Next: unzip it, then in Gemini/ChatGPT paste <code>tools/EXTRACTION_GUIDE.md</code>, upload page images from <code>pages/</code>, and use the answers in <code>manifest.json</code>. Validate the SQL in <code>extraction-checker.html</code> before loading to DEV. Full steps in <code>tools/EXTRACTION_HOWTO.md</code>.
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── parsing constants (mirror tools/cracku_preprocess.py) ─────────────
+const FURNITURE = [
+  /^\s*\d{1,2}\/\d{1,2}\/\d{2,4},?\s*\d{1,2}:\d{2}\s*(AM|PM)?\s*$/i,
+  /^\s*(https?:\/\/)?cracku\.in\/utils\/qus_pdf\/\w+\s*$/i,
+  /^\s*\d+\s*\/\s*\d+\s*$/,
+  /^\s*(VIEW|VIDEO)\s+SOLUTION\s*$/i,
+  /^\s*All rights reserved.*$/i,
+  /^\s*permission of cracku\.in.*$/i,
+  /^\s*recording or otherwise.*$/i,
+  /^\s*transmitted in any form.*$/i,
+  /^\s*Questions\s*$/,
+];
+const INLINE_BTN = /\s*(VIEW|VIDEO)\s+SOLUTION\s*/ig;
+const Q_MARKER   = /^\s*Question\s+(\d+)\s*$/i;
+const SET_MARKER = /Directions for the (?:following|next)\s+([a-z0-9]+)\s+questions?/i;
+const INSTR_HDR  = /^\s*Instructions\s*$/i;
+const ANSWERS_HDR= /^\s*Answers\s*$/i;
+const KEY_ALL    = /(\d{1,4})\.\s*([A-E]\b|-?\d+(?:\.\d+)?)/g;
+const INDIV      = /answer\s+(them|the questions?)\s+individually/i;
+const WORDNUM = {one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10};
+
+function cleanLine(s){
+  s = s.replace(/[​‌‍﻿-]/g,'');
+  s = s.replace(INLINE_BTN,' ');
+  return s.replace(/\s+/g,' ').trim();
+}
+function isFurniture(s){ return FURNITURE.some(p=>p.test(s)); }
+
+// turn a page's text items into cleaned lines (group by y)
+function itemsToLines(items){
+  const rows = {};
+  items.forEach(it=>{
+    if(!it.str || !it.str.trim()) return;
+    const y = Math.round(it.transform[5]);
+    (rows[y] = rows[y] || []).push({x: it.transform[4], s: it.str});
+  });
+  const ys = Object.keys(rows).map(Number).sort((a,b)=>b-a); // top→bottom
+  const lines = [];
+  ys.forEach(y=>{
+    const txt = rows[y].sort((a,b)=>a.x-b.x).map(o=>o.s).join(' ');
+    const c = cleanLine(txt);
+    if(c && !isFurniture(c)) lines.push(c);
+  });
+  return lines;
+}
+
+let RESULT = null; // {zipBlob-builder data}
+
+const dropEl = document.getElementById('drop');
+const fileEl = document.getElementById('file');
+const goEl = document.getElementById('go');
+let chosenFile = null;
+
+dropEl.onclick = ()=> fileEl.click();
+fileEl.onchange = e => { if(e.target.files[0]) setFile(e.target.files[0]); };
+dropEl.ondragover = e=>{ e.preventDefault(); dropEl.classList.add('over'); };
+dropEl.ondragleave = ()=> dropEl.classList.remove('over');
+dropEl.ondrop = e=>{ e.preventDefault(); dropEl.classList.remove('over'); if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); };
+
+function setFile(f){
+  if(f.type !== 'application/pdf'){ alert('Please choose a PDF.'); return; }
+  chosenFile = f;
+  dropEl.querySelector('.t1').textContent = '✓ ' + f.name;
+  dropEl.querySelector('.t2').textContent = (f.size/1048576).toFixed(1) + ' MB — ready to process';
+  goEl.disabled = false;
+}
+
+goEl.onclick = ()=> process();
+
+async function process(){
+  goEl.disabled = true;
+  document.getElementById('report').style.display = 'none';
+  const prog = document.getElementById('progress');
+  const fill = document.getElementById('barfill');
+  const ptext = document.getElementById('ptext');
+  prog.style.display = 'block';
+  const scale = parseFloat(document.getElementById('scale').value);
+
+  const buf = await chosenFile.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+  const nPages = pdf.numPages;
+
+  const pageLines = [];   // cleaned lines per page
+  const pageImages = [];  // {name, blob}
+
+  for(let i=1;i<=nPages;i++){
+    const page = await pdf.getPage(i);
+    // text
+    const tc = await page.getTextContent();
+    pageLines.push(itemsToLines(tc.items));
+    // image
+    const vp = page.getViewport({scale});
+    const canvas = document.createElement('canvas');
+    canvas.width = vp.width; canvas.height = vp.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({canvasContext: ctx, viewport: vp}).promise;
+    const blob = await new Promise(res=> canvas.toBlob(res,'image/jpeg',0.85));
+    pageImages.push({name:`page_${String(i).padStart(4,'0')}.jpg`, blob});
+    fill.style.width = Math.round(i/nPages*100)+'%';
+    ptext.textContent = `Rendering page ${i} / ${nPages}…`;
+    if(i % 5 === 0) await new Promise(r=>setTimeout(r,0)); // keep UI alive
+  }
+
+  ptext.textContent = 'Parsing questions, answers & sets…';
+  await new Promise(r=>setTimeout(r,30));
+  const parsed = parseDoc(pageLines, nPages, chosenFile.name);
+
+  ptext.textContent = 'Building ZIP…';
+  await new Promise(r=>setTimeout(r,30));
+  RESULT = await buildZip(parsed, pageImages);
+
+  prog.style.display = 'none';
+  showReport(parsed, nPages);
+}
+
+// ── the parser (port of cracku_preprocess.py) ─────────────────────────
+function parseDoc(pageLines, nPages, pdfName){
+  // find Answers section
+  let answersPage = null;
+  for(let i=0;i<pageLines.length;i++){
+    if(pageLines[i].some(l=>ANSWERS_HDR.test(l))){ answersPage = i; break; }
+  }
+  const qEnd = answersPage!==null ? answersPage : nPages;
+
+  const questions=[], sets=[];
+  let curSet=null, curRem=0, setCounter=0, curQ=null;
+  const flush=()=>{ if(curQ){ questions.push(curQ); curQ=null; } };
+
+  for(let pi=0; pi<qEnd; pi++){
+    const lines = pageLines[pi];
+    let j=0;
+    while(j<lines.length){
+      const ln = lines[j];
+      if(INSTR_HDR.test(ln) || SET_MARKER.test(ln)){
+        const instr=[]; let k=j, cnt=null, hasDir=false, indiv=false;
+        while(k<lines.length && !Q_MARKER.test(lines[k])){
+          if(!INSTR_HDR.test(lines[k])){
+            instr.push(lines[k]);
+            const m = lines[k].match(SET_MARKER);
+            if(m){ hasDir=true; const t=m[1].toLowerCase(); cnt = WORDNUM[t] || (/^\d+$/.test(t)?parseInt(t):null); }
+            if(INDIV.test(lines[k])) indiv=true;
+          }
+          k++;
+        }
+        if(curSet && curSet.q_count && curRem>0){ j=k; continue; } // repeated counted-set header → ignore
+        if(indiv){ curSet=null; curRem=0; }
+        else if(hasDir && cnt){ setCounter++; curSet={set_id:String(setCounter),page:pi+1,instr,q_count:cnt,q_nos:[],confident:true}; sets.push(curSet); curRem=cnt; }
+        else { setCounter++; curSet={set_id:String(setCounter),page:pi+1,instr:instr.length?instr:['(image-based set — no text directions)'],q_count:null,q_nos:[],confident:false}; sets.push(curSet); curRem=9999; }
+        j=k; continue;
+      }
+      const mq = ln.match(Q_MARKER);
+      if(mq){
+        flush();
+        const qno = parseInt(mq[1]);
+        let attach=null;
+        if(curSet && curRem>0){ attach=curSet.set_id; curSet.q_nos.push(qno); curRem--; if(curRem<=0 && curSet.q_count) curSet=null; }
+        curQ={q_no:qno,page:pi+1,lines:[],set_id:attach};
+        j++; continue;
+      }
+      if(curQ) curQ.lines.push(ln);
+      j++;
+    }
+  }
+  flush();
+
+  // answer key — parse from Answers section, stop when solutions begin
+  const answers={};
+  if(answersPage!==null){
+    let miss=0;
+    outer:
+    for(let pi=answersPage; pi<nPages; pi++){
+      for(const l of pageLines[pi]){
+        if(ANSWERS_HDR.test(l)) continue;
+        const matches=[...l.matchAll(KEY_ALL)];
+        let leftover = l.replace(KEY_ALL,'').replace(/\s+/g,'');
+        if(matches.length>=1 && leftover.length<3){
+          miss=0;
+          matches.forEach(m=>{
+            const no=parseInt(m[1]); const a=m[2];
+            answers[no] = /^[A-E]$/.test(a) ? {answer:a,type:'mcq'} : {answer:a,type:'tita'};
+          });
+        } else {
+          miss++;
+          if(Object.keys(answers).length && miss>6) break outer;
+        }
+      }
+    }
+  }
+
+  // attach answers + type
+  questions.forEach(q=>{
+    const a = answers[q.q_no];
+    q.answer = a? a.answer : null;
+    q.answer_type = a? a.type : 'mcq';
+  });
+
+  return {pdfName, nPages, answersPage, questions, sets, answers};
+}
+
+// ── build the output ZIP ──────────────────────────────────────────────
+async function buildZip(parsed, pageImages){
+  const zip = new JSZip();
+  const pagesDir = zip.folder('pages');
+  pageImages.forEach(p=> pagesDir.file(p.name, p.blob));
+  const pkgDir = zip.folder('packages');
+
+  const setById={}; parsed.sets.forEach(s=> setById[s.set_id]=s);
+  parsed.questions.forEach(q=>{
+    const qtext = q.lines.join('\n').trim();
+    let setblock='';
+    if(q.set_id && setById[q.set_id]){
+      const s=setById[q.set_id];
+      setblock = `\n## SET CONTEXT (shared)\nset_id: ${s.set_id}\n` + s.instr.join('\n') + '\n';
+    }
+    const pkg =
+`# Question ${q.q_no}  (from ${parsed.pdfName})
+
+## KNOWN ANSWER (from answer key — do NOT guess)
+answer: ${q.answer ?? 'NOT FOUND — verify manually'}
+answer_type: ${q.answer_type}
+${setblock}
+## RAW TEXT (math may be broken — TRUST THE IMAGE for math/figures)
+${qtext}
+
+## LOOK AT THIS IMAGE for correct math, symbols, tables, figures:
+pages/page_${String(q.page).padStart(4,'0')}.jpg
+
+## YOUR JOB
+Produce the SQL per tools/EXTRACTION_GUIDE.md:
+- Read the IMAGE to get math right; wrap inline math in \\( ... \\), display in \\[ ... \\]
+- Keep text verbatim; use /n/ for line breaks
+- Use the KNOWN ANSWER above (correct_option for mcq / correct_value for tita)
+- question_type = ${q.set_id?'set_question':'single'}; set_id = ${q.set_id ?? 'NULL'}
+- Classify topic/subtopic from the allowed taxonomy
+- Solution ends with the KEY INSIGHT / Trap / How to fix block
+`;
+    pkgDir.file(`q_${String(q.q_no).padStart(4,'0')}.md`, pkg);
+  });
+
+  const manifest = {
+    pdf_name: parsed.pdfName, pages: parsed.nPages,
+    answers_section_page: parsed.answersPage!==null ? parsed.answersPage+1 : null,
+    question_count: parsed.questions.length, set_count: parsed.sets.length,
+    answers_found: Object.keys(parsed.answers).length,
+    questions: parsed.questions.map(q=>({q_no:q.q_no,page:q.page,set_id:q.set_id,answer:q.answer,answer_type:q.answer_type})),
+    sets: parsed.sets.map(s=>({set_id:s.set_id,page:s.page,q_count:s.q_count,q_nos:s.q_nos,confident:s.confident,instruction:s.instr.join(' ').slice(0,300)})),
+  };
+  zip.file('manifest.json', JSON.stringify(manifest,null,2));
+  zip.file('REPORT.txt', buildReportText(parsed));
+
+  return await zip.generateAsync({type:'blob'}, );
+}
+
+function buildReportText(p){
+  const qnos = p.questions.map(q=>q.q_no);
+  const missing = p.questions.filter(q=>q.answer===null).map(q=>q.q_no);
+  const dupes = [...new Set(qnos.filter(n=>qnos.filter(x=>x===n).length>1))];
+  let gaps=[]; if(qnos.length){ const lo=Math.min(...qnos),hi=Math.max(...qnos); for(let n=lo;n<=hi;n++) if(!qnos.includes(n)) gaps.push(n); }
+  const cntWarn = p.sets.filter(s=>s.q_count && s.q_nos.length!==s.q_count).map(s=>s.set_id);
+  const review = p.sets.filter(s=>!s.confident).map(s=>s.set_id);
+  return [
+    `PDF: ${p.pdfName}`,
+    `Pages: ${p.nPages} | Questions: ${p.questions.length} | Sets: ${p.sets.length} | Answers found: ${Object.keys(p.answers).length}`,
+    `Question range: ${qnos.length?Math.min(...qnos):'-'}–${qnos.length?Math.max(...qnos):'-'}`,
+    '',
+    `[!] No answer found (${missing.length}): ${missing.slice(0,50).join(', ')}`,
+    `[!] Duplicate q numbers: ${dupes.join(', ')}`,
+    `[!] Missing q numbers (gaps): ${gaps.slice(0,50).join(', ')}`,
+    `[!] Set count mismatch: ${cntWarn.join(', ')}`,
+    `[!] Image-based sets — CONFIRM visually (${review.length}): ${review.slice(0,50).join(', ')}`,
+  ].join('\n');
+}
+
+function showReport(p, nPages){
+  const qnos = p.questions.map(q=>q.q_no);
+  const missing = p.questions.filter(q=>q.answer===null).length;
+  const review = p.sets.filter(s=>!s.confident).length;
+  const r = document.getElementById('report');
+  document.getElementById('rtitle').textContent = `✓ Done — ${p.pdfName}`;
+  document.getElementById('rstats').innerHTML = `
+    <div class="stat"><span>Pages rendered</span><span class="v">${nPages}</span></div>
+    <div class="stat"><span>Questions parsed</span><span class="v">${p.questions.length}</span></div>
+    <div class="stat"><span>Answers matched</span><span class="v">${Object.keys(p.answers).length}</span></div>
+    <div class="stat"><span>Sets detected</span><span class="v">${p.sets.length}</span></div>`;
+  let flags='';
+  flags += missing===0
+    ? `<div class="flag ok">✓ Every question has an answer.</div>`
+    : `<div class="flag warn">⚠ ${missing} question(s) have no answer — listed in REPORT.txt. Look them up in the PDF.</div>`;
+  if(review>0) flags += `<div class="flag warn">⚠ ${review} image-based set(s) — glance at the page image to confirm grouping (and crop the chart).</div>`;
+  document.getElementById('rflags').innerHTML = flags;
+  r.style.display = 'block';
+}
+
+document.getElementById('download').onclick = ()=>{
+  if(!RESULT) return;
+  const name = chosenFile.name.replace(/\.pdf$/i,'') + '_extracted.zip';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(RESULT);
+  a.download = name; a.click();
+};
+</script>
+</body>
+</html>
