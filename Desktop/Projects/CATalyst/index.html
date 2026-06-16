@@ -880,153 +880,209 @@
 
   <!-- UPGRADE MODAL -->
   <div id="upgrade-modal" class="modal-overlay hidden">
-    <div class="modal-box upgrade-box">
+    <div class="modal-box upv3-box">
 
-      <!-- Tier switcher -->
-      <div class="upgrade-tier-tabs">
-        <button class="upgrade-tier-tab active" id="tab-pro" onclick="switchUpgradeTier('pro')">CATalyst Pro</button>
-        <button class="upgrade-tier-tab" id="tab-max" onclick="switchUpgradeTier('max')">CATalyst Max <span class="tier-soon-badge">Soon</span></button>
+      <!-- Topbar -->
+      <div class="upv3-topbar">
+        <div class="upgrade-tier-tabs">
+          <button class="upgrade-tier-tab active" id="tab-pro" onclick="switchUpgradeTier('pro')">CATalyst Pro</button>
+          <button class="upgrade-tier-tab" id="tab-max" onclick="switchUpgradeTier('max')">Max <span class="tier-soon-badge">Soon</span></button>
+        </div>
+        <button class="upv3-close" id="close-upgrade-btn">✕</button>
       </div>
 
       <!-- PRO TIER -->
       <div id="upgrade-tier-pro">
 
-        <!-- Urgency bar -->
-        <div class="upgrade-urgency-bar">
-          <span class="urgency-dot"></span>
-          <span>CAT 2026 — <strong id="modal-days-left">—</strong> days left to build your system</span>
-        </div>
-
-        <!-- Coaching comparison anchor -->
-        <div class="upgrade-anchor-line">
-          Coaching costs <s>₹15,000–30,000</s>. You're getting the full system for:
-        </div>
-
-        <!-- Hero plan — ₹489 -->
-        <div class="upgrade-hero-plan plan-selected" id="plan-onetime" onclick="selectPlan('onetime')">
-          <div class="hero-plan-top">
-            <div class="hero-plan-badge">⭐ Best Value — Founder's Price</div>
-            <div class="hero-plan-scarcity" id="modal-slots">19 slots left</div>
+        <!-- ① Urgency bar — sets the emotional frame first -->
+        <div class="upv3-urgency">
+          <div class="upv3-urgency-top">
+            <span class="upv3-udot"></span>
+            <span class="upv3-ulabel">CAT 2026 — <strong id="modal-days-left">—</strong> days left to build your system</span>
+            <span class="upv3-slots" id="modal-slots">19 left</span>
           </div>
-          <div class="hero-plan-price">
-            <div class="hero-plan-equiv">₹81<span>/month equivalent</span></div>
-            <div class="hero-plan-total">₹489 total · One time · Till CAT 2026</div>
+          <div class="upv3-bar-track"><div class="upv3-bar-fill" id="upv3-bar"></div></div>
+        </div>
+
+        <!-- ② Slot machine comparison -->
+        <div class="cd-machine">
+          <div class="cd-machine-label">₹489 one time — less than</div>
+          <div class="cd-drum-wrap">
+            <div class="cd-drum" id="compare-drum">
+              <span class="cd-emoji">🎬</span>
+              <div class="cd-lines">
+                <span class="cd-main">1 month of Netflix</span>
+                <span class="cd-sub">They charge ₹649 every month. You pay ₹489. Once.</span>
+              </div>
+            </div>
           </div>
-          <div class="hero-plan-perday">Less than ₹3/day — cheaper than a chai ☕</div>
+          <div class="cd-dots" id="cd-dots">
+            <span class="cd-dot cd-dot-active"></span>
+            <span class="cd-dot"></span><span class="cd-dot"></span>
+            <span class="cd-dot"></span><span class="cd-dot"></span>
+            <span class="cd-dot"></span><span class="cd-dot"></span>
+            <span class="cd-dot"></span><span class="cd-dot"></span>
+            <span class="cd-dot"></span>
+          </div>
         </div>
 
-        <!-- Secondary plan — ₹99/mo -->
-        <div class="upgrade-secondary-plan" id="plan-monthly" onclick="selectPlan('monthly')">
-          <div class="secondary-plan-label">Or pay monthly</div>
-          <div class="secondary-plan-price">₹99<span>/month</span> · Auto-renews · Cancel anytime</div>
+        <!-- ③ Plan cards -->
+        <div class="upv3-plans">
+
+          <!-- ₹489 recommended -->
+          <div class="upv3-card upv3-rec plan-selected" id="plan-onetime" onclick="selectPlan('onetime')">
+            <div class="upv3-rec-badge">⭐ BEST VALUE</div>
+            <div class="upv3-price">₹489</div>
+            <div class="upv3-period">till CAT 2026 · one time</div>
+            <div class="upv3-price-breakdowns">
+              <span class="upv3-breakdown-pill">₹81/month</span>
+              <span class="upv3-breakdown-sep">·</span>
+              <span class="upv3-breakdown-pill">₹21/week</span>
+            </div>
+            <div class="upv3-save-pill">Saves ₹105 vs monthly</div>
+          </div>
+
+          <!-- ₹99 monthly — same visual height -->
+          <div class="upv3-card upv3-sec" id="plan-monthly" onclick="selectPlan('monthly')">
+            <div class="upv3-sec-label">Monthly</div>
+            <div class="upv3-price upv3-price-sm">₹99</div>
+            <div class="upv3-period">/month</div>
+            <div class="upv3-sec-divider"></div>
+            <div class="upv3-sec-pros">
+              <span>Cancel anytime</span>
+              <span>Try 1 month</span>
+            </div>
+          </div>
+
         </div>
 
-        <!-- Features -->
-        <div class="upgrade-feats-v2">
-          <div class="upgrade-feat-v2">✅ 790+ real CAT questions — Quant, VARC, LRDI</div>
-          <div class="upgrade-feat-v2">✅ Fix Mode — drills only <em>your</em> weak spots</div>
-          <div class="upgrade-feat-v2">✅ Error Log — see exactly what costs you marks</div>
-          <div class="upgrade-feat-v2">✅ Sync across all your devices</div>
+        <!-- ④ Feature line — single row, no boxes -->
+        <div class="cd-feat-line">
+          <span>📚 790+ PYQs</span>
+          <span class="cd-feat-sep">·</span>
+          <span>🎯 Fix Mode</span>
+          <span class="cd-feat-sep">·</span>
+          <span>📊 Error Log</span>
+          <span class="cd-feat-sep">·</span>
+          <span>🔄 All Devices</span>
         </div>
 
-        <!-- CTA -->
-        <button class="btn-pay-now" id="modal-pay-btn" onclick="initiatePayment('modal')">
-          Unlock CATalyst Pro — ₹489
+        <!-- ⑤ CTA -->
+        <button class="upv3-cta" id="modal-pay-btn" onclick="initiatePayment('modal')">
+          Pay ₹489 — Unlock Everything
         </button>
 
-        <!-- Trust row -->
-        <div class="upgrade-trust-row">
-          <span>🔒 Razorpay</span>
-          <span>⚡ Instant access</span>
-          <span>↩ 7-day refund</span>
+        <!-- ⑥ Social proof + trust merged -->
+        <div class="cd-bottom-row">
+          <div class="cd-social">
+            <div class="cd-avs"><span class="cd-av">H</span><span class="cd-av">O</span><span class="cd-av">S</span></div>
+            <span class="cd-social-txt">20 aspirants in Pro</span>
+          </div>
+          <div class="cd-trust-mini">
+            <span>🔒 Razorpay</span>
+            <span>·</span>
+            <a href="/refund-policy.html" target="_blank" class="refund-trust-link">↩ 7-day refund</a>
+          </div>
         </div>
 
-        <p class="upgrade-refund-note">Not helpful? WhatsApp us within 7 days — full refund, no questions.</p>
       </div>
 
       <!-- MAX TIER (coming soon) -->
       <div id="upgrade-tier-max" class="hidden">
-        <div class="upgrade-hero">
-          <div class="max-coming-icon">🚀</div>
-          <h3>CATalyst Max</h3>
-          <p class="upgrade-founders">AI counselling → Personal roadmap → Adaptive daily DPPs → Weekly reviews.</p>
+        <div class="upv3-max-hero">
+          <div class="upv3-max-icon">🚀</div>
+          <h3 class="upv3-max-title">CATalyst Max</h3>
+          <p class="upv3-max-sub">AI counselling → Personal roadmap → Adaptive daily DPPs → Weekly reviews.</p>
         </div>
-        <div class="upgrade-features">
-          <div class="upgrade-feat">🎯 AI counselling interview (feels like therapy)</div>
-          <div class="upgrade-feat">📅 Personal weekly roadmap with reasoning</div>
-          <div class="upgrade-feat">📝 Adaptive daily practice from real PYQs</div>
-          <div class="upgrade-feat">📊 Weekly AI review — adjusts your plan</div>
-          <div class="upgrade-feat">✅ Everything in Pro</div>
+        <div class="upv3-max-feats">
+          <div class="upv3-max-feat">🎯 AI counselling interview — feels like a mentor</div>
+          <div class="upv3-max-feat">📅 Personal weekly roadmap with reasoning</div>
+          <div class="upv3-max-feat">📝 Adaptive daily practice from real PYQs</div>
+          <div class="upv3-max-feat">📊 Weekly AI review that adjusts your plan</div>
+          <div class="upv3-max-feat">✅ Everything in Pro, included</div>
         </div>
-        <div class="upgrade-plans upgrade-plans-dim">
-          <div class="upgrade-plan">
-            <div class="plan-badge plan-badge-amber">Roadmap Week</div>
-            <div class="plan-amount">₹99</div>
-            <div class="plan-desc">1-week trial<br>Full counselling + DPPs</div>
-          </div>
-          <div class="upgrade-plan">
-            <div class="plan-badge plan-badge-blue">Max Plan</div>
-            <div class="plan-amount">₹799</div>
-            <div class="plan-desc">Till CAT 2026<br>Full Max access</div>
-          </div>
+        <div class="upv3-max-plans">
+          <div class="upv3-max-plan"><div class="upv3-mpbadge amber">Roadmap Week</div><div class="upv3-mpprice">₹99</div><div class="upv3-mpdesc">7-day full access</div></div>
+          <div class="upv3-max-plan"><div class="upv3-mpbadge blue">Max Till CAT</div><div class="upv3-mpprice">₹799</div><div class="upv3-mpdesc">Full access till CAT 2026</div></div>
         </div>
-        <button class="btn-pay-now btn-notify" onclick="notifyMaxLaunch()">Notify me when Max launches →</button>
-        <p class="upgrade-trust">Coming soon — building now</p>
+        <button class="upv3-notify-btn" onclick="notifyMaxLaunch()">Notify me when Max launches →</button>
+        <p class="upv3-max-coming">Building now — expected August 2026</p>
       </div>
 
-      <button class="btn-skip" id="close-upgrade-btn">Maybe later</button>
     </div>
   </div>
 
   <!-- PAYWALL — shown when trial expires, no close button -->
   <div id="paywall-overlay" class="paywall-overlay hidden">
-    <div class="paywall-box">
+    <div class="paywall-box upv3-pw-box">
 
-      <!-- What they're losing -->
-      <div class="paywall-header">
-        <h2 class="paywall-title">Your trial ended — your mistakes are waiting.</h2>
-        <p class="paywall-desc">You found <strong id="pw-mistake-count">—</strong> mistakes in 7 days. They're all saved. Upgrade to keep fixing them before CAT.</p>
-      </div>
-
-      <!-- Locked features -->
-      <div class="paywall-locked">
-        <div class="paywall-locked-row">🔒 Practice — <span class="lock-sub">790+ questions locked</span></div>
-        <div class="paywall-locked-row">🔒 Error Log — <span class="lock-sub">your mistake patterns locked</span></div>
-        <div class="paywall-locked-row">🔒 Fix Mode — <span class="lock-sub">your weak-spot drills locked</span></div>
-      </div>
-
-      <!-- Coaching anchor -->
-      <div class="upgrade-anchor-line" style="margin-bottom:0.75rem">
-        Coaching costs <s>₹15,000–30,000</s>. Keep your system for:
-      </div>
-
-      <!-- Hero plan -->
-      <div class="upgrade-hero-plan plan-selected" id="pw-plan-onetime" onclick="pwSelectPlan('onetime')" style="margin-bottom:0.5rem">
-        <div class="hero-plan-top">
-          <div class="hero-plan-badge">⭐ Best Value — Founder's Price</div>
-          <div class="hero-plan-scarcity">19 slots left</div>
+      <!-- ① Big mistake count — gut punch -->
+      <div class="cd-pw-hook">
+        <div class="cd-pw-num-wrap">
+          <span class="cd-pw-num" id="pw-mistake-count">—</span>
+          <div class="cd-pw-num-label">mistakes found<br>in your 7-day trial</div>
         </div>
-        <div class="hero-plan-price">
-          <div class="hero-plan-equiv">₹81<span>/month equivalent</span></div>
-          <div class="hero-plan-total">₹489 total · One time · Till CAT 2026</div>
+        <p class="cd-pw-sub">All saved. All waiting. Every unfixed mistake is a mark left behind on CAT day.</p>
+      </div>
+
+      <!-- ② Locked strip -->
+      <div class="upv3-pw-locked">
+        <span class="upv3-pw-pill">🔒 Practice</span>
+        <span class="upv3-pw-pill">🔒 Error Log</span>
+        <span class="upv3-pw-pill">🔒 Fix Mode</span>
+      </div>
+
+      <!-- ③ Slot machine comparison -->
+      <div class="cd-machine cd-machine-sm">
+        <div class="cd-machine-label">₹489 one time costs less than</div>
+        <div class="cd-drum-wrap">
+          <div class="cd-drum" id="compare-drum-pw">
+            <span class="cd-emoji">🎬</span>
+            <div class="cd-lines">
+              <span class="cd-main">1 month of Netflix</span>
+              <span class="cd-sub">They charge ₹649 every month. You pay ₹489. Once.</span>
+            </div>
+          </div>
         </div>
-        <div class="hero-plan-perday">Less than ₹3/day · <strong id="pw-days-left">—</strong> days to CAT</div>
       </div>
 
-      <!-- Secondary monthly -->
-      <div class="upgrade-secondary-plan" id="pw-plan-monthly" onclick="pwSelectPlan('monthly')" style="margin-bottom:1rem">
-        <div class="secondary-plan-label">Or pay monthly</div>
-        <div class="secondary-plan-price">₹99<span>/month</span> · Auto-renews · Cancel anytime</div>
+      <!-- ④ Urgency -->
+      <div class="upv3-urgency upv3-urgency-pw">
+        <div class="upv3-urgency-top">
+          <span class="upv3-udot"></span>
+          <span class="upv3-ulabel">CAT 2026 — <strong id="pw-days-left">—</strong> days to fix them all</span>
+        </div>
+        <div class="upv3-bar-track"><div class="upv3-bar-fill" id="upv3-pw-bar"></div></div>
       </div>
 
-      <button class="btn-pay-now" id="pw-pay-btn" onclick="initiatePayment('paywall')">
-        Unlock Everything — ₹489
+      <!-- ⑤ Plan cards -->
+      <div class="upv3-plans">
+        <div class="upv3-card upv3-rec plan-selected" id="pw-plan-onetime" onclick="pwSelectPlan('onetime')">
+          <div class="upv3-rec-badge">⭐ BEST VALUE</div>
+          <div class="upv3-price">₹489</div>
+          <div class="upv3-period">till CAT 2026</div>
+          <div class="upv3-equiv">≈ ₹81/month · ₹21/week</div>
+          <div class="upv3-save-pill">Save ₹105 vs monthly</div>
+          <div class="upv3-once">Pay once. Own it forever.</div>
+        </div>
+        <div class="upv3-card upv3-sec" id="pw-plan-monthly" onclick="pwSelectPlan('monthly')">
+          <div class="upv3-sec-label">Monthly</div>
+          <div class="upv3-price upv3-price-sm">₹99</div>
+          <div class="upv3-period">/month</div>
+          <div class="upv3-sub-cancel">Cancel<br>anytime</div>
+        </div>
+      </div>
+
+      <!-- ⑥ CTA -->
+      <button class="upv3-cta" id="pw-pay-btn" onclick="initiatePayment('paywall')">
+        Fix My Mistakes — ₹489
       </button>
 
+      <!-- Trust -->
       <div class="upgrade-trust-row">
         <span>🔒 Razorpay</span>
         <span>⚡ Instant access</span>
-        <span>↩ 7-day refund</span>
+        <a href="/refund-policy.html" target="_blank" class="refund-trust-link">↩ 7-day refund</a>
       </div>
 
       <p class="paywall-already-paid">Already paid? <a href="https://wa.me/917080442040" target="_blank" class="pay-whatsapp">WhatsApp us ↗</a></p>
@@ -1042,12 +1098,21 @@
   <div id="toast" class="toast hidden"></div>
 
   <script>
-    // ── CAT countdown ─────────────────────────────────────────────
+    // ── CAT countdown + progress bar ──────────────────────────────
     (function() {
-      const CAT_DATE = new Date('2026-11-29'); // CAT 2026 approx date
-      const today    = new Date();
-      const days     = Math.max(0, Math.ceil((CAT_DATE - today) / (1000 * 60 * 60 * 24)));
+      const CAT_DATE   = new Date('2026-11-29');
+      const START_DATE = new Date('2026-01-01');
+      const today      = new Date();
+      const days       = Math.max(0, Math.ceil((CAT_DATE - today) / (1000 * 60 * 60 * 24)));
       document.querySelectorAll('#modal-days-left, #pw-days-left').forEach(el => { if (el) el.textContent = days; });
+      // Progress bar — how much prep time has slipped by (creates urgency)
+      const totalMs   = CAT_DATE - START_DATE;
+      const elapsedMs = today - START_DATE;
+      const pct       = Math.min(100, Math.max(5, (elapsedMs / totalMs) * 100)).toFixed(1);
+      // Set as CSS var so @keyframes animation ends at the right percentage
+      document.querySelectorAll('.upv3-bar-fill').forEach(el => {
+        el.style.setProperty('--bar-pct', pct + '%');
+      });
     })();
 
     // ── Payment state ──────────────────────────────────────────────
@@ -1121,6 +1186,7 @@
             image:           '/icon-192.png',
             prefill:         { email },
             theme:           { color: '#5b7af5' },
+            modal:           { ondismiss: () => _resetPayBtn(btn, plan) },
             handler: async (response) => {
               await _activateSubscription(response, userId, context);
             },
@@ -1151,6 +1217,7 @@
             image:       '/icon-192.png',
             prefill:     { email },
             theme:       { color: '#5b7af5' },
+            modal:       { ondismiss: () => _resetPayBtn(btn, plan) },
             handler: async (response) => {
               await _verifyAndActivate(response, 'onetime', userId, context);
             },
@@ -1234,8 +1301,55 @@
     function _resetPayBtn(btn, plan) {
       btn.disabled = false;
       const isMonthly = plan === 'monthly';
-      btn.textContent = isMonthly ? 'Pay ₹99/mo — Secure Checkout' : 'Pay ₹489 — Secure Checkout';
+      btn.textContent = isMonthly ? 'Pay ₹99/mo — Secure Checkout' : 'Pay ₹489 — Unlock Everything';
     }
+
+    // ── Comparison slot machine ────────────────────────────────
+    (function() {
+      const ITEMS = [
+        { e: '🎬', t: '1 month of Netflix',       s: 'They charge ₹649 every month. You pay ₹489. Once.' },
+        { e: '🍕', t: '2 Swiggy deliveries',       s: 'You spend more on food delivery in one weekend.' },
+        { e: '🎬', t: '1 month of Netflix',       s: 'Netflix = shows. CATalyst = percentile.' },
+        { e: '📚', t: 'Half a CAT textbook',       s: 'Most prep books cost ₹800–₹1,200 each.' },
+        { e: '🎬', t: '1 month of Netflix',       s: 'Less than Netflix. Lasts all the way to CAT.' },
+        { e: '🎓', t: '1 mock test fee',           s: 'TIME & IMS charge ₹500–₹1,000 per mock exam.' },
+        { e: '🎬', t: '1 month of Netflix',       s: 'Netflix renews every month. This doesn\'t.' },
+        { e: '🎞️', t: '2 movie outings',           s: 'One multiplex night costs ₹500+. This is less.' },
+        { e: '☕',  t: '25 cutting chais',         s: '₹20 a cup × 25 = ₹500. Less than a month.' },
+        { e: '🏫', t: '1 coaching class',          s: 'Institutes charge ₹1,000–₹5,000 per session.' },
+      ];
+
+      let idx = 0;
+
+      function paint(drumId, dotsId, item, i) {
+        const drum = document.getElementById(drumId);
+        if (!drum) return;
+        drum.innerHTML =
+          `<span class="cd-emoji">${item.e}</span>` +
+          `<div class="cd-lines"><span class="cd-main">${item.t}</span><span class="cd-sub">${item.s}</span></div>`;
+        drum.animate(
+          [{ transform: 'translateY(-14px)', opacity: 0 },
+           { transform: 'translateY(0)',     opacity: 1 }],
+          { duration: 420, easing: 'cubic-bezier(0.22,1,0.36,1)', fill: 'forwards' }
+        );
+        // update dots
+        if (dotsId) {
+          document.querySelectorAll(`#${dotsId} .cd-dot`).forEach((d, n) => {
+            d.classList.toggle('cd-dot-active', n === i);
+          });
+        }
+      }
+
+      // init
+      paint('compare-drum', 'cd-dots', ITEMS[0], 0);
+      paint('compare-drum-pw', null, ITEMS[0], 0);
+
+      setInterval(() => {
+        idx = (idx + 1) % ITEMS.length;
+        paint('compare-drum',    'cd-dots', ITEMS[idx], idx);
+        paint('compare-drum-pw', null,      ITEMS[idx], idx);
+      }, 2600);
+    })();
   </script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

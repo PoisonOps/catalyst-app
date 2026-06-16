@@ -4088,6 +4088,14 @@ body {
   flex-wrap: wrap;
 }
 
+.refund-trust-link {
+  color: var(--text3);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(148,163,184,0.35);
+  transition: color 0.15s;
+}
+.refund-trust-link:hover { color: var(--primary); }
+
 /* ── Refund note ─────────────────────────────────────────── */
 .upgrade-refund-note {
   font-size: 0.73rem;
@@ -4198,6 +4206,793 @@ body {
   text-align: center;
   margin-top: 0.75rem;
   margin-bottom: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UPGRADE v2 — Redesigned modal + paywall
+   ═══════════════════════════════════════════════════════════ */
+
+/* Box entrance animation */
+.upv2-box {
+  animation: upv2Enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes upv2Enter {
+  from { opacity: 0; transform: scale(0.92) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Topbar: tabs left, close right */
+.upv2-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.1rem;
+}
+.upv2-close-btn {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.upv2-close-btn:hover { color: var(--text1); background: rgba(255,255,255,0.06); }
+
+/* Countdown strip */
+.upv2-countdown {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(239,68,68,0.07);
+  border: 1px solid rgba(239,68,68,0.18);
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.8rem;
+  color: #fca5a5;
+  margin-bottom: 1rem;
+}
+.upv2-urgency-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  animation: pulse-red 1.4s ease-in-out infinite;
+}
+.upv2-count {
+  font-weight: 800;
+  font-size: 1rem;
+  color: #f87171;
+}
+
+/* Price hero block */
+.upv2-price-block {
+  background: rgba(255,255,255,0.03);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem 1rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.upv2-price-block.plan-selected {
+  border-color: #5b7af5;
+  box-shadow: 0 0 0 1px rgba(91,122,245,0.25), 0 4px 32px rgba(91,122,245,0.1);
+}
+.upv2-pb-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+.upv2-pb-amount {
+  font-size: 2.6rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+.upv2-pb-badge {
+  background: rgba(245,158,11,0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.18rem 0.6rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.upv2-pb-meta {
+  font-size: 0.76rem;
+  color: var(--text3);
+  margin-bottom: 0.55rem;
+}
+.upv2-pb-vs {
+  display: inline-block;
+  font-size: 0.71rem;
+  font-weight: 600;
+  color: #4ade80;
+  background: rgba(74,222,128,0.07);
+  border: 1px solid rgba(74,222,128,0.18);
+  border-radius: 6px;
+  padding: 0.18rem 0.55rem;
+}
+
+/* Feature 2×2 grid */
+.upv2-feat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.upv2-feat-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 9px;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.73rem;
+  color: var(--text2);
+  line-height: 1.35;
+}
+.upv2-fi { font-size: 0.95rem; flex-shrink: 0; margin-top: 0.05rem; }
+
+/* Primary CTA */
+.upv2-cta-btn {
+  width: 100%;
+  padding: 0.88rem 1rem;
+  background: linear-gradient(130deg, #5b7af5 0%, #7c6af7 100%);
+  color: #fff;
+  font-size: 0.97rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: opacity 0.2s, transform 0.1s;
+  margin-bottom: 0.65rem;
+  letter-spacing: 0.01em;
+}
+.upv2-cta-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  left: -120%;
+  width: 55%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+  animation: upv2Shimmer 2.8s 0.8s infinite;
+}
+@keyframes upv2Shimmer {
+  0%   { left: -120%; }
+  100% { left: 180%; }
+}
+.upv2-cta-btn:hover   { opacity: 0.92; transform: translateY(-1px); }
+.upv2-cta-btn:active  { transform: translateY(0); }
+.upv2-cta-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* Monthly secondary row */
+.upv2-monthly-row {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text3);
+  cursor: pointer;
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+  margin-bottom: 0.65rem;
+}
+.upv2-monthly-row:hover { color: var(--text2); background: rgba(255,255,255,0.04); }
+.upv2-monthly-row.plan-selected { color: #5b7af5; background: rgba(91,122,245,0.07); }
+.upv2-monthly-row strong { color: var(--text1); font-weight: 700; }
+.upv2-monthly-row.plan-selected strong { color: #7c9cf8; }
+
+/* ── Max tier (coming soon) ──────────────────────────────── */
+.upv2-max-hero { text-align: center; margin-bottom: 1.25rem; }
+.upv2-max-icon { font-size: 2rem; margin-bottom: 0.4rem; }
+.upv2-max-title { font-size: 1.2rem; font-weight: 800; color: var(--text1); margin-bottom: 0.3rem; }
+.upv2-max-sub { font-size: 0.82rem; color: var(--text3); }
+.upv2-max-feats { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 1.25rem; }
+.upv2-max-feat { font-size: 0.82rem; color: var(--text2); padding: 0.4rem 0.5rem; }
+.upv2-max-plans {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;
+  opacity: 0.55;
+}
+.upv2-max-plan {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 0.85rem;
+  text-align: center;
+}
+.upv2-max-plan-badge {
+  font-size: 0.65rem; font-weight: 700; border-radius: 20px;
+  padding: 0.15rem 0.5rem; display: inline-block; margin-bottom: 0.5rem;
+}
+.upv2-max-plan-badge.amber { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
+.upv2-max-plan-badge.blue  { background: rgba(91,122,245,0.12); color: #7c9cf8; border: 1px solid rgba(91,122,245,0.25); }
+.upv2-max-plan-price { font-size: 1.5rem; font-weight: 900; color: var(--text1); }
+.upv2-max-plan-desc { font-size: 0.71rem; color: var(--text3); margin-top: 0.2rem; }
+.upv2-notify-btn {
+  width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+  color: var(--text2); font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; margin-bottom: 0.6rem; transition: background 0.2s;
+}
+.upv2-notify-btn:hover { background: rgba(255,255,255,0.08); }
+.upv2-max-coming { text-align: center; font-size: 0.72rem; color: var(--text3); }
+
+/* ── Paywall v2 ──────────────────────────────────────────── */
+.upv2-pw-box {} /* inherits paywall-box sizing/scroll */
+.upv2-pw-header { text-align: center; margin-bottom: 1rem; }
+.upv2-pw-lock-icon { font-size: 1.75rem; margin-bottom: 0.4rem; }
+.upv2-pw-title {
+  font-size: 1.2rem; font-weight: 800; color: var(--text1); margin-bottom: 0.35rem;
+}
+.upv2-pw-desc { font-size: 0.82rem; color: var(--text2); }
+.upv2-pw-locked-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;
+}
+.upv2-pw-lock-pill {
+  font-size: 0.72rem; color: #fca5a5;
+  background: rgba(239,68,68,0.07);
+  border: 1px solid rgba(239,68,68,0.16);
+  border-radius: 20px; padding: 0.22rem 0.65rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UPGRADE v3 — Complete redesign (side-by-side plans)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Box */
+.upv3-box {
+  animation: upv3Enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  padding: 1.25rem 1.25rem 1.1rem;
+}
+@keyframes upv3Enter {
+  from { opacity: 0; transform: translateY(28px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Topbar */
+.upv3-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.upv3-close {
+  background: none; border: none;
+  color: var(--text3); font-size: 1rem;
+  cursor: pointer; padding: 0.3rem 0.5rem;
+  border-radius: 6px; line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+.upv3-close:hover { color: var(--text1); background: rgba(255,255,255,0.06); }
+
+/* Urgency block */
+.upv3-urgency {
+  background: rgba(239,68,68,0.07);
+  border: 1px solid rgba(239,68,68,0.18);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem 0.6rem;
+  margin-bottom: 0.75rem;
+}
+.upv3-urgency-pw { margin-bottom: 0.6rem; }
+.upv3-urgency-top {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.78rem;
+  color: #fca5a5;
+}
+.upv3-udot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  animation: pulse-red 1.4s ease-in-out infinite;
+}
+.upv3-ulabel { flex: 1; }
+.upv3-ulabel strong { color: #f87171; font-size: 0.9rem; }
+.upv3-slots {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fca5a5;
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.22);
+  border-radius: 20px;
+  padding: 0.15rem 0.55rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+/* Progress bar */
+.upv3-bar-track {
+  height: 4px;
+  background: rgba(239,68,68,0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.upv3-bar-fill {
+  height: 100%;
+  width: 0%;
+  --bar-pct: 52%;
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  border-radius: 4px;
+  animation: upv3BarGrow 1.4s 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes upv3BarGrow {
+  from { width: 0%; }
+  to   { width: var(--bar-pct); }
+}
+
+/* Anchor row */
+.upv3-anchor {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+.upv3-anchor-left { color: var(--text3); }
+.upv3-anchor-left s { color: #f87171; text-decoration-color: #f87171; }
+.upv3-anchor-vs {
+  color: var(--text3);
+  font-size: 0.7rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+}
+.upv3-anchor-right { color: var(--text2); }
+.upv3-anchor-right strong { color: #4ade80; }
+
+/* ── Side-by-side plan cards ──────────────────────────────── */
+.upv3-plans {
+  display: grid;
+  grid-template-columns: 1.65fr 1fr;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+/* Base card */
+.upv3-card {
+  border-radius: 14px;
+  padding: 1rem 0.9rem 0.9rem;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+  overflow: hidden;
+  min-height: 160px;
+}
+
+/* ₹489 recommended card */
+.upv3-rec {
+  background: linear-gradient(140deg, rgba(91,122,245,0.1) 0%, rgba(91,122,245,0.04) 100%);
+  border: 2px solid rgba(91,122,245,0.35);
+}
+.upv3-rec.plan-selected {
+  border-color: #5b7af5;
+  box-shadow: 0 0 0 1px rgba(91,122,245,0.2), 0 4px 40px rgba(91,122,245,0.18);
+  animation: upv3RecPulse 3s 0.5s ease-in-out infinite;
+}
+@keyframes upv3RecPulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(91,122,245,0.2), 0 4px 30px rgba(91,122,245,0.15); }
+  50%       { box-shadow: 0 0 0 1px rgba(91,122,245,0.3), 0 4px 50px rgba(91,122,245,0.28); }
+}
+.upv3-sec.plan-selected {
+  border-color: #5b7af5;
+  box-shadow: 0 0 0 1px rgba(91,122,245,0.2);
+}
+/* Dim the non-selected card */
+.upv3-plans:has(.upv3-sec.plan-selected) .upv3-rec { opacity: 0.5; animation: none; }
+.upv3-plans:has(.upv3-rec.plan-selected) .upv3-sec { opacity: 0.55; }
+
+/* ₹489 badge */
+.upv3-rec-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fbbf24;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 20px;
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  margin-bottom: 0.55rem;
+}
+
+/* ₹99 secondary card */
+.upv3-sec {
+  background: rgba(255,255,255,0.025);
+  border: 1.5px solid rgba(255,255,255,0.07);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 1rem;
+}
+.upv3-sec-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 0.3rem;
+}
+.upv3-sec-divider {
+  width: 30px; height: 1px;
+  background: rgba(255,255,255,0.1);
+  margin: 0.55rem auto;
+}
+.upv3-sec-pros {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.69rem;
+  color: #94a3b8;
+}
+
+/* Shared price text */
+.upv3-price {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 0.2rem;
+}
+.upv3-price-sm { font-size: 1.75rem; }
+.upv3-period {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-bottom: 0.45rem;
+}
+.upv3-equiv {
+  font-size: 0.7rem;
+  color: var(--text3);
+  margin-bottom: 0.45rem;
+}
+.upv3-save-pill {
+  display: inline-block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #4ade80;
+  background: rgba(74,222,128,0.08);
+  border: 1px solid rgba(74,222,128,0.2);
+  border-radius: 6px;
+  padding: 0.18rem 0.5rem;
+  margin-bottom: 0.45rem;
+}
+.upv3-once {
+  font-size: 0.7rem;
+  color: var(--text3);
+}
+.upv3-sub-cancel {
+  font-size: 0.68rem;
+  color: var(--text3);
+  line-height: 1.4;
+}
+
+/* Price breakdown pills inside ₹489 card */
+.upv3-price-breakdowns {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.45rem;
+  flex-wrap: wrap;
+}
+.upv3-breakdown-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 6px;
+  padding: 0.14rem 0.45rem;
+}
+.upv3-breakdown-sep { font-size: 0.65rem; color: #64748b; }
+
+/* Feature single line */
+.cd-feat-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-size: 0.73rem;
+  color: var(--text3);
+  margin-bottom: 0.9rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.cd-feat-sep { opacity: 0.3; }
+
+/* Bottom row: social proof + trust merged */
+.cd-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+  flex-wrap: wrap;
+}
+.cd-trust-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  color: var(--text3);
+}
+.cd-trust-mini .refund-trust-link { font-size: 0.7rem; }
+
+/* Legacy — keep grid styles but hide if unused */
+.upv3-feats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+}
+.upv3-feat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 0.5rem 0.3rem;
+  font-size: 0.67rem;
+  color: var(--text3);
+  text-align: center;
+  line-height: 1.2;
+}
+.upv3-feat span:first-child { font-size: 1rem; }
+
+/* CTA */
+.upv3-cta {
+  width: 100%;
+  padding: 0.9rem;
+  background: linear-gradient(130deg, #4f6ef0 0%, #7c6af7 100%);
+  color: #fff;
+  font-size: 0.97rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0.7rem;
+  letter-spacing: 0.01em;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.upv3-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  left: -120%;
+  width: 50%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: upv3Shimmer 2.6s 1.2s infinite;
+}
+@keyframes upv3Shimmer {
+  0%   { left: -120%; }
+  100% { left: 180%; }
+}
+.upv3-cta:hover   { opacity: 0.92; transform: translateY(-1px); }
+.upv3-cta:active  { transform: translateY(0); }
+.upv3-cta:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+/* ── Max coming soon ─────────────────────────────────────── */
+.upv3-max-hero { text-align: center; margin-bottom: 1.1rem; }
+.upv3-max-icon { font-size: 1.8rem; margin-bottom: 0.35rem; }
+.upv3-max-title { font-size: 1.15rem; font-weight: 800; color: var(--text1); margin-bottom: 0.25rem; }
+.upv3-max-sub { font-size: 0.8rem; color: var(--text3); }
+.upv3-max-feats { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.1rem; }
+.upv3-max-feat { font-size: 0.8rem; color: var(--text2); padding: 0.35rem 0.25rem; }
+.upv3-max-plans {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;
+  margin-bottom: 1rem; opacity: 0.5;
+}
+.upv3-max-plan {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; padding: 0.8rem; text-align: center;
+}
+.upv3-mpbadge {
+  font-size: 0.62rem; font-weight: 700; border-radius: 20px;
+  padding: 0.14rem 0.5rem; display: inline-block; margin-bottom: 0.4rem;
+}
+.upv3-mpbadge.amber { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
+.upv3-mpbadge.blue  { background: rgba(91,122,245,0.12); color: #7c9cf8; border: 1px solid rgba(91,122,245,0.25); }
+.upv3-mpprice { font-size: 1.4rem; font-weight: 900; color: var(--text1); }
+.upv3-mpdesc { font-size: 0.68rem; color: var(--text3); margin-top: 0.18rem; }
+.upv3-notify-btn {
+  width: 100%; padding: 0.75rem;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 10px; color: var(--text2); font-size: 0.83rem; font-weight: 600;
+  cursor: pointer; margin-bottom: 0.5rem; transition: background 0.15s;
+}
+.upv3-notify-btn:hover { background: rgba(255,255,255,0.07); }
+.upv3-max-coming { text-align: center; font-size: 0.7rem; color: var(--text3); }
+
+/* ── Slot machine comparison ─────────────────────────────── */
+.cd-machine {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 0.85rem 1rem 0.7rem;
+  margin-bottom: 0.85rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+/* subtle shimmer stripe across the machine */
+.cd-machine::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(91,122,245,0.04) 50%, transparent 70%);
+  animation: cdMachineSheen 4s 1s linear infinite;
+  pointer-events: none;
+}
+@keyframes cdMachineSheen {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+.cd-machine-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.6rem;
+}
+.cd-machine-sm { padding: 0.7rem 1rem 0.6rem; margin-bottom: 0.75rem; }
+.cd-drum-wrap {
+  min-height: 2.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.55rem;
+}
+.cd-drum {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.cd-emoji { font-size: 1.4rem; flex-shrink: 0; }
+.cd-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  text-align: left;
+}
+.cd-main { font-size: 0.88rem; font-weight: 700; color: var(--text1); }
+.cd-sub  { font-size: 0.68rem; color: var(--text3); }
+
+/* Progress dots inside machine */
+.cd-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-top: 2px;
+}
+.cd-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  transition: background 0.3s, transform 0.25s, width 0.25s;
+  flex-shrink: 0;
+}
+.cd-dot-active {
+  background: #5b7af5;
+  width: 14px;
+  border-radius: 3px;
+  transform: none;
+}
+
+/* ── Paywall mistake counter ─────────────────────────────── */
+.cd-pw-hook {
+  text-align: center;
+  margin-bottom: 0.85rem;
+}
+.cd-pw-num-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.cd-pw-num {
+  font-size: 4.5rem;
+  font-weight: 900;
+  color: #ef4444;
+  letter-spacing: -3px;
+  line-height: 1;
+  animation: cdNumGlow 2s ease-in-out infinite;
+}
+@keyframes cdNumGlow {
+  0%, 100% { text-shadow: 0 0 16px rgba(239,68,68,0.35); }
+  50%       { text-shadow: 0 0 40px rgba(239,68,68,0.65); }
+}
+.cd-pw-num-label {
+  font-size: 0.78rem;
+  color: var(--text3);
+  line-height: 1.4;
+  text-align: left;
+}
+.cd-pw-sub {
+  font-size: 0.8rem;
+  color: var(--text2);
+  line-height: 1.5;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* ── Social proof avatars ────────────────────────────────── */
+.cd-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  margin-bottom: 0.8rem;
+}
+.cd-avs { display: flex; }
+.cd-av {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5b7af5, #7c6af7);
+  border: 2px solid var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.57rem;
+  font-weight: 800;
+  color: #fff;
+  margin-left: -5px;
+  flex-shrink: 0;
+}
+.cd-av:first-child { margin-left: 0; }
+.cd-social-txt { font-size: 0.72rem; color: var(--text3); }
+
+/* ── Modal box glow (breathing feel) ────────────────────── */
+.upv3-box {
+  animation: upv3Enter 0.32s cubic-bezier(0.22,1,0.36,1) both, upv3BoxBreathe 5s 1s ease-in-out infinite;
+}
+@keyframes upv3BoxBreathe {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(91,122,245,0.18), 0 24px 64px rgba(0,0,0,0.55); }
+  50%       { box-shadow: 0 0 0 1px rgba(91,122,245,0.32), 0 24px 64px rgba(0,0,0,0.55), 0 0 60px rgba(91,122,245,0.1); }
+}
+
+/* ── Paywall v3 ──────────────────────────────────────────── */
+.upv3-pw-box { padding: 1.4rem 1.25rem 1.1rem; animation: upv3Enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.upv3-pw-hook { text-align: center; margin-bottom: 0.9rem; }
+.upv3-pw-emoji { font-size: 1.6rem; margin-bottom: 0.35rem; }
+.upv3-pw-title { font-size: 1.1rem; font-weight: 800; color: var(--text1); margin-bottom: 0.3rem; }
+.upv3-pw-sub { font-size: 0.8rem; color: var(--text2); line-height: 1.45; }
+.upv3-pw-locked {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem;
+}
+.upv3-pw-pill {
+  font-size: 0.69rem; color: #fca5a5;
+  background: rgba(239,68,68,0.07);
+  border: 1px solid rgba(239,68,68,0.16);
+  border-radius: 20px; padding: 0.2rem 0.6rem;
 }
 
 .upgrade-pay {
