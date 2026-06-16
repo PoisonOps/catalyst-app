@@ -25,9 +25,9 @@ There are no lint, test, or compile steps.
 
 - **Production:** https://catalyst-app-six.vercel.app
 - **Landing page:** https://catalyst-app-six.vercel.app/landing.html (live)
-- **Deployments:** 20+ Vercel deployments, 60+ commits
-- **Users:** 3 trial signups, 1 paying user (Oviya — ₹489 till CAT)
-- **Fix Mode completions:** confirmed by at least 3 users (Hitarth, Krishna, one other)
+- **Deployments:** 30+ Vercel deployments, 70+ commits
+- **Users:** 18 signups, 1 paying user (Oviya — ₹489 till CAT). Real user activity confirmed: fix_mode_completed events from multiple non-founder users.
+- **Fix Mode completions:** 34% completion rate (11 of 32 sessions, 30-day window). At least 3 distinct users completed fix sessions.
 - **Key contacts:** Hitarth (most engaged, suggested ₹449 bundle), Shirin (converting ~June 13), Siddhant (99.85%ile, founder of CAT Unfiltered, 400 signups / 32 paying in 6 days — validated the concept strongly, but his community is early-stage aspirants; revisit August), Prakhar (warm lead, on Rodha portal — v1 didn't fit his workflow)
 - **Revenue:** ₹489 (1 paying user). Target: ₹1L MRR by month 5–6.
 - **Question bank:** ~794 questions (see Question Bank Status below)
@@ -66,15 +66,15 @@ There are no lint, test, or compile steps.
 
 Fix these before any outreach push — in priority order:
 
-1. **[HIGH] Analytics events not logging** — `events` table exists, `DB.logEvent()` exists, but inserts are not firing. Debug the call chain from `DB.logEvent()` → Supabase insert. Without this we are blind on conversion data.
+1. **[HIGH] DI set images missing** — ~50 Data Interpretation sets have no images uploaded to Supabase Storage. `image_url` fields are empty/null. Affects the entire DI section on mobile. Need to crop, name, and upload image assets for all 50 sets.
 
-2. **[HIGH] DI set images missing** — ~50 Data Interpretation sets have no images uploaded to Supabase Storage. `image_url` fields are empty/null. Affects the entire DI section on mobile. Need to crop, name, and upload image assets for all 50 sets.
+2. **[LOW] `package.json` uncommitted** — run `git diff package.json`, commit if intentional.
 
-3. **[LOW] `package.json` uncommitted** — run `git diff package.json`, commit if intentional.
+3. **[LOW] `.DS_Store` not in `.gitignore`** — one-line fix.
 
-4. **[LOW] `.DS_Store` not in `.gitignore`** — one-line fix.
+> **Events logging — CONFIRMED WORKING** (June 2026). `DB.logEvent()` inserts fire correctly in prod. Verified via `DB.testEvent()` in DevTools console + Supabase SQL query. Previous concern was a false alarm caused by `FLAGS.DEBUG_LOG = false` hiding errors silently. Errors now always `console.warn`.
 
-> **RC scroll on mobile — FIXED.** RC passages now scroll correctly on mobile Chrome. This was a previous high-priority bug; it is resolved.
+> **RC scroll on mobile — FIXED.** RC passages now scroll correctly on mobile Chrome.
 
 ## Architecture
 
@@ -225,19 +225,23 @@ Card question text in the error log is stored on the element as `data-raw="${enc
 
 ### Analytics System
 
-- `DB.logEvent(eventName, userId, metadata)` — fire-and-forget, never blocks UI, no-ops if no Supabase client
+- `DB.logEvent(eventName, userId, metadata)` — fire-and-forget, never blocks UI, no-ops if no Supabase client. Errors always `console.warn` (not gated behind `DEBUG_LOG`).
+- `DB.testEvent()` — call from DevTools console on the prod app to verify insert is working; writes a `test_ping` row to the `events` table.
 - Events table schema: `id, event, user_id (nullable uuid), metadata (jsonb), created_at`
-- Table + RLS policies created by running `analytics-setup.sql` in Supabase SQL Editor once
-- Dashboard: `analytics.html` — standalone page, uses prod anon key, real-time via Supabase channel subscription. Keep URL private.
-- **BUG: events are not logging** — inserts not firing despite `DB.logEvent()` being called. Fix before next outreach push.
+- Table + RLS policies created by running `analytics-setup.sql` in Supabase SQL Editor once. Also run the `get_user_info` RPC function from that file (resolves UUIDs → name + email for the analytics dashboard).
+- Dashboard: `analytics.html` — standalone founder dashboard, uses prod anon key, real-time via Supabase channel subscription. Keep URL private.
+  - All day-bucketing uses **IST (+05:30)** — `istDate()` and `todayIST()` helpers in the script
+  - Founder account excluded via `FOUNDER_IDS` constant at top of script
+  - Calls `get_user_info(user_ids uuid[])` Supabase RPC to show real names/emails in user table and Today's Signups panel
 - Events that should fire:
 
 | Event | Where |
 |---|---|
 | `signup` | `auth.js → signup()` after successful auth |
-| `trial_started` | `db.js → initTrial()` on first call |
+| `trial_started` | `db.js → initTrial()` on first call per device |
 | `fix_mode_started` | `practice.js → loadFixSession()` |
 | `fix_mode_completed` | `practice.js → _showFixSessionComplete()` |
+| `paywall_shown` | `app.js` when paywall overlay is displayed |
 | `day7_return` | `auth.js → onLogin()` — fires once per user when elapsed ≥ 7 days; tracked by `cat_day7_fired_${userId}` in localStorage |
 | `tour_completed` | `onboarding.js → complete()` — used to detect tour completion across Safari/PWA storage contexts on iOS |
 
@@ -343,8 +347,7 @@ The roadmap is now defined by **CATalyst Max v2** (`CATalyst_Max_v2_Plan.md`). M
 2. Draft counselling interview script on paper
 3. Identify PYQ source (clean 10-year papers + solutions)
 4. Sketch roadmap weekly-view UI on paper
-5. Fix analytics bug (events not logging) — still HIGH; we're blind on conversion data
-6. Upload DI set images for ~50 affected sets — still HIGH
+5. Upload DI set images for ~50 affected sets — still HIGH
 
 ### Max v2 build (5–7 weeks solo — **starts only after first MVP Dev client**)
 
