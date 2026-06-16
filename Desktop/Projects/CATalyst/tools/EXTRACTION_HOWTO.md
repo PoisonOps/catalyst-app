@@ -105,11 +105,14 @@ If the numbers look right, you're good to extract.
 
 > Gemini 2.5 Pro is best here (great at reading math off images, huge context). ChatGPT Pro also works. Use whichever — just be consistent.
 
-1. Open a new chat. **Paste the entire prompt from `tools/EXTRACTION_GUIDE.md`** as your first message (this teaches the AI the exact format and the correct LaTeX rules).
-2. **Upload ~8–10 page images** at a time from `out_numsys/pages/` (e.g. `page_0002.png` to `page_0011.png`).
-3. Paste the matching **answers** for those questions — open `out_numsys/manifest.json` and copy the answer lines for those question numbers (or open the individual `packages/q_00XX.md` files, which already contain the answer).
-4. Tell it: *"Generate the SQL for the questions on these pages, following the rules. Use the answers I gave — do not guess."*
-5. Copy the SQL it produces.
+Each `packages/q_XXXX.md` file now contains **three things the AI needs**: the known answer, the **official worked solution from the PDF**, and which page image to read. So the AI never invents an answer OR a solution — it reformats the real ones and fixes the math from the image.
+
+1. Open a new chat. **Paste the entire prompt from `tools/EXTRACTION_GUIDE.md`** as your first message.
+2. For a batch (~8 questions): **attach the matching `packages/q_XXXX.md` files** AND the **page images** they point to (e.g. `q_0001.md`…`q_0008.md` + `page_0003.jpg`…`page_0010.jpg`).
+3. Tell it: *"Extract each attached question into SQL. Use the KNOWN ANSWER and reformat the OFFICIAL WORKED SOLUTION from each package — don't invent. Read the page image to render the math correctly. Ignore video thumbnails and watermarks."*
+4. Copy the SQL it produces.
+
+> **Faster but lower quality:** upload page images only + paste answers, and let the AI write its own solutions. Use this only for easy questions — the package method above gives accurate, grounded solutions.
 
 > **Tip:** A `packages/q_0001.md` file already bundles the clean text + the known answer + which image to look at. For tricky questions (LRDI sets, missing answers), feed ONE package + its page image at a time for maximum care.
 

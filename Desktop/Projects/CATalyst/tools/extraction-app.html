@@ -282,6 +282,37 @@ function parseDoc(pageLines, nPages, pdfName){
     q.answer_type = a? a.type : 'mcq';
   });
 
+  // ── parse the worked-solutions section (so the AI rewrites a REAL solution) ──
+  const solutions = {};
+  const SOL_MARK = /^\s*(\d{1,4})\.\s*([A-E]|-?\d+(?:\.\d+)?)\s*$/;
+  if(answersPage!==null){
+    const flat=[];
+    for(let pi=answersPage; pi<nPages; pi++) flat.push(...pageLines[pi]);
+    let solStart=null;
+    for(let i=0;i<flat.length;i++){
+      const m=flat[i].match(SOL_MARK);
+      if(m && parseInt(m[1])===1){
+        // next line must be prose, not another marker (which would mean answer key)
+        for(const la of flat.slice(i+1,i+3)){
+          if(SOL_MARK.test(la)) break;        // marker → answer key, skip
+          if(la.length>20){ solStart=i; break; }
+        }
+        if(solStart!==null) break;
+      }
+    }
+    if(solStart!==null){
+      let curNo=null, buf=[], last=0;
+      const save=()=>{ if(curNo!==null && buf.length) solutions[curNo]=buf.join('\n').trim(); };
+      for(const l of flat.slice(solStart)){
+        const m=l.match(SOL_MARK);
+        if(m && parseInt(m[1])===last+1){ save(); curNo=parseInt(m[1]); last=curNo; buf=[]; }
+        else if(curNo!==null) buf.push(l);
+      }
+      save();
+    }
+  }
+  questions.forEach(q=> q.solution_src = solutions[q.q_no] || null);
+
   return {pdfName, nPages, answersPage, questions, sets, answers};
 }
 
@@ -300,6 +331,9 @@ async function buildZip(parsed, pageImages){
       const s=setById[q.set_id];
       setblock = `\n## SET CONTEXT (shared)\nset_id: ${s.set_id}\n` + s.instr.join('\n') + '\n';
     }
+    const solblock = q.solution_src
+      ? `\n## OFFICIAL WORKED SOLUTION (rewrite THIS — do not invent your own method)\nThe math below is text-broken; follow the METHOD here and render the math correctly from the question image. Reformat into Trap / Key insight / How to fix.\n\n${q.solution_src}\n`
+      : `\n## OFFICIAL WORKED SOLUTION\n(none found in PDF — solve carefully from the image; the final answer is still the KNOWN ANSWER above)\n`;
     const pkg =
 `# Question ${q.q_no}  (from ${parsed.pdfName})
 
@@ -312,12 +346,13 @@ ${qtext}
 
 ## LOOK AT THIS IMAGE for correct math, symbols, tables, figures:
 pages/page_${String(q.page).padStart(4,'0')}.jpg
-
+${solblock}
 ## YOUR JOB
 Produce the SQL per tools/EXTRACTION_GUIDE.md:
 - Read the IMAGE to get math right; wrap inline math in \\( ... \\), display in \\[ ... \\]
 - Keep text verbatim; use /n/ for line breaks
 - Use the KNOWN ANSWER above (correct_option for mcq / correct_value for tita)
+- Base your solution on the OFFICIAL WORKED SOLUTION above — reformat it, fixing the math
 - question_type = ${q.set_id?'set_question':'single'}; set_id = ${q.set_id ?? 'NULL'}
 - Classify topic/subtopic from the allowed taxonomy
 - Solution ends with the KEY INSIGHT / Trap / How to fix block

@@ -229,6 +229,45 @@ def main():
         else:
             q['answer_type'] = 'mcq' if has_opts else 'tita'
 
+    # ── parse the worked-solutions section (so the AI rewrites a REAL solution) ─
+    # Solutions sit after the answer key, each block = "N. <answer>" then working
+    # lines until the next "N+1." marker. Math here is text-broken, but the METHOD
+    # is intact — the AI fixes the math from the question image.
+    solutions = {}
+    SOL_MARK = re.compile(r'^\s*(\d{1,4})\.\s*([A-E]|-?\d+(?:\.\d+)?)\s*$')
+    if answers_page is not None:
+        flat = []
+        for pi in range(answers_page, n_pages):
+            flat.extend(page_lines[pi])
+        # find solution #1: a "1." marker followed IMMEDIATELY by prose (not another
+        # marker). The answer key's "1." is followed by "2." (a marker) → skipped;
+        # the worked solution's "1." is followed by real working text → matched.
+        sol_start = None
+        for i, l in enumerate(flat):
+            m = SOL_MARK.match(l)
+            if m and int(m.group(1)) == 1:
+                for la in flat[i+1:i+3]:
+                    if SOL_MARK.match(la):
+                        break  # next is a marker → this is the answer key, not a solution
+                    if len(la) > 20:
+                        sol_start = i; break
+                if sol_start is not None:
+                    break
+        if sol_start is not None:
+            cur_no, buf, last = None, [], 0
+            def _save():
+                if cur_no is not None and buf:
+                    solutions[cur_no] = '\n'.join(buf).strip()
+            for l in flat[sol_start:]:
+                m = SOL_MARK.match(l)
+                if m and int(m.group(1)) == last + 1:
+                    _save(); cur_no = int(m.group(1)); last = cur_no; buf = []
+                elif cur_no is not None:
+                    buf.append(l)
+            _save()
+    for q in questions:
+        q['solution_src'] = solutions.get(q['q_no'])
+
     # ── write outputs ────────────────────────────────────────────────────────
     set_by_id = {s['set_id']: s for s in sets}
     for q in questions:
@@ -239,6 +278,16 @@ def main():
             setblock = ("\n## SET CONTEXT (shared)\n"
                         f"set_id: {s['set_id']}\n"
                         + '\n'.join(s['instruction_lines']) + "\n")
+        sol_src = q.get('solution_src')
+        solblock = (
+            "\n## OFFICIAL WORKED SOLUTION (rewrite THIS — do not invent your own method)\n"
+            "The math below is text-broken; follow the METHOD here and render the math\n"
+            "correctly from the question image. Reformat into Trap / Key insight / How to fix.\n\n"
+            f"{sol_src}\n"
+        ) if sol_src else (
+            "\n## OFFICIAL WORKED SOLUTION\n(none found in PDF — solve carefully from the image; "
+            "the final answer is still the KNOWN ANSWER above)\n"
+        )
         pkg = f"""# Question {q['q_no']}  (from {pdf_name})
 
 ## KNOWN ANSWER (from answer key — do NOT guess)
@@ -250,15 +299,16 @@ answer_type: {q['answer_type']}
 
 ## LOOK AT THIS IMAGE for correct math, symbols, tables, figures:
 pages/page_{q['page']:04d}.png
-
+{solblock}
 ## YOUR JOB
 Produce the SQL row(s) per tools/EXTRACTION_GUIDE.md:
 - Read the IMAGE to get math right; wrap inline math in \\( ... \\), display in \\[ ... \\]
 - Keep all text verbatim; use /n/ for line breaks
 - Use the KNOWN ANSWER above (set correct_option for mcq / correct_value for tita)
+- Base your solution on the OFFICIAL WORKED SOLUTION above — reformat it, fixing the math
 - question_type = {'set_question' if q['set_id'] else 'single'}; set_id = {q['set_id'] or 'NULL'}
 - Classify topic/subtopic from the allowed taxonomy
-- Write solution ending in the KEY INSIGHT / Trap / How to fix block
+- Solution ends with the KEY INSIGHT / Trap / How to fix block
 """
         with open(os.path.join(outdir, 'packages', f"q_{q['q_no']:04d}.md"), 'w') as f:
             f.write(pkg)
