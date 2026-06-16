@@ -295,6 +295,15 @@
   </div>
 </div>
 
+<!-- ── TODAY'S SIGNUPS ────────────────────────────────────── -->
+<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.65rem">
+  <div class="section-label" style="margin-bottom:0">Today's Signups</div>
+  <div style="font-size:0.72rem;font-weight:700;color:var(--accent);background:rgba(91,122,245,0.12);border-radius:99px;padding:0.1rem 0.5rem" id="today-signups-count">—</div>
+</div>
+<div class="table-card" style="padding:1rem 1.25rem;margin-bottom:1.5rem">
+  <div id="today-signups-list" style="min-height:2rem"></div>
+</div>
+
 <!-- ── TODAY'S FUNNEL ─────────────────────────────────────── -->
 <div class="section-label">Today's Funnel</div>
 <div class="funnel">
@@ -460,7 +469,7 @@
 
     const [r30, rAll] = await Promise.all([
       sb.from('events').select('event, user_id, created_at, metadata').gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }),
-      sb.from('events').select('event, user_id, created_at, metadata').eq('event', 'signup').gte('created_at', allTimeAgo),
+      sb.from('events').select('event, user_id, created_at, metadata').eq('event', 'signup').gte('created_at', allTimeAgo).order('created_at', { ascending: false }),
     ]);
 
     if (r30.error) {
@@ -472,6 +481,17 @@
 
     const events     = (r30.data || []).filter(e => !FOUNDER_IDS.has(e.user_id));
     const allSignups = (rAll.data || []).filter(e => !FOUNDER_IDS.has(e.user_id));
+
+    // Fetch real names/emails for all users seen in events
+    const allUids = [...new Set([
+      ...events.filter(e=>e.user_id).map(e=>e.user_id),
+      ...allSignups.filter(e=>e.user_id).map(e=>e.user_id),
+    ])];
+    const userInfoMap = {};
+    if (allUids.length) {
+      const { data: uInfo } = await sb.rpc('get_user_info', { user_ids: allUids });
+      (uInfo || []).forEach(u => { userInfoMap[u.id] = { email: u.email, name: u.full_name || u.email }; });
+    }
 
     const count = (arr, type) => arr.filter(e => e.event === type).length;
     const uniq  = (arr, type) => new Set(arr.filter(e => e.event === type && e.user_id).map(e => e.user_id)).size;
@@ -684,8 +704,13 @@
       const rowClass = u.paid ? 'paid-row' : (daysLeft !== null && daysLeft <= 2 && daysLeft > 0) ? 'risk-row' : '';
       const comp = u.fixStarted ? Math.round(u.fixDone/u.fixStarted*100)+'%' : '—';
 
+      const info     = userInfoMap[u.uid];
+      const nameHtml = info
+        ? `<div style="font-size:0.8rem;color:var(--text)">${info.name}</div><div style="font-size:0.68rem;color:var(--text2)">${info.email}</div>`
+        : `<span style="font-family:monospace;font-size:0.72rem;color:var(--text2)">${maskId(u.uid)}</span>`;
+
       return `<tr class="${rowClass}">
-        <td style="font-family:monospace;font-size:0.75rem">${maskId(u.uid)}</td>
+        <td style="text-align:left">${nameHtml}</td>
         <td class="highlight" style="text-align:left">${fmtDate(u.firstSeen)}</td>
         <td>${relTime(u.lastSeen)}</td>
         <td>${statusHtml}</td>
@@ -696,13 +721,28 @@
     }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:1.5rem">No users yet</td></tr>';
 
     // ── STORE SNAPSHOT ───────────────────────────────────────────
+    // ── TODAY'S SIGNUPS ──────────────────────────────────────────
+    const todaySignupUids = allSignups
+      .filter(e => istDate(e.created_at) === today && e.user_id)
+      .map(e => e.user_id);
+    const todaySignupHtml = todaySignupUids.length
+      ? todaySignupUids.map(uid => {
+          const info = userInfoMap[uid];
+          return info
+            ? `<div style="padding:0.45rem 0;border-bottom:1px solid var(--border)"><span style="font-size:0.85rem;color:var(--text);font-weight:600">${info.name}</span> <span style="font-size:0.72rem;color:var(--text2)">${info.email}</span></div>`
+            : `<div style="padding:0.45rem 0;border-bottom:1px solid var(--border);font-family:monospace;font-size:0.75rem;color:var(--text2)">${maskId(uid)}</div>`;
+        }).join('')
+      : `<div style="color:var(--text3);font-size:0.8rem;padding:0.5rem 0">No signups today</div>`;
+    document.getElementById('today-signups-list').innerHTML = todaySignupHtml;
+    document.getElementById('today-signups-count').textContent = todaySignupUids.length || '0';
+
     _snapshot = {
       generatedAt: new Date().toISOString(), today,
       revenue: { total: totalRev, oneTime: onetimeEvs.length, monthly: monthlyEvs.length, convRate },
       pipeline: { totalSigs, inTrial, expiringSoon, expired, paid: paidUserIds.size },
       todayFunnel: { fSignup, fTrial, fFixStart, fFixDone, fPaid },
       engagement: { allStarted, allCompleted, day7Users, avgFixPerUser },
-      dailyRows, users,
+      dailyRows, users, userInfoMap,
     };
 
     document.getElementById('updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -725,11 +765,10 @@
     const funnelLine = `Signup(${todayF.fSignup}) → Trial Started(${todayF.fTrial}, ${pct(todayF.fTrial,todayF.fSignup)}) → Fix Started(${todayF.fFixStart}, ${pct(todayF.fFixStart,todayF.fTrial)}) → Fix Done(${todayF.fFixDone}, ${pct(todayF.fFixDone,todayF.fFixStart)}) → Paid(${todayF.fPaid})`;
 
     const userLines = s.users.slice(0, 20).map(u => {
-      const ts = trialSummary(u);
-      return `  ${maskId(u.uid)} | ${u.paid?'PAID·'+(u.plan||'onetime'):'trial'} | joined ${fmtDate(u.firstSeen)} | last ${relTime(u.lastSeen)} | fix ${u.fixStarted}→${u.fixDone} | events ${u.eventCount} ${ts}`;
+      const info = s.userInfoMap[u.uid];
+      const label = info ? `${info.name} <${info.email}>` : maskId(u.uid);
+      return `  ${label} | ${u.paid?'PAID·'+(u.plan||'onetime'):'trial/expired'} | joined ${fmtDate(u.firstSeen)} | last ${relTime(u.lastSeen)} | fix ${u.fixStarted}→${u.fixDone} | events ${u.eventCount}`;
     }).join('\n');
-
-    function trialSummary(u) { return ''; }
 
     const report = `CATalyst Founder Analytics Report
 Generated: ${s.generatedAt}
