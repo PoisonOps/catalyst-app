@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CATalyst — Extraction Checker</title>
+
+<!-- Same KaTeX the app uses, so rendering matches production exactly -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<style>
+  :root{
+    --bg:#0f1117; --bg2:#1a1d27; --bg3:#252836; --border:rgba(255,255,255,.08);
+    --text:#e8eaf0; --text2:#8b90a0; --text3:#4a4f60;
+    --accent:#5b7af5; --green:#10b981; --red:#ef4444; --amber:#f59e0b; --purple:#8b5cf6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);padding:1.25rem;max-width:1200px;margin:0 auto}
+  h1{font-size:1.15rem;font-weight:800;margin-bottom:.25rem}
+  h1 span{color:var(--accent)}
+  .sub{font-size:.8rem;color:var(--text2);margin-bottom:1rem}
+  textarea{width:100%;height:230px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:ui-monospace,Menlo,monospace;font-size:.78rem;padding:.85rem;resize:vertical;line-height:1.5}
+  textarea:focus{outline:none;border-color:var(--accent)}
+  .controls{display:flex;gap:.6rem;align-items:center;margin:.75rem 0 1rem;flex-wrap:wrap}
+  button{border:none;border-radius:8px;padding:.55rem 1.1rem;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn-go{background:var(--accent);color:#fff}
+  .btn-ghost{background:var(--bg3);color:var(--text2)}
+  button:hover{opacity:.85}
+  .hint{font-size:.72rem;color:var(--text3)}
+
+  /* summary banner */
+  .summary{display:none;border-radius:10px;padding:.9rem 1.1rem;margin-bottom:1rem;font-weight:700;font-size:.9rem}
+  .summary.ok{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);color:var(--green)}
+  .summary.bad{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:var(--red)}
+  .summary .counts{font-weight:500;font-size:.8rem;color:var(--text2);margin-top:.35rem}
+
+  /* issue list */
+  .issues{margin-bottom:1.5rem}
+  .issue{display:flex;gap:.6rem;align-items:flex-start;padding:.5rem .7rem;border-radius:8px;margin-bottom:.4rem;font-size:.8rem;line-height:1.45}
+  .issue.error{background:rgba(239,68,68,.08);border-left:3px solid var(--red)}
+  .issue.warn{background:rgba(245,158,11,.08);border-left:3px solid var(--amber)}
+  .issue .tag{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:.1rem .4rem;border-radius:4px;white-space:nowrap;margin-top:.05rem}
+  .issue.error .tag{background:rgba(239,68,68,.2);color:#ff8585}
+  .issue.warn .tag{background:rgba(245,158,11,.2);color:#ffc663}
+  .issue .loc{color:var(--text2);font-family:ui-monospace,monospace;font-size:.72rem}
+  .issue code{background:var(--bg3);padding:.05rem .3rem;border-radius:4px;font-size:.72rem;color:var(--amber)}
+
+  .section-h{font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin:1.25rem 0 .65rem}
+
+  /* set cards */
+  .set-card{background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.25);border-radius:10px;padding:.9rem 1rem;margin-bottom:.85rem}
+  .set-head{font-size:.72rem;font-weight:800;color:var(--purple);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.05em}
+  .set-meta{font-size:.72rem;color:var(--text2);margin-bottom:.5rem}
+  .set-passage{font-size:.85rem;line-height:1.6;color:var(--text);max-height:170px;overflow:auto;background:var(--bg);border-radius:8px;padding:.7rem;white-space:normal}
+
+  /* question cards */
+  .q-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin-bottom:.85rem}
+  .q-card.has-err{border-color:rgba(239,68,68,.45)}
+  .q-top{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:.5rem;flex-wrap:wrap}
+  .q-id{font-size:.72rem;font-weight:800;color:var(--accent)}
+  .q-badges{display:flex;gap:.35rem;flex-wrap:wrap}
+  .badge{font-size:.62rem;font-weight:700;padding:.12rem .5rem;border-radius:99px;background:var(--bg3);color:var(--text2)}
+  .badge.set{background:rgba(139,92,246,.15);color:var(--purple)}
+  .q-text{font-size:.92rem;line-height:1.6;margin-bottom:.7rem}
+  .opts{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.7rem}
+  .opt{font-size:.85rem;padding:.4rem .65rem;border-radius:7px;background:var(--bg);border:1px solid var(--border);line-height:1.5}
+  .opt.correct{border-color:var(--green);background:rgba(16,185,129,.08)}
+  .opt .ol{font-weight:800;color:var(--text2);margin-right:.4rem}
+  .opt.correct .ol{color:var(--green)}
+  .sol{font-size:.82rem;line-height:1.6;color:var(--text2);background:var(--bg);border-radius:8px;padding:.65rem;margin-top:.3rem}
+  .sol-label{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:.35rem}
+  .q-errs{margin-top:.55rem;display:flex;flex-direction:column;gap:.3rem}
+  .q-errs .issue{margin-bottom:0}
+  .rc-para{margin-bottom:.6rem}
+  .empty{color:var(--text3);font-size:.85rem;padding:2rem;text-align:center}
+  .katex{font-size:1em}
+</style>
+</head>
+<body>
+
+<h1>⚡ <span>CATalyst</span> — Extraction Checker</h1>
+<div class="sub">Paste AI-generated SQL below. It validates every rule and renders every question exactly like the app — all offline, before anything touches Supabase.</div>
+
+<textarea id="sql-input" placeholder="Paste your INSERT INTO sets (...) / INSERT INTO questions (...) statements here…"></textarea>
+
+<div class="controls">
+  <button class="btn-go" onclick="run()">✓ Check &amp; Preview</button>
+  <button class="btn-ghost" onclick="loadSample()">Load sample</button>
+  <button class="btn-ghost" onclick="clearAll()">Clear</button>
+  <span class="hint">Tip: validate in small batches (one PDF chunk at a time).</span>
+</div>
+
+<div class="summary" id="summary"></div>
+<div class="issues" id="global-issues"></div>
+<div id="render-area"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  TAXONOMY — the real source of truth (mirrors js/config.js)
+// ════════════════════════════════════════════════════════════
+const TAXONOMY = {
+  Quant: {
+    Algebra:        ['Linear Equations','Quadratic Equations','Inequalities','Logarithms','Functions','Modulus','Progressions','Polynomials','Maxima-Minima','Surds & Indices'],
+    Arithmetic:     ['Percentages','Profit & Loss','Simple Interest','Compound Interest','Ratio & Proportion','Mixtures & Alligations','Averages','Time & Work','Pipes & Cisterns','Time Speed Distance','Boats & Streams'],
+    Geometry:       ['Lines & Angles','Triangles','Quadrilaterals','Circles','Polygons','Coordinate Geometry','Mensuration 2D','Mensuration 3D'],
+    'Modern Math':  ['Permutations & Combinations','Probability','Set Theory','Venn Diagrams','Sequences & Series','Binomial Theorem'],
+    'Number System':['Divisibility','LCM & HCF','Remainders','Factorials','Base System','Cyclic Pattern','Units Digit','Number Properties'],
+  },
+  VARC: {
+    RC: ['Philosophy','Economics','Science','History','Sociology','Politics','Environment','Abstract'],
+    VA: ['Para Jumbles','Odd One Out','Summary','Sentence Completion','Sentence Correction'],
+  },
+  LRDI: {
+    LR: ['Arrangements','Selections','Games & Tournaments','Blood Relations','Directions','Venn Diagram Based','Ranking'],
+    DI: ['Tables','Bar Graph','Line Graph','Pie Chart','Caselets','Mixed Graphs'],
+    'LR Based DI': ['Tables','Bar Graph','Line Graph','Pie Chart','Caselets','Mixed Graphs','Arrangements','Selections'],
+  },
+};
+const VALID_DIFF = ['Easy','Medium','Hard'];
+const VALID_QTYPE = ['single','standalone','set_question'];
+const VALID_ATYPE = ['mcq','tita'];
+const VALID_OPT   = ['A','B','C','D','E'];
+// LaTeX command markers that MUST live inside \( \) or \[ \] or $$ $$
+const LATEX_CMD = /\\(frac|sqrt|sum|prod|int|times|div|le|ge|ne|neq|pm|infty|alpha|beta|gamma|theta|pi|lfloor|rfloor|lceil|rceil|binom|log|cdot|cdots|ldots|geq|leq|overline|vec|hat|bar)\b|[\^_]\{|\\[a-zA-Z]+\{/;
+
+// ════════════════════════════════════════════════════════════
+//  RENDER — identical logic to js/practice.js formatText/formatRC
+// ════════════════════════════════════════════════════════════
+function formatText(text){
+  if(!text) return '';
+  const blocks=[];
+  let s=String(text).replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g,m=>{
+    const e=m.replace(/</g,'&lt;').replace(/>/g,'&gt;'); blocks.push(e); return `__M_${blocks.length-1}__`;
+  });
+  s=s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  s=s.replaceAll('/n/','<br>').replace(/\\n/g,'<br>').replace(/\n/g,'<br>');
+  blocks.forEach((b,i)=>{ s=s.replace(`__M_${i}__`,()=>b); });
+  return s;
+}
+function formatRC(text){
+  if(!text) return '';
+  const blocks=[];
+  let s=String(text).replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\))/g,m=>{
+    const e=m.replace(/</g,'&lt;').replace(/>/g,'&gt;'); blocks.push(e); return `__M_${blocks.length-1}__`;
+  });
+  s=s.split('/n/n/').map(p=>`<p class="rc-para">${p.replaceAll('/n/','<br>')}</p>`).join('');
+  blocks.forEach((b,i)=>{ s=s.replace(`__M_${i}__`,()=>b); });
+  return s;
+}
+function renderInto(el,raw,isRC){
+  el.innerHTML = isRC ? formatRC(raw) : formatText(raw);
+  if(window.renderMathInElement){
+    renderMathInElement(el,{delimiters:[
+      {left:'$$',right:'$$',display:true},
+      {left:'\\(',right:'\\)',display:false},
+      {left:'\\[',right:'\\]',display:true},
+    ],throwOnError:false});
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  PARSER — splits SQL into statements, then rows of {col:val}
+// ════════════════════════════════════════════════════════════
+// Split top-level by ';' but ignore ';' inside $$...$$ dollar quotes
+function splitStatements(sql){
+  const out=[]; let buf=''; let inDollar=false;
+  for(let i=0;i<sql.length;i++){
+    if(sql[i]==='$'&&sql[i+1]==='$'){ inDollar=!inDollar; buf+='$$'; i++; continue; }
+    if(sql[i]===';'&&!inDollar){ if(buf.trim()) out.push(buf.trim()); buf=''; continue; }
+    buf+=sql[i];
+  }
+  if(buf.trim()) out.push(buf.trim());
+  return out;
+}
+// Tokenise one VALUES tuple body into an array of raw values
+function splitTuple(body){
+  const vals=[]; let buf=''; let depth=0; let inDollar=false;
+  for(let i=0;i<body.length;i++){
+    const c=body[i];
+    if(c==='$'&&body[i+1]==='$'){ inDollar=!inDollar; buf+='$$'; i++; continue; }
+    if(inDollar){ buf+=c; continue; }
+    if(c==='['||c==='('){ depth++; buf+=c; continue; }
+    if(c===']'||c===')'){ depth--; buf+=c; continue; }
+    if(c===','&&depth===0){ vals.push(buf.trim()); buf=''; continue; }
+    buf+=c;
+  }
+  if(buf.trim()!=='') vals.push(buf.trim());
+  return vals;
+}
+// Convert a raw SQL value to {type, value}
+function parseVal(raw){
+  const r=raw.trim();
+  if(/^\$\$[\s\S]*\$\$$/.test(r)) return {type:'str', value:r.slice(2,-2)};
+  if(/^null$/i.test(r))           return {type:'null', value:null};
+  if(/^(true|false)$/i.test(r))   return {type:'bool', value:/^true$/i.test(r)};
+  if(/^-?\d+$/.test(r))           return {type:'int', value:parseInt(r,10)};
+  if(/^'(.*)'$/s.test(r))         return {type:'str', value:r.slice(1,-1)};
+  if(/^ARRAY\[/i.test(r))         return {type:'array', value:r};
+  return {type:'raw', value:r};
+}
+// Parse an INSERT statement → {table, columns, rows:[{col:{type,value}}]}
+function parseInsert(stmt){
+  const m=stmt.match(/insert\s+into\s+(?:public\.)?(\w+)\s*\(([^)]*)\)\s*values\s*([\s\S]*)/i);
+  if(!m) return null;
+  const table=m[1].toLowerCase();
+  const columns=m[2].split(',').map(c=>c.trim().replace(/["`]/g,''));
+  const valuesPart=m[3].trim();
+  // Split into tuples: top-level (...) groups, respecting $$ and nesting
+  const tuples=[]; let buf=''; let depth=0; let inDollar=false; let started=false;
+  for(let i=0;i<valuesPart.length;i++){
+    const c=valuesPart[i];
+    if(c==='$'&&valuesPart[i+1]==='$'){ inDollar=!inDollar; buf+='$$'; i++; continue; }
+    if(inDollar){ buf+=c; continue; }
+    if(c==='('){ depth++; if(depth===1){ started=true; buf=''; continue; } }
+    if(c===')'){ depth--; if(depth===0){ tuples.push(buf); started=false; continue; } }
+    if(started) buf+=c;
+  }
+  const rows=tuples.map(t=>{
+    const raws=splitTuple(t);
+    const row={}; columns.forEach((col,i)=>{ row[col]= raws[i]!==undefined ? parseVal(raws[i]) : {type:'missing',value:undefined}; });
+    row.__rawCount=raws.length;
+    return row;
+  });
+  return {table,columns,rows};
+}
+
+// ════════════════════════════════════════════════════════════
+//  VALIDATION
+// ════════════════════════════════════════════════════════════
+let ISSUES=[]; // {level:'error'|'warn', where, msg}
+function add(level,where,msg){ ISSUES.push({level,where,msg}); }
+
+// LaTeX sanity on a single string field
+function checkLatex(where,field,val){
+  if(val==null) return;
+  // single-$ math (won't render in app — $ excluded)
+  const singleDollar = val.replace(/\$\$/g,'').match(/\$[^$]+\$/);
+  if(singleDollar) add('error',where,`<b>${field}</b>: uses single <code>$…$</code> which the app does NOT render. Use <code>\\(…\\)</code> for inline math.`);
+  // plain (...) wrapping LaTeX commands but not inside \( \)
+  // strip real math blocks first, then look for leftover latex commands
+  const stripped = val.replace(/\\\([\s\S]*?\\\)/g,'').replace(/\\\[[\s\S]*?\\\]/g,'').replace(/\$\$[\s\S]*?\$\$/g,'');
+  if(LATEX_CMD.test(stripped)){
+    add('error',where,`<b>${field}</b>: LaTeX command found OUTSIDE <code>\\(…\\)</code> — it will show as raw text. Wrap it: <code>\\( … \\)</code>.`);
+  }
+  // unbalanced inline delimiters
+  const op=(val.match(/\\\(/g)||[]).length, cl=(val.match(/\\\)/g)||[]).length;
+  if(op!==cl) add('error',where,`<b>${field}</b>: unbalanced inline math delimiters — <code>${op}</code> × <code>\\(</code> vs <code>${cl}</code> × <code>\\)</code>.`);
+  const ob=(val.match(/\\\[/g)||[]).length, cb=(val.match(/\\\]/g)||[]).length;
+  if(ob!==cb) add('error',where,`<b>${field}</b>: unbalanced display math — <code>${ob}</code> × <code>\\[</code> vs <code>${cb}</code> × <code>\\]</code>.`);
+  // real newline inside value (should be /n/)
+  if(/\n/.test(val)) add('error',where,`<b>${field}</b>: contains a real newline — use <code>/n/</code> instead (real newlines break formatting/SQL).`);
+  // truncation / skim markers
+  if(/(\.\.\.|…)/.test(val)) add('warn',where,`<b>${field}</b>: contains <code>…</code> / <code>...</code> — possible truncation. Verify it is verbatim.`);
+  if(/\[(table|figure|diagram|continued|etc)\b/i.test(val)) add('warn',where,`<b>${field}</b>: contains a bracketed placeholder (e.g. <code>[table]</code>) — content may have been summarized instead of extracted.`);
+}
+
+function str(row,col){ const v=row[col]; return v&&v.type==='str'?v.value:(v&&v.type==='null'?null:(v?v.value:undefined)); }
+function isNull(row,col){ const v=row[col]; return !v||v.type==='null'||v.type==='missing'; }
+
+function validate(sql){
+  ISSUES=[];
+  const statements=splitStatements(sql);
+  const setRows=[], qRows=[];
+  let parsedAny=false;
+
+  statements.forEach((stmt,si)=>{
+    if(!/insert\s+into/i.test(stmt)) return;
+    const parsed=parseInsert(stmt);
+    if(!parsed){ add('error',`statement ${si+1}`,'Could not parse this INSERT — check it uses <code>INSERT INTO table (cols) VALUES (…)</code> form.'); return; }
+    parsedAny=true;
+    if(/^insert\s+into\s+(?:public\.)?questions\s+values/i.test(stmt)||/values\s*\(/i.test(stmt)===false){
+      // covered below
+    }
+    if(!/\(/.test(stmt.split(/values/i)[0])){
+      add('error',`statement ${si+1}`,'Uses <code>INSERT INTO … VALUES</code> without a column list — always list columns explicitly.');
+    }
+    parsed.rows.forEach((row,ri)=>{
+      row.__where=`${parsed.table} row ${ri+1}`;
+      // column/value count mismatch
+      if(row.__rawCount!==parsed.columns.length){
+        add('error',row.__where,`Column/value count mismatch — <code>${parsed.columns.length}</code> columns but <code>${row.__rawCount}</code> values. A field is likely missing or an extra comma slipped in.`);
+      }
+      if(parsed.table==='sets') setRows.push({row,cols:parsed.columns});
+      else if(parsed.table==='questions') qRows.push({row,cols:parsed.columns});
+    });
+  });
+
+  if(!parsedAny){ add('error','input','No <code>INSERT INTO</code> statements found.'); return {setRows:[],qRows:[]}; }
+
+  // ── SET checks ──
+  const setIds=new Set();
+  setRows.forEach(({row})=>{
+    const w=row.__where;
+    const id=str(row,'id');
+    if(id==null) add('error',w,'set is missing <b>id</b>.'); else setIds.add(String(id));
+    checkTaxonomy(w,row);
+    ['instruction','passage'].forEach(f=>{ const v=str(row,f); if(v!=null) checkLatex(w,f,v); });
+    // image rule
+    checkImageRule(w,row);
+    const passage=str(row,'passage');
+    if(passage!=null && passage.length<40) add('warn',w,'passage looks very short (&lt;40 chars) — verify the full caselet/passage was captured verbatim.');
+  });
+
+  // ── QUESTION checks ──
+  const seenGlobal=new Set();
+  const usedSetIds=new Set();
+  qRows.forEach(({row})=>{
+    const w=row.__where;
+    // required
+    if(str(row,'question')==null) add('error',w,'missing <b>question</b> text.');
+    if(str(row,'pdf_name')==null) add('warn',w,'missing <b>pdf_name</b>.');
+    if(str(row,'source')==null) add('warn',w,'missing <b>source</b>.');
+    // global_q_no
+    const g=row['global_q_no'];
+    if(g){ if(g.type!=='int') add('warn',w,'<b>global_q_no</b> should be a bare integer (no <code>$$</code>).'); else { if(seenGlobal.has(g.value)) add('warn',w,`duplicate <b>global_q_no</b> <code>${g.value}</code>.`); seenGlobal.add(g.value); } }
+    // taxonomy
+    checkTaxonomy(w,row);
+    // difficulty
+    const diff=str(row,'difficulty'); if(diff!=null&&!VALID_DIFF.includes(diff)) add('error',w,`invalid <b>difficulty</b> <code>${diff}</code> — must be Easy / Medium / Hard.`);
+    // question_type
+    const qt=str(row,'question_type');
+    if(qt!=null&&!VALID_QTYPE.includes(qt)) add('error',w,`invalid <b>question_type</b> <code>${qt}</code> — use single / set_question.`);
+    // answer_type + mcq/tita consistency
+    const at=str(row,'answer_type');
+    if(at!=null&&!VALID_ATYPE.includes(at)) add('error',w,`invalid <b>answer_type</b> <code>${at}</code> — must be mcq or tita.`);
+    if(at==='mcq'){
+      if(isNull(row,'option_a')||isNull(row,'option_b')||isNull(row,'option_c')||isNull(row,'option_d'))
+        add('error',w,'MCQ but one or more of option_a–d is NULL.');
+      const co=str(row,'correct_option');
+      if(co==null) add('error',w,'MCQ but <b>correct_option</b> is NULL.');
+      else if(!VALID_OPT.includes(co)) add('error',w,`<b>correct_option</b> <code>${co}</code> must be A/B/C/D/E.`);
+      if(!isNull(row,'correct_value')) add('warn',w,'MCQ should have <b>correct_value</b> = NULL.');
+      // option label leakage
+      ['option_a','option_b','option_c','option_d','option_e'].forEach(o=>{ const v=str(row,o); if(v&&/^\s*\(?[A-E1-5][).]/.test(v)) add('warn',w,`<b>${o}</b> still contains an option label (e.g. "A)") — strip it.`); });
+    }
+    if(at==='tita'){
+      ['option_a','option_b','option_c','option_d'].forEach(o=>{ if(!isNull(row,o)) add('error',w,`TITA but <b>${o}</b> is not NULL.`); });
+      if(!isNull(row,'correct_option')) add('error',w,'TITA but <b>correct_option</b> is not NULL.');
+      if(isNull(row,'correct_value')) add('error',w,'TITA but <b>correct_value</b> is NULL — needs the actual answer.');
+    }
+    // set linking
+    const sid=str(row,'set_id');
+    if(qt==='set_question'){
+      if(sid==null) add('error',w,'set_question but <b>set_id</b> is NULL — it must reference its set.');
+      else { usedSetIds.add(String(sid)); if(!setIds.has(String(sid))) add('error',w,`<b>set_id</b> <code>${sid}</code> does not match any set defined in this batch.`); }
+    } else {
+      if(sid!=null) add('error',w,`standalone question but <b>set_id</b> = <code>${sid}</code> (should be NULL).`);
+    }
+    // latex on text fields
+    ['question','option_a','option_b','option_c','option_d','option_e','solution'].forEach(f=>{ const v=str(row,f); if(v!=null) checkLatex(w,f,v); });
+    // solution format
+    const sol=str(row,'solution');
+    if(sol==null) add('warn',w,'missing <b>solution</b>.');
+    else if(!/KEY INSIGHT/i.test(sol)) add('warn',w,'solution is missing the <code>KEY INSIGHT</code> block (Trap / Key insight / How to fix).');
+    // image rule
+    checkImageRule(w,row);
+  });
+
+  // sets with no questions
+  setIds.forEach(id=>{ if(!usedSetIds.has(id)) add('warn','sets',`set <code>${id}</code> is defined but no question references it.`); });
+
+  return {setRows,qRows};
+}
+
+function checkTaxonomy(w,row){
+  const subject=str(row,'subject'), topic=str(row,'topic');
+  if(subject!=null&&!TAXONOMY[subject]) { add('error',w,`invalid <b>subject</b> <code>${subject}</code> — must be Quant / VARC / LRDI.`); return; }
+  if(subject&&topic){
+    if(!TAXONOMY[subject][topic]) add('error',w,`invalid <b>topic</b> <code>${topic}</code> for ${subject}. Allowed: ${Object.keys(TAXONOMY[subject]).join(', ')}.`);
+    else {
+      // subtopic may be string or ARRAY[...]
+      const stRaw=row['subtopic'];
+      if(stRaw&&stRaw.type==='str'){
+        const sub=stRaw.value;
+        if(sub&&!TAXONOMY[subject][topic].includes(sub))
+          add('error',w,`invalid <b>subtopic</b> <code>${sub}</code> for ${subject}/${topic}. Allowed: ${TAXONOMY[subject][topic].join(', ')}.`);
+      } else if(stRaw&&stRaw.type==='array'){
+        const inner=stRaw.value.replace(/^ARRAY\[/i,'').replace(/\]$/,'');
+        const items=inner.split(',').map(s=>s.trim().replace(/^['"]|['"]$/g,'')).filter(Boolean);
+        items.forEach(it=>{ if(!TAXONOMY[subject][topic].includes(it)) add('error',w,`invalid <b>subtopic</b> <code>${it}</code> for ${subject}/${topic}.`); });
+      }
+    }
+  }
+}
+function checkImageRule(w,row){
+  const hi=row['has_image'];
+  const url=str(row,'image_url');
+  if(hi&&hi.type==='bool'){
+    if(hi.value===true&&url==null) add('error',w,'<b>has_image</b> = true but <b>image_url</b> is NULL.');
+    if(hi.value===false&&url!=null) add('error',w,'<b>has_image</b> = false but <b>image_url</b> is set.');
+  } else if(hi&&hi.type==='str'){
+    add('warn',w,'<b>has_image</b> should be a bare boolean true/false (no quotes).');
+  }
+  if(url!=null && !/\.(png|jpg|jpeg|webp)("|$|\]|,)?/i.test(url) && !/^\[/.test(url))
+    add('warn',w,`<b>image_url</b> <code>${url}</code> does not look like an image filename.`);
+}
+
+// ════════════════════════════════════════════════════════════
+//  UI
+// ════════════════════════════════════════════════════════════
+function run(){
+  const sql=document.getElementById('sql-input').value;
+  const summary=document.getElementById('summary');
+  const gi=document.getElementById('global-issues');
+  const area=document.getElementById('render-area');
+  gi.innerHTML=''; area.innerHTML='';
+  if(!sql.trim()){ summary.style.display='none'; area.innerHTML='<div class="empty">Paste some SQL and hit Check.</div>'; return; }
+
+  const {setRows,qRows}=validate(sql);
+  const errors=ISSUES.filter(i=>i.level==='error');
+  const warns =ISSUES.filter(i=>i.level==='warn');
+
+  summary.style.display='block';
+  if(errors.length===0){
+    summary.className='summary ok';
+    summary.innerHTML=`✓ No blocking errors — safe to load into DEV.<div class="counts">${setRows.length} set(s) · ${qRows.length} question(s) · ${warns.length} warning(s) to eyeball below.</div>`;
+  } else {
+    summary.className='summary bad';
+    summary.innerHTML=`✗ ${errors.length} error(s) must be fixed before loading.<div class="counts">${setRows.length} set(s) · ${qRows.length} question(s) · ${warns.length} warning(s).</div>`;
+  }
+
+  // global (non-row) issues
+  const rowWheres=new Set([...setRows,...qRows].map(x=>x.row.__where));
+  const globalIssues=ISSUES.filter(i=>!rowWheres.has(i.where));
+  gi.innerHTML=globalIssues.map(issueHTML).join('');
+
+  // render sets
+  if(setRows.length){ area.insertAdjacentHTML('beforeend','<div class="section-h">Sets</div>'); }
+  setRows.forEach(({row})=>{
+    const id=str(row,'id'), subject=str(row,'subject'), topic=str(row,'topic'), diff=str(row,'difficulty');
+    const card=document.createElement('div'); card.className='set-card';
+    card.innerHTML=`<div class="set-head">Set ${id||'?'} · ${subject||'?'} / ${topic||'?'} · ${diff||'?'}</div>`;
+    const instr=str(row,'instruction');
+    if(instr){ const d=document.createElement('div'); d.className='set-meta'; renderInto(d,instr,false); card.appendChild(d); }
+    const passage=str(row,'passage');
+    if(passage){ const p=document.createElement('div'); p.className='set-passage'; renderInto(p,passage,subject==='VARC'); card.appendChild(p); }
+    appendRowIssues(card,row);
+    area.appendChild(card);
+  });
+
+  // render questions
+  if(qRows.length){ area.insertAdjacentHTML('beforeend','<div class="section-h">Questions</div>'); }
+  qRows.forEach(({row})=>{
+    const g=row['global_q_no']?row['global_q_no'].value:'?';
+    const subject=str(row,'subject'), topic=str(row,'topic'), sub=str(row,'subtopic'),
+          micro=str(row,'micro_topic'), at=str(row,'answer_type'), qt=str(row,'question_type'),
+          diff=str(row,'difficulty'), sid=str(row,'set_id');
+    const hasErr=ISSUES.some(i=>i.where===row.__where&&i.level==='error');
+    const card=document.createElement('div'); card.className='q-card'+(hasErr?' has-err':'');
+    let badges=`<span class="badge">${subject||'?'}/${topic||'?'}</span>`;
+    if(sub) badges+=`<span class="badge">${sub}</span>`;
+    if(micro) badges+=`<span class="badge">${micro}</span>`;
+    badges+=`<span class="badge">${at||'?'}</span><span class="badge">${diff||'?'}</span>`;
+    if(qt==='set_question') badges+=`<span class="badge set">set ${sid||'?'}</span>`;
+    card.innerHTML=`<div class="q-top"><span class="q-id">Q${g}</span><div class="q-badges">${badges}</div></div>`;
+    const qt2=document.createElement('div'); qt2.className='q-text'; renderInto(qt2,str(row,'question'),false); card.appendChild(qt2);
+    // options
+    if(at==='mcq'){
+      const co=str(row,'correct_option');
+      const opts=document.createElement('div'); opts.className='opts';
+      ['A','B','C','D','E'].forEach(L=>{
+        const v=str(row,'option_'+L.toLowerCase());
+        if(v==null) return;
+        const o=document.createElement('div'); o.className='opt'+(co===L?' correct':'');
+        const tx=document.createElement('span'); renderInto(tx,v,false);
+        o.innerHTML=`<span class="ol">${L}</span>`; o.appendChild(tx); opts.appendChild(o);
+      });
+      card.appendChild(opts);
+    } else if(at==='tita'){
+      const o=document.createElement('div'); o.className='opt correct';
+      o.innerHTML=`<span class="ol">TITA</span>`; const tx=document.createElement('span'); renderInto(tx,str(row,'correct_value')||'(no answer)',false); o.appendChild(tx); card.appendChild(o);
+    }
+    // solution
+    const sol=str(row,'solution');
+    if(sol){ const sd=document.createElement('div'); sd.className='sol';
+      sd.innerHTML='<div class="sol-label">Solution</div>'; const sb=document.createElement('div'); renderInto(sb,sol,false); sd.appendChild(sb); card.appendChild(sd); }
+    appendRowIssues(card,row);
+    area.appendChild(card);
+  });
+}
+function appendRowIssues(card,row){
+  const rowIssues=ISSUES.filter(i=>i.where===row.__where);
+  if(!rowIssues.length) return;
+  const box=document.createElement('div'); box.className='q-errs';
+  box.innerHTML=rowIssues.map(issueHTML).join('');
+  card.appendChild(box);
+}
+function issueHTML(i){
+  return `<div class="issue ${i.level}"><span class="tag">${i.level}</span><div><span class="loc">${i.where}</span> — ${i.msg}</div></div>`;
+}
+function clearAll(){ document.getElementById('sql-input').value=''; run(); }
+function loadSample(){
+  document.getElementById('sql-input').value =
+`INSERT INTO sets (id, subject, topic, subtopic, difficulty, instruction, passage, has_image, image_url, pdf_name, source) VALUES
+($$1$$, $$LRDI$$, $$DI$$, $$Tables$$, $$Medium$$, $$Study the table and answer.$$, $$Sales of 4 products across 5 months are shown.$$, true, $$set_1_img_1.png$$, $$sample.pdf$$, $$Cracku$$);
+
+INSERT INTO questions (global_q_no, subject, topic, subtopic, micro_topic, question_type, answer_type, difficulty, question, option_a, option_b, option_c, option_d, option_e, correct_option, correct_value, solution, set_id, pdf_name, source, has_image, image_url, solution_image_url) VALUES
+(1, $$LRDI$$, $$DI$$, $$Tables$$, $$Count / Frequency$$, $$set_question$$, $$mcq$$, $$Medium$$, $$If product A's sales grew by \\( \\frac{1}{4} \\) each month, what was the total?$$, $$120$$, $$150$$, $$\\( \\frac{500}{3} \\)$$, $$200$$, NULL, $$C$$, NULL, $$Apply growth factor. Total = \\( 120 \\times \\frac{5}{4} \\).../n/KEY INSIGHT:/n/How to start: read the table row for A.$$, $$1$$, $$sample.pdf$$, $$Cracku$$, false, NULL, NULL),
+(2, $$Quant$$, $$Algebra$$, $$Quadratic Equations$$, $$Roots$$, $$single$$, $$tita$$, $$Hard$$, $$Find the max value of $b+c$ where roots satisfy the given.$$, NULL, NULL, NULL, NULL, NULL, NULL, $$5$$, $$Working.../n/KEY INSIGHT:/n/How to start: use Vieta.$$, NULL, $$sample.pdf$$, $$Cracku$$, false, NULL, NULL);`;
+  run();
+}
+window.addEventListener('DOMContentLoaded',()=>{ /* wait for katex defer */ setTimeout(()=>{},0); });
+</script>
+</body>
+</html>
