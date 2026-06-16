@@ -482,7 +482,7 @@
     const monthlyEvs  = paymentEvs.filter(e => (e.metadata?.plan) === 'monthly');
     const totalRev    = onetimeEvs.length * PRICE_ONETIME + monthlyEvs.length * PRICE_MONTHLY;
     const paidUserIds = new Set(paymentEvs.filter(e=>e.user_id).map(e=>e.user_id));
-    const totalSigs   = new Set([...allSignups.map(e=>e.user_id), ...events.filter(e=>e.event==='signup'&&e.user_id).map(e=>e.user_id)]).size;
+    const totalSigs   = new Set(allSignups.filter(e=>e.user_id).map(e=>e.user_id)).size;
     const convRate    = totalSigs ? Math.round(paidUserIds.size / totalSigs * 100) + '%' : '—';
 
     document.getElementById('r-total').textContent     = '₹' + totalRev.toLocaleString('en-IN');
@@ -494,18 +494,26 @@
     document.getElementById('r-conv').textContent      = convRate;
 
     // ── TRIAL PIPELINE ───────────────────────────────────────────
-    // Map user → trial start time
+    // Use allSignups (365d) as the canonical user set — one entry per user,
+    // keyed by earliest signup timestamp. trial_started fills in users whose
+    // signup event is missing/older but who have recent activity.
     const trialStartMap = {};
-    [...events.filter(e=>e.event==='trial_started'), ...allSignups].forEach(e => {
+    // Signup events are the source of truth for user existence
+    allSignups.forEach(e => {
       if (!e.user_id) return;
       const t = new Date(e.created_at).getTime();
       if (!trialStartMap[e.user_id] || t < trialStartMap[e.user_id]) trialStartMap[e.user_id] = t;
+    });
+    // trial_started fills gaps only for users already in the map (not new phantom users)
+    events.filter(e => e.event === 'trial_started' && e.user_id && trialStartMap[e.user_id]).forEach(e => {
+      const t = new Date(e.created_at).getTime();
+      if (t < trialStartMap[e.user_id]) trialStartMap[e.user_id] = t;
     });
 
     const now = Date.now();
     let inTrial = 0, expiringSoon = 0, expired = 0;
     Object.entries(trialStartMap).forEach(([uid, startMs]) => {
-      if (paidUserIds.has(uid)) return; // already paid — not in trial bucket
+      if (paidUserIds.has(uid)) return;
       const daysElapsed = (now - startMs) / 86400000;
       const daysLeft    = Math.max(0, TRIAL_DAYS - daysElapsed);
       if (daysLeft <= 0)  expired++;
@@ -513,7 +521,8 @@
       else inTrial++;
     });
 
-    document.getElementById('p-total').textContent     = totalSigs || Object.keys(trialStartMap).length;
+    const pipelineTotal = Object.keys(trialStartMap).length + paidUserIds.size;
+    document.getElementById('p-total').textContent     = pipelineTotal;
     document.getElementById('p-total-sub').textContent = paidUserIds.size + ' paid';
     document.getElementById('p-in-trial').textContent  = inTrial;
     document.getElementById('p-expiring').textContent  = expiringSoon;
