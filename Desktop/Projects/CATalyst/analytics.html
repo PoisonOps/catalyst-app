@@ -431,9 +431,18 @@
     const d = Math.floor(h / 24);
     return d + 'd ago';
   }
+  // IST = UTC+05:30 — all "today" and day-bucket logic uses IST dates
+  const IST_MS = 5.5 * 3600 * 1000;
+  function istDate(utcIso) {
+    // YYYY-MM-DD in IST for any UTC ISO string
+    return new Date(new Date(utcIso).getTime() + IST_MS).toISOString().split('T')[0];
+  }
+  function todayIST() {
+    return new Date(Date.now() + IST_MS).toISOString().split('T')[0];
+  }
   function makeDays(n) {
     return Array.from({ length: n }, (_, i) => {
-      const d = new Date(Date.now() - (n - 1 - i) * 86400000);
+      const d = new Date(Date.now() + IST_MS - (n - 1 - i) * 86400000);
       return d.toISOString().split('T')[0];
     });
   }
@@ -442,13 +451,9 @@
     return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
   }
   function maskId(uid) { if (!uid) return 'anon'; return uid.slice(0,6)+'…'+uid.slice(-4); }
-  function maskId(uid) {
-    if (!uid) return 'anon';
-    return uid.slice(0, 6) + '…' + uid.slice(-4);
-  }
 
   async function load() {
-    const today          = new Date().toISOString().split('T')[0];
+    const today          = todayIST();
     const thirtyDaysAgo  = new Date(Date.now() - 30 * 86400000).toISOString();
     // For pipeline we need all-time events (signups can be older)
     const allTimeAgo     = new Date(Date.now() - 365 * 86400000).toISOString();
@@ -515,7 +520,7 @@
     document.getElementById('p-expired').textContent   = expired;
 
     // ── TODAY'S FUNNEL ───────────────────────────────────────────
-    const today_ev  = events.filter(e => e.created_at.startsWith(today));
+    const today_ev  = events.filter(e => istDate(e.created_at) === today);
     const fSignup   = count(today_ev, 'signup');
     const fTrial    = count(today_ev, 'trial_started');
     const fFixStart = count(today_ev, 'fix_mode_started');
@@ -549,7 +554,7 @@
     // ── 14-DAY DATA ──────────────────────────────────────────────
     const days14 = makeDays(14);
     const dailyRows = days14.map(day => {
-      const dayEvs  = events.filter(e => e.created_at.startsWith(day));
+      const dayEvs  = events.filter(e => istDate(e.created_at) === day);
       const dau     = new Set(dayEvs.filter(e=>e.user_id).map(e=>e.user_id)).size;
       const signups = count(dayEvs, 'signup');
       const fixS    = count(dayEvs, 'fix_mode_started');
