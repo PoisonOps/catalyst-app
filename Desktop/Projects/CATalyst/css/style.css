@@ -3907,6 +3907,203 @@ body {
   line-height: 1.4;
 }
 
+/* ── Urgency bar ────────────────────────────────────────── */
+.upgrade-urgency-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: #ef4444;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+.urgency-dot {
+  width: 7px;
+  height: 7px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse-red 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ── Coaching anchor line ────────────────────────────────── */
+.upgrade-anchor-line {
+  font-size: 0.78rem;
+  color: var(--text2);
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.upgrade-anchor-line s {
+  color: var(--text3);
+  text-decoration-color: #ef4444;
+}
+
+/* ── Hero plan card (₹489) ───────────────────────────────── */
+.upgrade-hero-plan {
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(91,122,245,0.1), rgba(91,122,245,0.04));
+  cursor: pointer;
+  margin-bottom: 0.65rem;
+  position: relative;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.upgrade-hero-plan:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(91,122,245,0.2);
+}
+
+.hero-plan-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.hero-plan-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+.hero-plan-scarcity {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #f59e0b;
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.25);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.hero-plan-price {
+  margin-bottom: 0.4rem;
+}
+
+.hero-plan-equiv {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  font-family: var(--font-display);
+}
+
+.hero-plan-equiv span {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text2);
+}
+
+.hero-plan-total {
+  font-size: 0.78rem;
+  color: var(--text2);
+  margin-top: 0.2rem;
+}
+
+.hero-plan-perday {
+  font-size: 0.75rem;
+  color: var(--text3);
+  border-top: 1px solid rgba(91,122,245,0.15);
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* ── Secondary monthly plan ─────────────────────────────── */
+.upgrade-secondary-plan {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  transition: border-color 0.15s;
+  background: var(--bg2);
+}
+
+.upgrade-secondary-plan:hover,
+.upgrade-secondary-plan.plan-selected {
+  border-color: var(--accent);
+}
+
+.secondary-plan-label {
+  font-size: 0.78rem;
+  color: var(--text2);
+  font-weight: 500;
+}
+
+.secondary-plan-price {
+  font-size: 0.82rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.secondary-plan-price span {
+  font-weight: 400;
+  color: var(--text2);
+}
+
+/* ── Features v2 ─────────────────────────────────────────── */
+.upgrade-feats-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.upgrade-feat-v2 {
+  font-size: 0.82rem;
+  color: var(--text);
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.upgrade-feat-v2:last-child { border-bottom: none; }
+.upgrade-feat-v2 em { font-style: normal; font-weight: 600; color: var(--accent); }
+
+/* ── Trust row ───────────────────────────────────────────── */
+.upgrade-trust-row {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.72rem;
+  color: var(--text3);
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* ── Refund note ─────────────────────────────────────────── */
+.upgrade-refund-note {
+  font-size: 0.73rem;
+  color: var(--text3);
+  text-align: center;
+  margin-top: 0.4rem;
+  margin-bottom: 0;
+}
+
+/* ── Paywall locked row sub-label ───────────────────────── */
+.lock-sub {
+  font-size: 0.72rem;
+  color: var(--text3);
+  font-weight: 400;
+}
+
 /* ── Tier tabs ─────────────────────────────────────────── */
 .upgrade-tier-tabs {
   display: flex;

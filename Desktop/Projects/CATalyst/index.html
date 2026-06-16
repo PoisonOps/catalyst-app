@@ -890,31 +890,58 @@
 
       <!-- PRO TIER -->
       <div id="upgrade-tier-pro">
-        <div class="upgrade-hero">
-          <h3>CATalyst Pro</h3>
-          <p class="upgrade-founders">Everything you need to fix your mistakes before CAT 2026.</p>
+
+        <!-- Urgency bar -->
+        <div class="upgrade-urgency-bar">
+          <span class="urgency-dot"></span>
+          <span>CAT 2026 — <strong id="modal-days-left">—</strong> days left to build your system</span>
         </div>
-        <div class="upgrade-features">
-          <div class="upgrade-feat">✅ Unlimited question bank</div>
-          <div class="upgrade-feat">✅ Full mistake tracking + Fix Mode</div>
-          <div class="upgrade-feat">✅ Sync across all devices</div>
-          <div class="upgrade-feat">✅ Access till CAT 2026</div>
+
+        <!-- Coaching comparison anchor -->
+        <div class="upgrade-anchor-line">
+          Coaching costs <s>₹15,000–30,000</s>. You're getting the full system for:
         </div>
-        <div class="upgrade-founder-note">🔒 Founder's pricing — first 20 users only</div>
-        <div class="upgrade-plans">
-          <div class="upgrade-plan" id="plan-monthly" onclick="selectPlan('monthly')">
-            <div class="plan-badge plan-badge-amber">Auto-renews</div>
-            <div class="plan-amount">₹99<span>/mo</span></div>
-            <div class="plan-desc">Cancel anytime<br>Auto-pay monthly</div>
+
+        <!-- Hero plan — ₹489 -->
+        <div class="upgrade-hero-plan plan-selected" id="plan-onetime" onclick="selectPlan('onetime')">
+          <div class="hero-plan-top">
+            <div class="hero-plan-badge">⭐ Best Value — Founder's Price</div>
+            <div class="hero-plan-scarcity" id="modal-slots">19 slots left</div>
           </div>
-          <div class="upgrade-plan plan-selected" id="plan-onetime" onclick="selectPlan('onetime')">
-            <div class="plan-badge plan-badge-blue">Best Value</div>
-            <div class="plan-amount">₹489</div>
-            <div class="plan-desc">Till CAT 2026<br>One time · No renewals</div>
+          <div class="hero-plan-price">
+            <div class="hero-plan-equiv">₹81<span>/month equivalent</span></div>
+            <div class="hero-plan-total">₹489 total · One time · Till CAT 2026</div>
           </div>
+          <div class="hero-plan-perday">Less than ₹3/day — cheaper than a chai ☕</div>
         </div>
-        <button class="btn-pay-now" id="modal-pay-btn" onclick="initiatePayment('modal')">Pay ₹489 — Secure Checkout</button>
-        <p class="upgrade-trust">🔒 Secured by Razorpay · UPI · Cards · Net banking</p>
+
+        <!-- Secondary plan — ₹99/mo -->
+        <div class="upgrade-secondary-plan" id="plan-monthly" onclick="selectPlan('monthly')">
+          <div class="secondary-plan-label">Or pay monthly</div>
+          <div class="secondary-plan-price">₹99<span>/month</span> · Auto-renews · Cancel anytime</div>
+        </div>
+
+        <!-- Features -->
+        <div class="upgrade-feats-v2">
+          <div class="upgrade-feat-v2">✅ 790+ real CAT questions — Quant, VARC, LRDI</div>
+          <div class="upgrade-feat-v2">✅ Fix Mode — drills only <em>your</em> weak spots</div>
+          <div class="upgrade-feat-v2">✅ Error Log — see exactly what costs you marks</div>
+          <div class="upgrade-feat-v2">✅ Sync across all your devices</div>
+        </div>
+
+        <!-- CTA -->
+        <button class="btn-pay-now" id="modal-pay-btn" onclick="initiatePayment('modal')">
+          Unlock CATalyst Pro — ₹489
+        </button>
+
+        <!-- Trust row -->
+        <div class="upgrade-trust-row">
+          <span>🔒 Razorpay</span>
+          <span>⚡ Instant access</span>
+          <span>↩ 7-day refund</span>
+        </div>
+
+        <p class="upgrade-refund-note">Not helpful? WhatsApp us within 7 days — full refund, no questions.</p>
       </div>
 
       <!-- MAX TIER (coming soon) -->
@@ -954,44 +981,55 @@
   <!-- PAYWALL — shown when trial expires, no close button -->
   <div id="paywall-overlay" class="paywall-overlay hidden">
     <div class="paywall-box">
+
+      <!-- What they're losing -->
       <div class="paywall-header">
-        <div class="paywall-icon">⏰</div>
-        <h2 class="paywall-title">Your free trial has ended</h2>
-        <p class="paywall-desc">Your mistakes are saved. Upgrade to keep fixing them.</p>
+        <h2 class="paywall-title">Your trial ended — your mistakes are waiting.</h2>
+        <p class="paywall-desc">You found <strong id="pw-mistake-count">—</strong> mistakes in 7 days. They're all saved. Upgrade to keep fixing them before CAT.</p>
       </div>
-      <div class="paywall-stat-block">
-        <div class="paywall-stat">
-          <span class="paywall-stat-num" id="pw-mistake-count">—</span>
-          <span class="paywall-stat-label">mistakes tracked</span>
-        </div>
-        <div class="paywall-stat-divider"></div>
-        <div class="paywall-stat">
-          <span class="paywall-stat-num">7</span>
-          <span class="paywall-stat-label">days of data saved</span>
-        </div>
-      </div>
+
+      <!-- Locked features -->
       <div class="paywall-locked">
-        <div class="paywall-locked-title">Now locked</div>
-        <div class="paywall-locked-row">🔒 Practice Questions</div>
-        <div class="paywall-locked-row">🔒 My Error Log</div>
-        <div class="paywall-locked-row">🔒 Fix My Mistakes loop</div>
+        <div class="paywall-locked-row">🔒 Practice — <span class="lock-sub">790+ questions locked</span></div>
+        <div class="paywall-locked-row">🔒 Error Log — <span class="lock-sub">your mistake patterns locked</span></div>
+        <div class="paywall-locked-row">🔒 Fix Mode — <span class="lock-sub">your weak-spot drills locked</span></div>
       </div>
-      <div class="upgrade-founder-note" style="margin-bottom:1rem">🔒 Founder's pricing — first 20 users only</div>
-      <div class="upgrade-plans" style="margin-bottom:1rem">
-        <div class="upgrade-plan" id="pw-plan-monthly" onclick="pwSelectPlan('monthly')">
-          <div class="plan-badge plan-badge-amber">Auto-renews</div>
-          <div class="plan-amount">₹99<span>/mo</span></div>
-          <div class="plan-desc">Cancel anytime<br>Auto-pay monthly</div>
-        </div>
-        <div class="upgrade-plan plan-selected" id="pw-plan-onetime" onclick="pwSelectPlan('onetime')">
-          <div class="plan-badge plan-badge-blue">Best Value</div>
-          <div class="plan-amount">₹489</div>
-          <div class="plan-desc">Till CAT 2026<br>One time · No renewals</div>
-        </div>
+
+      <!-- Coaching anchor -->
+      <div class="upgrade-anchor-line" style="margin-bottom:0.75rem">
+        Coaching costs <s>₹15,000–30,000</s>. Keep your system for:
       </div>
-      <button class="btn-pay-now" id="pw-pay-btn" onclick="initiatePayment('paywall')">Pay ₹489 — Secure Checkout</button>
-      <p class="upgrade-trust">🔒 Secured by Razorpay · UPI · Cards · Net banking</p>
-      <p class="paywall-already-paid">Already paid? <a href="https://wa.me/917080442040" target="_blank" class="pay-whatsapp" style="font-size:0.8rem">Message us on WhatsApp ↗</a></p>
+
+      <!-- Hero plan -->
+      <div class="upgrade-hero-plan plan-selected" id="pw-plan-onetime" onclick="pwSelectPlan('onetime')" style="margin-bottom:0.5rem">
+        <div class="hero-plan-top">
+          <div class="hero-plan-badge">⭐ Best Value — Founder's Price</div>
+          <div class="hero-plan-scarcity">19 slots left</div>
+        </div>
+        <div class="hero-plan-price">
+          <div class="hero-plan-equiv">₹81<span>/month equivalent</span></div>
+          <div class="hero-plan-total">₹489 total · One time · Till CAT 2026</div>
+        </div>
+        <div class="hero-plan-perday">Less than ₹3/day · <strong id="pw-days-left">—</strong> days to CAT</div>
+      </div>
+
+      <!-- Secondary monthly -->
+      <div class="upgrade-secondary-plan" id="pw-plan-monthly" onclick="pwSelectPlan('monthly')" style="margin-bottom:1rem">
+        <div class="secondary-plan-label">Or pay monthly</div>
+        <div class="secondary-plan-price">₹99<span>/month</span> · Auto-renews · Cancel anytime</div>
+      </div>
+
+      <button class="btn-pay-now" id="pw-pay-btn" onclick="initiatePayment('paywall')">
+        Unlock Everything — ₹489
+      </button>
+
+      <div class="upgrade-trust-row">
+        <span>🔒 Razorpay</span>
+        <span>⚡ Instant access</span>
+        <span>↩ 7-day refund</span>
+      </div>
+
+      <p class="paywall-already-paid">Already paid? <a href="https://wa.me/917080442040" target="_blank" class="pay-whatsapp">WhatsApp us ↗</a></p>
       <button class="paywall-back-btn" onclick="document.getElementById('paywall-overlay').classList.add('hidden'); document.body.style.overflow=''; App.navigate('dashboard');">← Back to Dashboard</button>
     </div>
   </div>
@@ -1004,6 +1042,14 @@
   <div id="toast" class="toast hidden"></div>
 
   <script>
+    // ── CAT countdown ─────────────────────────────────────────────
+    (function() {
+      const CAT_DATE = new Date('2026-11-29'); // CAT 2026 approx date
+      const today    = new Date();
+      const days     = Math.max(0, Math.ceil((CAT_DATE - today) / (1000 * 60 * 60 * 24)));
+      document.querySelectorAll('#modal-days-left, #pw-days-left').forEach(el => { if (el) el.textContent = days; });
+    })();
+
     // ── Payment state ──────────────────────────────────────────────
     let _activePlan    = 'onetime'; // 'monthly' | 'onetime'
     let _activePwPlan  = 'onetime';
@@ -1035,7 +1081,7 @@
       document.getElementById('pw-plan-monthly').classList.toggle('plan-selected', isMonthly);
       document.getElementById('pw-plan-onetime').classList.toggle('plan-selected', !isMonthly);
       const btn = document.getElementById('pw-pay-btn');
-      btn.textContent = isMonthly ? 'Pay ₹99/mo — Secure Checkout' : 'Pay ₹489 — Secure Checkout';
+      btn.textContent = isMonthly ? 'Unlock Everything — ₹99/mo' : 'Unlock Everything — ₹489';
     }
 
     // ── Max notify ─────────────────────────────────────────────────
