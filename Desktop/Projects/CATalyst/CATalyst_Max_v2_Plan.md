@@ -327,3 +327,158 @@ Execution-dependent: bottom of band = product shipped, marketing sporadic. Top o
 ---
 
 *The product is good. The plan is sound. The only variable is whether distribution happens daily. Ship the client first. Then ship this.*
+
+---
+---
+
+# PART II — Deep Build Spec (added June 16, 2026)
+
+*This half is the detailed brainstorm behind Part I. Part I is the strategy; Part II is how the product actually feels and how it gets funded. Nothing here overrides the locked decisions in §12 — it extends them.*
+
+## 14. AI Architecture — Route by Stakes, Not Priority
+
+The mental model is NOT "Claude is the priority model." It is: **route each task to the cheapest model that can do it well.** Most tasks are high-volume and low-stakes (free models). Exactly three tasks are sacred and define the product (Claude only).
+
+| Task | Model | Why |
+|---|---|---|
+| Interview conversation (many turns, real-time) | **Groq (Llama)** | Speed makes it feel alive; it's collecting info, depth not needed mid-turn. Free + instant. |
+| Parsing daily check-ins (sentiment, signal) | **Gemini Flash (free tier)** | High volume, low stakes. |
+| Motivational nudges / micro-copy | **Gemini Flash** | Cheap, frequent. |
+| Voice → text (check-ins, interview) — Phase 2 | **Groq Whisper** | Free, fast. |
+| **Profile synthesis (the "I see you" moment)** | **Claude** | This IS the product. Cannot be generic. |
+| **Roadmap generation** | **Claude** | Pedagogical soundness = life or death. |
+| **Weekly review + plan adjustment** | **Claude** | The retention engine. |
+| DPP selection | **No AI — pure SQL/logic** | Weighted query. (Locked: AI thinks once, logic repeats daily.) |
+
+Claude runs ~**3-4 times per user per week**, never constantly. Matches the ~₹40 one-time + ₹10/month unit economics already in §7.
+
+**Implementation rule:** do NOT build the 3-way routing layer on day one. Build one function — `askAI(task, prompt)` — that calls Groq (free) for everything during dev. Design the interface so swapping Claude into the 3 sacred tasks later is a one-line change each. Every AI call returns strict JSON with a fallback chain (Claude → Gemini → cached template) so a provider outage never breaks a user's day.
+
+## 15. Bootstrap Finance — The App Funds Itself From Rupee One
+
+The locked decision "₹99 paid BEFORE any AI runs" (§12.5) is not just a seriousness filter — **it is the cash-flow mechanism.** Money arrives before the AI spends anything:
+
+- ₹99 lands → THEN AI runs interview + roadmap → Claude costs ~₹40 → ₹57 margin kept. **Never out of pocket.**
+
+**Cost to build + test the entire Max product: ₹0 (only time).**
+
+- **Dev/testing:** 100% on **Groq** (genuinely free, no deposit). Entire flow — interview, synthesis, roadmap, weekly review — works for development.
+- **Gemini's ₹1000 refundable is for the paid Vertex/Cloud billing tier — NOT needed.** Use Google AI Studio's separate free Flash tier as fallback. Skip the ₹1000 until there's revenue.
+- **Claude waits** until the first ₹99 arrives, then swaps into the 3 sacred tasks — funded by that same ₹99.
+
+**You never spend money you don't already have from a user.**
+
+## 16. The Bootstrap Sequence (Total Cost ₹0) — Proof Before Price
+
+The "why would an aspirant pay a random guy?" fear is real but already designed around. Nobody pays ₹999 to a stranger for a promise — and the model never asks them to.
+
+```
+1. Self-test on Groq (free)          → Sahil (91%ile) runs his own profile; validate the magic moment
+2. 10 free beta users on Groq (free) → testimonials + real improvement graphs; nobody pays, no trust tested
+3. Publish proof                      → "Riya, self-study, Arithmetic 54% → 78% in 5 weeks" — graphs, not promises
+4. NOW charge ₹99                     → people pay for proof + risk-removal (₹99 ≈ one Zomato order)
+5. ₹99 funds Claude for that user     → upgrade the 3 sacred tasks; margin positive
+6. ₹99 → ₹999 (the week earned it)    → product earned the upgrade, not Sahil's reputation
+```
+
+**Why this dissolves the trust problem:** they never pay for a promise (₹99 removes risk, trust barely matters at that price); the *product* earns the ₹999 by day 8 (a quality question in our control, not a trust question); proof is published before any price is charged; and trust is built earlier through content (§9), not at the paywall. PYQs are the trust anchor — nobody questions real CAT papers.
+
+## 17. The Interview — Therapy, Not a Form (7 Acts)
+
+The opening message is a psychological permission slip: *"Before I build your plan, I want to understand you — not your scores, not your target college. You."* It tells the user they don't have to perform.
+
+Branching tree (stored as JSON config — questions + branches + conditions):
+
+1. **The Situation (no judgment)** — final-year / working / dropper / 2nd-3rd year / between. Each branch diverges completely. A dropper gets asked about last year's emotional wreckage; a working pro about day structure first, not weaknesses.
+2. **The Daily Reality** — *"walk me through a typical weekday"* (literally, not "how many hours"). Captures placement season, hostel vs home, multiple exams (XAT/NMAT/IIFT), family responsibilities. Same "2 hours" means totally different things across these.
+3. **The Honest Baseline** — not "what's your mock %" but "what *happened* in your last mock." The story reveals more than the score ("ran out of time" = attention; "I panic" = anxiety). Self-rated subject comfort 1-5, then probe one — nobody is uniformly bad at a subject.
+4. **The Why (the real therapy)** — *"Why CAT? The real reason, not the career answer."* Determines resilience, motivational framing, and whether they run toward or away from something. The single most important question in the interview.
+5. **The Real Obstacles** — *"What's actually stopped you from being consistent until now?"* (this phrasing gets honesty; "what are your challenges" gets generic). Time / consistency / specific-area freeze / distraction / the guilt loop / family pressure / comparison.
+6. **The Fears** — *"What would feel like failure?"* + *"What scares you most right now?"* Naming anxiety reduces its power and gives the engine the exact trigger to intervene later.
+7. **The Synthesis (make them feel seen)** — Claude reflects the whole picture back in one paragraph that names their situation, their anchor subject, their freeze points, their week-3 break pattern, their *why*, and what the plan will assume. **This paragraph IS the product.** If it lands, they're a user for life. Validate this moment before building anything downstream.
+
+## 18. The Reciprocity Engine (the real "addiction" mechanism)
+
+A study app cannot be addictive like Instagram — the core action (solving) is effortful, so slot-machine dopamine fails and feels manipulative. What works for an effortful app is **reciprocity**: every time the user *gives*, the app *visibly gives back within seconds.*
+
+- Tell it a bad day → tomorrow's plan is lighter, *and it says why.*
+- Log a mock score → instant breakdown + roadmap visibly reshuffles.
+- Share a fear in the interview → that fear is named and addressed weeks later.
+- Finish a hard week → unlock + recognition.
+
+No other CAT app does this — they're vending machines (money in, questions out). This reciprocity is the moat.
+
+**Psychology that works here:** identity over goals ("you're someone who shows up"); loss aversion *with grace*; variable reward in the *feedback* not the tasks (the weekly review reveals something new about them each time — *that's* the slot machine); closing open loops (Zeigarnik); "someone is watching."
+**Dark patterns that BACKFIRE for study apps (avoid):** aggressive hard-break streaks (→ guilt loop → deletion), notification spam, vanity metrics they know are hollow, fake urgency.
+
+## 19. Nine Validated Product Ideas
+
+1. **The "One Thing" on bad days** — on a rough day, hide the full plan (a wall of failure); show ONE thing: *"Today was hard. Just do these 5 questions. Keep the chain alive."* (BJ Fogg — shrink the behavior until failure is impossible.) Probably prevents more quits than any other feature. **Build.**
+2. **Hinglish / language mirroring** — the interview detects how they write and mirrors it. Nearly free for an LLM, unlocks Tier 2/3 India (the actual market), creates instant intimacy. Possibly a bigger differentiator than the roadmap. **Build.**
+3. **The Reality Mirror** — weekly honest snapshot (*"planned 12h, did 7; said Quant was priority, spent 80% on VARC"*). Aspirants are drowning in lies; the app that tells the truth earns total trust. **Rule: never show the mirror without the path forward.** Truth + hope, never truth alone.
+4. **The Omni-Input** — one always-present button to dump anything ("bombed my mock," "fought with parents," "feeling unstoppable"). Everything feeds the engine. This is the *"whatever they do, they come here to tell"* vision as one concrete, permanent fixture. **Build.**
+5. **Engineered Week-1 win** — Week 1 targets the *fastest-improving* area (usually Percentages/Arithmetic), NOT the weakest. They must *feel* measurable improvement within 7 days because day 8 is the ₹999 wall. Hope is engineered, not spoken. **Critical conversion mechanic.**
+6. **Voice notes** — speak the interview/check-ins instead of typing (Groq Whisper, free). Better data, deeper therapy feel. **Phase 2, not launch** (complexity).
+7. **The Comeback Moment** — returning after a gap is the highest-churn instant. Celebrate it, never punish: *"You came back. Most people don't. Let's just do today."* Build re-entry with as much care as onboarding.
+8. **Consistency-based social proof** — *"47 aspirants studied today"* / *"top 20% for consistency this week."* Never score comparison (always demotivates) — *consistency,* which everyone can win at because it's effort not talent.
+9. **End-of-Journey Artifact** — on CAT day: *"180 days. 4,200 questions. Arithmetic 44% → 81%."* Emotional, intensely shareable, and the best marketing you'll have — real journeys posted by real users. Retention payoff AND distribution engine.
+
+## 20. Expanded Edge Cases
+
+- **Serial restarter** (quits every Wednesday) → micro-commitments + the "One Thing," not weekly plans.
+- **Mock-score obsessive** → always show trend lines, never single points.
+- **The interview liar** (says 3h, does 30min) → never call it out; the engine silently learns reality from behavior and recalibrates to actual capacity.
+- **Weak-English aspirant** → interview works in simple language / Hinglish (see idea #2).
+- **Over-planner** → app removes all planning; "zero decisions" is salvation for them.
+- **Perpetual delayer** ("after my sem exams") → capture predictable busy windows, pre-build rest weeks, offer a minimum-viable track so they never fully stop.
+- **Placement-season collision (Oct = CAT + placements)** → auto-detected; plan shrinks to 45 min of pure high-yield.
+- **Anxiety/freeze aspirant** → untimed first, build to timed slowly ("speed comes after accuracy").
+- **Overconfident user** (says VARC strong, RC at 44%) → show once, diplomatically, offer a diagnostic.
+- **No-baseline user** (zero mocks) → Week 1 task #1 is a 20-question mini-diagnostic, not a DPP.
+- **Strong all-rounder (99%ile target)** → plan centers on mock analysis + temperament + selection strategy, not topic drilling.
+- **The disappeared user (14+ days silent)** → gentle re-engagement, full re-interview option, plan restarts from today.
+- **Family/health situations** → never asked directly; if volunteered, mark those weeks as rest weeks automatically.
+- **₹999-can't-afford user** → the ₹99 week must feel *complete*, so ₹999 feels like *more*, not like unlocking what was withheld.
+
+## 21. The Daily Interface & Content Library
+
+**Home = "Today's Mission"** (date · CAT countdown · today's 3-4 tasks incl. outside-app tasks · streak · honest pace projection). Outside-app tasks are first-class: coaching classes (check off), YouTube lectures (deep-linked, marked done on return), book chapters (Arun Sharma references), mock logs (trigger plan adjustment). This makes CATalyst the single source of truth for their entire prep, not just a DPP app — which is exactly what makes the analysis engine smart.
+
+**Daily check-in (60s, every evening):** mood (😊/😐/😔) + completion (full/half/skipped) + optional one-line free text. The free text is gold — routed to Gemini for signal, feeds the weekly review and plan adjustment.
+
+**Content Library** (`content_library` table, built once): topic → type (video/chapter) → source (Rodha/Unacademy/Arun Sharma) → URL/reference → duration. The roadmap auto-attaches the right link to each "learn X" task. One tap → YouTube → return → marked done.
+
+## 22. The Make-or-Break Truths (honest verdict)
+
+The tech is fully buildable solo on free AI. The product lives or dies on three things code can't fix:
+1. **Roadmap pedagogical quality** — generic-but-plausible AI output = instant collapse. Sahil's CAT knowledge + 15-20 prompt iterations + beta pressure-testing.
+2. **Interview avoiding the uncanny valley** — if it feels scripted it's *worse* than a form.
+3. **Honest hope, not false hope** — engineered early wins + real improvement. False hope dies at the first bad mock and loses them forever. Real hope ("here are the 4 extra questions that get you to 85%ile, and the week-by-week path to them") is unbreakable.
+
+**Build order discipline:** build interview → synthesis → roadmap reveal FIRST. Put it in front of 5 real aspirants and watch their faces at the synthesis paragraph. If that moment lands, build the rest. If it doesn't, no DPP engine will save it. The magic moment is the whole bet — validate it before building the machine behind it.
+
+## 23. Updated Build Order (reflects Part II)
+
+```
+Phase 0 — Data Foundation (free, scriptable, gates everything)
+  · PYQ extraction from 29-yr PDF (Claude/Groq vision pipeline)
+  · Tag existing 794 Qs + flag PYQ overlaps
+  · content_library table (YouTube + Arun Sharma map)
+  · PYQ frequency analysis → topic weights table
+Phase 1 — Interview  (the magic moment — validate before going further)
+  · Branching question tree (JSON config)
+  · Chat UI (bubbles, not a form) on Groq
+  · Profile synthesis (Claude) → user_profiles + the "I see you" paragraph
+Phase 2 — Roadmap
+  · Roadmap generator (Claude → weekly JSON), Week-1 optimized for fastest visible win
+  · Weekly view UI (Week 1 visible, rest locked)
+Phase 3 — Daily Loop
+  · Home "Today's Mission" + outside-app task tracking + Omni-Input + daily check-in
+Phase 4 — DPP Engine (no AI — weighted SQL)
+Phase 5 — Analysis Engine (Claude weekly review → auto-adjust next week)
+Phase 6 — Payments (₹99 wall after interview / before roadmap reveal; ₹999 at day 8; credit logic)
+```
+
+Source banks available: **Cracku PDFs, Arun Sharma PDFs, 29-year PYQ book** (`Past 29 yrs CAT papers (section wise).pdf`). PYQ extraction is the grind that unlocks DPP + roadmap quality — start there.
+
+*One-line product summary for every decision: whatever they do for CAT — inside the app or outside — CATalyst should know about it, and show them what it means. That's the whole product. That's the moat.*
