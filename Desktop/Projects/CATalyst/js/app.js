@@ -140,6 +140,7 @@ const App = {
     if (page === 'review') Review.load();
     if (page === 'errorlog') ErrorLog.render();
     if (page === 'practice') Practice.onPageEnter();
+    if (page === 'analytics') Analytics.init();
     window.scrollTo(0, 0);
   },
 
@@ -336,6 +337,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (session && session.user) {
         Auth.currentUser = session.user;
         Auth.onLogin(session.user);
+      } else if (typeof ENV !== 'undefined' && ENV === 'dev') {
+        // DEV ONLY (localhost): auto-login a throwaway test account so you can
+        // browse/verify questions without a login. Hostname-gated — never runs in prod.
+        devAutoLogin(authEl);
       } else {
         authEl.classList.add('active');
         Auth.init();
@@ -351,6 +356,37 @@ document.addEventListener('DOMContentLoaded', () => {
     Auth.init();
   }
 });
+
+// ── DEV-ONLY auto-login (localhost) ───────────────────────────
+// Signs into a fixed dev test account, creating it on first run. This exists
+// so you can open localhost and immediately see extracted questions render —
+// no signup needed. Guarded by ENV === 'dev' in the caller, so prod never hits it.
+async function devAutoLogin(authEl) {
+  const EMAIL = 'dev@catalyst.local';
+  const PASS  = 'devpass123';
+  showLoading('Dev auto-login…');
+  try {
+    let { data, error } = await sbClient.auth.signInWithPassword({ email: EMAIL, password: PASS });
+    if (error) {
+      // First run on this dev DB — create the account (email confirmation is off in dev)
+      const up = await sbClient.auth.signUp({ email: EMAIL, password: PASS, options: { data: { full_name: 'Dev Tester' } } });
+      data = up.data;
+    }
+    hideLoading();
+    if (data && data.user && data.session) {
+      Auth.currentUser = data.user;
+      Auth.onLogin(data.user);
+    } else {
+      // Confirmation may be ON in dev — fall back to the normal login screen
+      authEl.classList.add('active');
+      Auth.init();
+    }
+  } catch (e) {
+    hideLoading();
+    authEl.classList.add('active');
+    Auth.init();
+  }
+}
 
 // ── PWA Install Prompt ────────────────────────────────────────
 const PWAPrompt = {
