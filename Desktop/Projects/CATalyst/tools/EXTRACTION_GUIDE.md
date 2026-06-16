@@ -8,13 +8,26 @@ Replaces the three older prompts (which had the wrong math format baked in).
 ## The Workflow (never skip a step)
 
 ```
-1. Split the PDF into small chunks (1 set or ~5-10 questions per chunk)
-2. Feed a chunk + the PROMPT below to any AI (Gemini free tier works great, has vision)
-3. Paste the AI's SQL into tools/extraction-checker.html → fix every ERROR, eyeball every WARNING
-4. Only when the checker is green: paste into DEV Supabase (localhost) SQL editor
-5. Open the app on localhost → verify a few questions render correctly live
-6. Migrate DEV → PROD with:  DEV_SERVICE_KEY=… PROD_SERVICE_KEY=… node migrate-to-prod.js
+0. Pre-process the PDF (Cracku "Top N" format) — does the boring parts in code, free:
+     pip3 install PyMuPDF
+     python3 tools/cracku_preprocess.py "Top 396 ... .pdf" out_algebra
+   → out_algebra/packages/q_0001.md  (clean text + KNOWN ANSWER + which page image)
+   → out_algebra/pages/page_0001.png (rendered page — the AI READS this for correct math)
+   → out_algebra/REPORT.txt          (flags missing answers, gaps, sets to eyeball)
+1. Feed each q_XXXX.md + its page_XXXX.png to Gemini (free, vision) with the PROMPT below
+2. Paste the AI's SQL into tools/extraction-checker.html → fix every ERROR, eyeball every WARNING
+3. Only when the checker is green: paste into DEV Supabase (localhost) SQL editor
+4. Open the app on localhost → verify a few questions render correctly live
+5. Migrate DEV → PROD with:  DEV_SERVICE_KEY=… PROD_SERVICE_KEY=… node migrate-to-prod.js
 ```
+
+**Why step 0 matters.** The preprocessor removes ~80% of the error surface in code (no AI, no cost): it strips page furniture, splits on the PDF's real "Question N", parses the separate answer key, groups counted sets, and — critically — renders each page to an image so the AI reads the REAL math instead of pdftotext's destroyed version (`n2` → n², stacked fractions, `log2` → log₂). The AI then only does the genuinely hard part on one clean question with the answer already attached, so it can't drift.
+
+**Content-type reality (from analysing the actual PDFs):**
+- **VARC (RC, PJ, VA)** — clean text. Preprocessor nails it; AI mostly writes solutions.
+- **Quant** — math destroyed by text extraction → the AI MUST read the page image. Preprocessor provides it.
+- **LRDI** — charts/tables are images. Counted sets ("following four questions") group correctly; image-based sets are flagged in REPORT.txt for a 2-second visual confirm (unavoidable — you must see the chart to crop it anyway).
+- **29-yr PYQ paper** — front matter is scanned; question pages are text (VARC clean, Quant mangled). Same rules apply per section.
 
 **Never paste AI SQL straight into PROD.** The checker catches errors offline; DEV catches the rest. PROD only ever receives already-verified rows.
 
