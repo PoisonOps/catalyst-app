@@ -252,7 +252,10 @@ function checkLatex(where,field,val){
   // real newline inside value (should be /n/)
   if(/\n/.test(val)) add('error',where,`<b>${field}</b>: contains a real newline — use <code>/n/</code> instead (real newlines break formatting/SQL).`);
   // truncation / skim markers
-  if(/(\.\.\.|…)/.test(val)) add('warn',where,`<b>${field}</b>: contains <code>…</code> / <code>...</code> — possible truncation. Verify it is verbatim.`);
+  // Only flag a TRAILING ellipsis (likely a real cut-off). Mid-text "..." is normal
+  // in CAT math (infinite series, nested radicals, "x-3, x-6, …") — not truncation.
+  if(/(\.\.\.|…)\s*$/.test(val) && !/(infinity|infty|onwards|so on)\b[^a-z]*$/i.test(val))
+    add('warn',where,`<b>${field}</b>: ends with <code>…</code> — looks cut off. Check the full text was captured.`);
   if(/\[(table|figure|diagram|continued|etc)\b/i.test(val)) add('warn',where,`<b>${field}</b>: contains a bracketed placeholder (e.g. <code>[table]</code>) — content may have been summarized instead of extracted.`);
 }
 
@@ -264,6 +267,7 @@ function validate(sql){
   const statements=splitStatements(sql);
   const setRows=[], qRows=[];
   let parsedAny=false;
+  let _rowSeq=0;
 
   statements.forEach((stmt,si)=>{
     if(!/insert\s+into/i.test(stmt)) return;
@@ -277,7 +281,12 @@ function validate(sql){
       add('error',`statement ${si+1}`,'Uses <code>INSERT INTO … VALUES</code> without a column list — always list columns explicitly.');
     }
     parsed.rows.forEach((row,ri)=>{
-      row.__where=`${parsed.table} row ${ri+1}`;
+      _rowSeq++;
+      // Label by question number / set id (uniqueness guaranteed by _rowSeq fallback)
+      const gid = (row['global_q_no'] && row['global_q_no'].type==='int') ? row['global_q_no'].value : null;
+      if(parsed.table==='questions')   row.__where = gid!=null ? `Q${gid}` : `question #${_rowSeq}`;
+      else if(parsed.table==='sets'){ const sid=str(row,'id'); row.__where = sid!=null ? `set ${sid}` : `set #${_rowSeq}`; }
+      else row.__where = `${parsed.table} row ${_rowSeq}`;
       // column/value count mismatch
       if(row.__rawCount!==parsed.columns.length){
         add('error',row.__where,`Column/value count mismatch — <code>${parsed.columns.length}</code> columns but <code>${row.__rawCount}</code> values. A field is likely missing or an extra comma slipped in.`);
@@ -332,8 +341,9 @@ function validate(sql){
       if(co==null) add('error',w,'MCQ but <b>correct_option</b> is NULL.');
       else if(!VALID_OPT.includes(co)) add('error',w,`<b>correct_option</b> <code>${co}</code> must be A/B/C/D/E.`);
       if(!isNull(row,'correct_value')) add('warn',w,'MCQ should have <b>correct_value</b> = NULL.');
-      // option label leakage
-      ['option_a','option_b','option_c','option_d','option_e'].forEach(o=>{ const v=str(row,o); if(v&&/^\s*\(?[A-E1-5][).]/.test(v)) add('warn',w,`<b>${o}</b> still contains an option label (e.g. "A)") — strip it.`); });
+      // option label leakage — require whitespace after the label punctuation so
+      // decimal options like "1.5" / "2.41" are NOT mistaken for a label.
+      ['option_a','option_b','option_c','option_d','option_e'].forEach(o=>{ const v=str(row,o); if(v&&/^\s*\(?([A-E]|[1-5])[).]\s/.test(v)) add('warn',w,`<b>${o}</b> still contains an option label (e.g. "A)") — strip it.`); });
     }
     if(at==='tita'){
       ['option_a','option_b','option_c','option_d'].forEach(o=>{ if(!isNull(row,o)) add('error',w,`TITA but <b>${o}</b> is not NULL.`); });
