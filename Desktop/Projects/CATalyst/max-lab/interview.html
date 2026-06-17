@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CATalyst Max — Counselling Interview</title>
+<title>CATalyst Max — Counselling</title>
 <style>
   :root{
     --bg:#0f1117;--bg2:#1a1d27;--bg3:#252836;--border:rgba(255,255,255,.08);
@@ -13,8 +13,8 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;max-width:620px;margin:0 auto}
-  header{padding:.9rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;flex-shrink:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;max-width:640px;margin:0 auto}
+  header{padding:.85rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;flex-shrink:0}
   .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1rem}
   header h1{font-size:.92rem;font-weight:700}
   header .sub{font-size:.68rem;color:var(--text2)}
@@ -22,39 +22,39 @@
   .icon-btn{background:var(--bg3);border:none;color:var(--text2);border-radius:7px;padding:.35rem .6rem;font-size:.72rem;cursor:pointer;font-family:inherit}
   .icon-btn:hover{color:var(--text)}
 
-  #chat{flex:1;overflow-y:auto;padding:1.1rem;display:flex;flex-direction:column;gap:.75rem}
-  .msg{max-width:85%;padding:.7rem .9rem;border-radius:14px;font-size:.92rem;line-height:1.5;animation:rise .35s ease}
+  #chat{flex:1;overflow-y:auto;padding:1.1rem;display:flex;flex-direction:column;gap:.7rem}
+  .msg{max-width:86%;padding:.7rem .9rem;border-radius:14px;font-size:.94rem;line-height:1.55;animation:rise .35s ease;white-space:pre-wrap;word-wrap:break-word}
   @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  .msg.bot{background:var(--bot);border-bottom-left-radius:4px;align-self:flex-start;white-space:pre-wrap}
-  .msg.user{background:var(--user);color:#fff;border-bottom-right-radius:4px;align-self:flex-end;white-space:pre-wrap}
-  .msg.synth{background:linear-gradient(135deg,rgba(91,122,245,.14),rgba(139,92,246,.14));border:1px solid rgba(139,92,246,.3);max-width:97%;align-self:stretch;font-size:.95rem;line-height:1.65}
+  .msg.bot{background:var(--bot);border-bottom-left-radius:4px;align-self:flex-start}
+  .msg.user{background:var(--user);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+  .msg.reveal{background:linear-gradient(135deg,rgba(91,122,245,.14),rgba(139,92,246,.14));border:1px solid rgba(139,92,246,.3);max-width:98%;align-self:stretch;font-size:.95rem;line-height:1.7}
+  .reveal-label{font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);margin-bottom:.5rem}
   .typing{align-self:flex-start;background:var(--bot);border-radius:14px;border-bottom-left-radius:4px;padding:.8rem 1rem;display:flex;gap:4px}
   .typing span{width:7px;height:7px;border-radius:50%;background:var(--text3);animation:blink 1.2s infinite}
   .typing span:nth-child(2){animation-delay:.2s} .typing span:nth-child(3){animation-delay:.4s}
   @keyframes blink{0%,60%,100%{opacity:.3} 30%{opacity:1}}
+  .sys-note{align-self:center;font-size:.72rem;color:var(--text3);text-align:center;max-width:80%;padding:.3rem}
 
-  .choices{display:flex;flex-wrap:wrap;gap:.5rem;align-self:flex-start;max-width:90%}
-  .choice{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:99px;padding:.5rem .9rem;font-size:.82rem;cursor:pointer;font-family:inherit;transition:.12s}
-  .choice:hover{border-color:var(--accent);background:rgba(91,122,245,.12)}
+  .cta{align-self:stretch;margin-top:.4rem}
+  .cta button{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;border-radius:11px;padding:.8rem;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit}
 
   footer{padding:.8rem 1rem;border-top:1px solid var(--border);flex-shrink:0}
   .composer{display:flex;gap:.5rem;align-items:flex-end}
-  textarea#answer{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:inherit;font-size:.92rem;padding:.65rem .8rem;resize:none;max-height:120px;line-height:1.4}
+  textarea#answer{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:inherit;font-size:.94rem;padding:.65rem .8rem;resize:none;max-height:120px;line-height:1.4}
   textarea#answer:focus{outline:none;border-color:var(--accent)}
   #send{background:var(--accent);border:none;color:#fff;border-radius:50%;width:42px;height:42px;font-size:1.1rem;cursor:pointer;flex-shrink:0}
   #send:disabled{opacity:.4;cursor:not-allowed}
-  .hint{font-size:.68rem;color:var(--text3);margin-top:.4rem;text-align:center}
+  .hint{font-size:.66rem;color:var(--text3);margin-top:.4rem;text-align:center}
 
-  /* setup / end panels */
-  .panel{padding:1.5rem;overflow-y:auto}
+  .panel{padding:1.4rem;overflow-y:auto}
   .panel h2{font-size:1.05rem;margin-bottom:.5rem}
-  .panel p{font-size:.85rem;color:var(--text2);line-height:1.6;margin-bottom:.8rem}
-  .panel label{font-size:.78rem;color:var(--text2);display:block;margin:.7rem 0 .3rem}
+  .panel p{font-size:.84rem;color:var(--text2);line-height:1.6;margin-bottom:.7rem}
+  .panel label{font-size:.78rem;color:var(--text2);display:block;margin:.7rem 0 .25rem}
   .panel input,.panel textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:inherit;font-size:.85rem;padding:.55rem .7rem}
   .btn{background:var(--accent);border:none;color:#fff;border-radius:9px;padding:.6rem 1.2rem;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit;margin-top:1rem}
   .btn-ghost{background:var(--bg3);color:var(--text2)}
   .note{font-size:.72rem;color:var(--text3);line-height:1.5;margin-top:.6rem}
-  .copybox{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:.7rem;font-family:ui-monospace,monospace;font-size:.72rem;white-space:pre-wrap;max-height:200px;overflow:auto;margin-top:.5rem;color:var(--text2)}
+  .err{color:var(--amber);font-size:.8rem;margin-top:.5rem}
 </style>
 </head>
 <body>
@@ -67,277 +67,313 @@
   </div>
   <div class="right">
     <button class="icon-btn" onclick="restart()">↻ Restart</button>
-    <button class="icon-btn" id="settings-btn" onclick="toggleSettings()">⚙</button>
+    <button class="icon-btn" onclick="toggleSettings()">⚙</button>
   </div>
 </header>
 
-<!-- SETTINGS (API key, optional) -->
+<!-- SETTINGS -->
 <div class="panel" id="settings" style="display:none">
-  <h2>Settings (optional)</h2>
-  <p>For the synthesis to generate <b>inside the app</b>, paste a free Gemini API key (from <b>aistudio.google.com → Get API key</b>). It's stored only in this browser. Without it, you'll get a one-click prompt to paste into Gemini/ChatGPT instead — either works.</p>
-  <label>Gemini API key (optional)</label>
-  <input type="password" id="api-key" placeholder="AIza…" />
-  <label>Model</label>
-  <input type="text" id="api-model" value="gemini-2.0-flash" />
-  <button class="btn" onclick="saveSettings()">Save</button>
+  <h2>Setup (one-time)</h2>
+  <p>Paste your keys — they're stored only in this browser, never sent anywhere except the AI provider. Gemini is primary; Groq is the automatic fallback if Gemini is busy.</p>
+  <label>Gemini API key (from aistudio.google.com)</label>
+  <input type="password" id="gemini-key" placeholder="AQ… or AIza…" />
+  <label>Gemini model</label>
+  <input type="text" id="gemini-model" value="gemini-2.5-flash" />
+  <label>Groq API key (fallback, from console.groq.com)</label>
+  <input type="password" id="groq-key" placeholder="gsk_…" />
+  <label>Groq model</label>
+  <input type="text" id="groq-model" value="llama-3.3-70b-versatile" />
+  <button class="btn" onclick="saveSettings()">Save & start</button>
   <button class="btn btn-ghost" onclick="toggleSettings()">Close</button>
+  <div class="note">No key yet? Gemini: aistudio.google.com → Get API key (free, no card). Groq: console.groq.com → API Keys.</div>
 </div>
 
-<!-- CHAT -->
 <div id="chat"></div>
 
-<!-- INPUT -->
 <footer id="footer">
   <div class="composer">
-    <textarea id="answer" rows="1" placeholder="Type your answer… (be honest, it's just us)"></textarea>
+    <textarea id="answer" rows="1" placeholder="Type your answer…"></textarea>
     <button id="send" onclick="submitAnswer()">↑</button>
   </div>
-  <div class="hint">This is a real test. Answer like you would to a mentor.</div>
+  <div class="hint">Be honest — it's just us, and nothing here is shared.</div>
 </footer>
 
-<!-- END PANEL -->
+<!-- END / EXPORT -->
 <div class="panel" id="end" style="display:none">
-  <h2>🎯 Interview complete</h2>
-  <p>Below is the full profile + the synthesis. Save it for your notes — and write down how the aspirant <b>reacted</b> to the synthesis (their face, their words). That reaction is the data that matters.</p>
-  <label>How did they react to the synthesis? (your notes)</label>
-  <textarea id="reaction" rows="3" placeholder="e.g. 'went quiet, said this is exactly me', or 'felt generic'…"></textarea>
-  <button class="btn" onclick="downloadSession()">⬇ Download this session (profile + synthesis + notes)</button>
+  <h2>🎯 Session complete</h2>
+  <p>Save this for your notes — and write down how they <b>reacted</b> to the synthesis and the plan. That reaction is the real data.</p>
+  <label>How did they react? (your notes)</label>
+  <textarea id="reaction" rows="3" placeholder="e.g. 'went quiet, said this is exactly me' / 'plan felt generic'…"></textarea>
+  <button class="btn" onclick="downloadSession()">⬇ Download session</button>
   <button class="btn btn-ghost" onclick="restart()">↻ New interview</button>
-  <div class="note">Each session saves as a text file. Collect 5–8 of these during outreach — they're the raw material for designing the Roadmap.</div>
 </div>
 
 <script>
 // ════════════════════════════════════════════════════════════
-//  THE INTERVIEW — 7 acts, mentor tone. Each step: a bot message
-//  (string or fn(A)→string), how to answer, and a key to store it.
+//  THE MASTER SYSTEM PROMPT — this is the product.
 // ════════════════════════════════════════════════════════════
-const A = {}; // collected answers
+const SYSTEM_PROMPT = `You are the CATalyst Max mentor — a warm, sharp guide who self-studied for CAT and remembers exactly how lonely and confusing it was. You are conducting a ~10-minute counselling conversation with a CAT aspirant, BEFORE building their personal study plan.
 
-const STEPS = [
-  { key:'_intro', bot:
-    "Hey 👋\n\nBefore I build your CAT plan, I want to actually understand you — not your scores or your dream college. The real stuff.\n\nThis takes about 10 minutes. There are no right answers. Just be honest — it's only us here.",
-    choices:["I'm ready →"] },
+YOUR MISSION: make them feel deeply understood, while gathering everything needed to build a plan that fits their real life. This is an INTERVIEW with a clear agenda — not open chat, not a vent session. Every question should make them feel: "if I answer this honestly, I'll get a real solution for ME."
 
-  // ── ACT 1 — THE SITUATION ──
-  { key:'situation', bot:"First — where are you in life right now?",
-    choices:["Final-year college","Working a job","Dropper / gap year","2nd/3rd year college","Something else"] },
-  { key:'situation_detail', bot:(A)=>{
-      const s=(A.situation||'').toLowerCase();
-      if(s.includes('working')) return "A job + CAT — that's genuinely hard. What kind of work do you do, and what do your hours look like on a normal day?";
-      if(s.includes('dropper')) return "Respect — that takes guts. Is this your first attempt or a re-attempt? If you've given CAT before, what happened last time?";
-      if(s.includes('final')) return "Got it. Placement season usually hits Oct–Nov — right when CAT prep peaks. Are you sitting for placements too?";
-      if(s.includes('2nd')||s.includes('3rd')) return "Early start — that's actually an advantage. What made you decide to start prepping now?";
-      return "Tell me a bit more about your situation — what does a typical week look like for you?";
-    } },
+HOW YOU TALK:
+- ONE message at a time. Short, warm, human — like a senior who has been there. Never a form, never clinical, never a generic chatbot.
+- Reflect before you move on: briefly acknowledge what they said so they feel heard ("a job + CAT — that's genuinely hard, okay."), THEN ask the next thing. Do not interrogate.
+- Never judge. Whatever they say is okay. No "you should have started earlier."
+- Mirror their language: if they write in Hinglish, reply in natural Hinglish. Match their energy and vocabulary level (simple if they're simple).
+- One-word answer → gently draw them out. Emotional answer → hold space, be human first. Joking → smile with them, then return to the thread.
+- Everything is skippable. If they dodge something personal, let it go warmly and move on.
+- Keep it moving — about 12–15 exchanges total, then wrap. Do not drag or over-ask.
 
-  // ── ACT 2 — DAILY REALITY ──
-  { key:'daily', bot:"Walk me through a normal weekday — morning to night. Not 'I study 2 hours' — what your day actually looks like." },
-  { key:'capacity', bot:"Realistically, how many hours a day can you give CAT — and how many days a week? (honest numbers, not ideal ones)" },
+YOUR AGENDA (cover ALL of these naturally, roughly in order, adapting depth to the person — never skip the practical ones for emotional talk):
+1. SITUATION — where they are in life (college year / working / dropper / between things) + the key detail (placement-season clash, re-attempt, job hours).
+2. DAILY REALITY — what their actual day looks like; when they're realistically free and their energy then.
+3. CAPACITY — honest hours/day, days/week, and their CAT timeline / how many months left.
+4. RESOURCES — coached / recorded course / pure self-study? what are they using right now (Rodha, PDFs, YouTube, a portal)?
+5. BASELINE — mocks taken? the STORY of their last mock (not just the score — what went wrong/right). Which of Quant / VARC / LRDI they feel okay about (their anchor) and which one makes their stomach drop (their freeze). Then probe the freeze: is it "don't know how to start" / "run out of time" / "panic & freeze" / "silly mistakes"?
+6. THE WHY — the real reason for CAT, not the resume answer.
+7. OBSTACLES — what actually breaks their consistency (starting trouble / 3-days-then-vanish / phone / pressure / comparison).
+8. FEARS — what failure would feel like; what scares them most right now.
+9. SELF-BELIEF — do they genuinely believe they can crack it (drawn out gently).
 
-  // ── ACT 3 — HONEST BASELINE ──
-  { key:'mock', bot:"Forget targets for a second. Have you taken any mock yet? If yes — what happened in your last one? (not just the score — what went right or wrong)" },
-  { key:'comfort', bot:"Of the three — Quant, VARC, LRDI — which one do you actually feel okay about, and which one makes your stomach drop?" },
-  { key:'weak_detail', bot:(A)=>`When you sit with the one that scares you — what exactly goes wrong? You don't know how to start, you run out of time, you panic, or silly mistakes?` },
+RULES OF DEPTH & TRUST:
+- Open with a warm message that sets the contract: ~10 minutes, no right answers, they can skip anything, nothing is shared, it's just the two of you — and one short line of your own story (you self-studied and know the 11pm loneliness) so they feel safe to open up.
+- Escalate intimacy: start safe and factual (situation, hours), earn trust, only go to the WHY and FEARS later.
+- Justify any sensitive question by THEIR benefit ("I ask so your plan fits your life, not a generic one").
+- Never ask for guarded facts (income, names, family specifics). Ask about feelings and patterns. If they volunteer something heavy, respond as a human first, then continue gently.
 
-  // ── ACT 4 — THE WHY ──
-  { key:'why', bot:"Okay, the big one. Why CAT? And not the LinkedIn answer — the real reason. What's actually driving this for you?" },
+WHEN YOU HAVE COVERED THE AGENDA well enough to build a real plan, reply with EXACTLY this token and nothing else:
+<<INTERVIEW_COMPLETE>>`;
 
-  // ── ACT 5 — THE OBSTACLES ──
-  { key:'obstacle', bot:"Be honest with me — what's actually stopped you from being consistent so far? Everyone has something: time, starting trouble, you study hard for 3 days then vanish, the phone, pressure…" },
+const SYNTHESIS_PROMPT = `The counselling conversation is below. Write ONE paragraph (130–180 words) reflecting back what you heard, so the aspirant feels deeply SEEN.
 
-  // ── ACT 6 — THE FEARS ──
-  { key:'fear', bot:"Last real question. When you imagine CAT not going the way you want — what's the part that scares you most?" },
-
-  // ── ACT 7 — handled separately (synthesis) ──
-];
-
-// ════════════════════════════════════════════════════════════
-//  ENGINE
-// ════════════════════════════════════════════════════════════
-let stepIdx = 0;
-const chat = document.getElementById('chat');
-const answerEl = document.getElementById('answer');
-const sendBtn = document.getElementById('send');
-
-function botMsg(text){
-  const d=document.createElement('div'); d.className='msg bot'; d.textContent=text; chat.appendChild(d); scroll();
-}
-function userMsg(text){
-  const d=document.createElement('div'); d.className='msg user'; d.textContent=text; chat.appendChild(d); scroll();
-}
-function scroll(){ chat.scrollTop = chat.scrollHeight; }
-
-function showTyping(){
-  const t=document.createElement('div'); t.className='typing'; t.id='typing';
-  t.innerHTML='<span></span><span></span><span></span>'; chat.appendChild(t); scroll();
-}
-function hideTyping(){ const t=document.getElementById('typing'); if(t) t.remove(); }
-
-function showChoices(arr, onPick){
-  const wrap=document.createElement('div'); wrap.className='choices';
-  arr.forEach(c=>{
-    const b=document.createElement('button'); b.className='choice'; b.textContent=c;
-    b.onclick=()=>{ wrap.remove(); onPick(c); };
-    wrap.appendChild(b);
-  });
-  chat.appendChild(wrap); scroll();
-}
-
-function setComposer(on){
-  document.getElementById('footer').style.display = on ? 'block' : 'none';
-}
-
-async function askStep(){
-  if(stepIdx >= STEPS.length){ runSynthesis(); return; }
-  const step = STEPS[stepIdx];
-  const text = typeof step.bot==='function' ? step.bot(A) : step.bot;
-  showTyping();
-  await wait(650 + Math.min(text.length*8, 1400));
-  hideTyping();
-  botMsg(text);
-
-  if(step.choices){
-    setComposer(false);
-    showChoices(step.choices, (picked)=>{
-      // intro choice isn't stored as an answer
-      if(step.key!=='_intro'){ userMsg(picked); A[step.key]=picked; }
-      stepIdx++; askStep();
-    });
-  } else {
-    setComposer(true);
-    answerEl.focus();
-  }
-}
-
-function submitAnswer(){
-  const val=answerEl.value.trim();
-  if(!val) return;
-  const step=STEPS[stepIdx];
-  userMsg(val); A[step.key]=val;
-  answerEl.value=''; answerEl.style.height='auto';
-  stepIdx++; askStep();
-}
-
-answerEl.addEventListener('input',()=>{ answerEl.style.height='auto'; answerEl.style.height=Math.min(answerEl.scrollHeight,120)+'px'; });
-answerEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); submitAnswer(); } });
-const wait = ms => new Promise(r=>setTimeout(r,ms));
-
-// ════════════════════════════════════════════════════════════
-//  SYNTHESIS — the magic moment
-// ════════════════════════════════════════════════════════════
-function buildSynthesisPrompt(){
-  const profile = Object.entries(A).map(([k,v])=>`${k}: ${v}`).join('\n');
-  return `You are a warm, sharp CAT mentor who just finished a 10-minute counselling conversation with an aspirant. Below is everything they told you. Write ONE paragraph (130–180 words) reflecting back what you heard, so they feel deeply SEEN.
-
-Rules:
-- Name their specific situation (college/job/dropper, and any placement-season clash).
-- Name their anchor (the subject they feel okay about) and their freeze point (the one that scares them) — use their own words where you can.
+- Name their specific situation (college/job/dropper, any placement clash).
+- Name their anchor (the subject they feel okay about) and their freeze (the one that scares them), in their own words where possible.
 - Name the REAL pattern behind their inconsistency.
 - Name their WHY, and let it carry weight.
 - Acknowledge their fear honestly, without drama.
-- End with 1–2 sentences on what the plan you're about to build will ASSUME about their life, so it actually fits them.
-Tone: warm, direct, human — a mentor who genuinely listened, not a chatbot. If they wrote in Hinglish, reply in Hinglish. No bullet points, no headings, no "Dear student". Start naturally. Do NOT give the plan yet — only the reflection.
+- End with 1–2 sentences on what the plan you're about to build will ASSUME about their life, so it fits them.
 
---- WHAT THEY TOLD YOU ---
-${profile}`;
-}
+Tone: warm, direct, human — a mentor who genuinely listened. If they wrote in Hinglish, write in Hinglish. No bullet points, no headings, no "Dear student". Start naturally. Do NOT give the plan yet — only the reflection. Output ONLY the paragraph.`;
 
-async function runSynthesis(){
-  setComposer(false);
-  showTyping();
-  await wait(900);
-  hideTyping();
-  botMsg("Give me a few seconds. Let me put together what I'm hearing about you…");
-  showTyping();
+const ROADMAP_PROMPT = `Based on the conversation below, generate a SAMPLE personalized CAT roadmap that makes this aspirant believe they can actually hit their target. This is a preview of what CATalyst Max builds. Make it feel built for THEM — nothing like a generic plan they'd get from ChatGPT.
 
-  const key=localStorage.getItem('gemini_key');
-  const model=localStorage.getItem('gemini_model')||'gemini-2.0-flash';
-  let synthesis=null;
+Use EXACTLY these sections with these headers:
 
-  if(key){
-    try{ synthesis = await callGemini(key, model, buildSynthesisPrompt()); }
-    catch(e){ synthesis = null; }
-  }
-  hideTyping();
+**YOUR REAL PROBLEM**
+2–3 lines naming their actual issue in plain words (e.g. "your Quant isn't a concept problem — you freeze on how to START a question"). Show you understood, not just labelled.
 
-  if(synthesis){
-    const d=document.createElement('div'); d.className='msg bot synth'; d.textContent=synthesis;
-    chat.appendChild(d); scroll();
-    A._synthesis = synthesis;
-    finishUp();
-  } else {
-    // fallback: give the founder a prompt to run manually
-    botMsg("(No API key set — so here's the synthesis prompt. Tap copy, paste it into Gemini or ChatGPT, then read the paragraph it gives back to the aspirant and watch their reaction.)");
-    const box=document.createElement('div'); box.className='copybox'; box.textContent=buildSynthesisPrompt();
-    chat.appendChild(box);
-    const cp=document.createElement('button'); cp.className='btn'; cp.textContent='📋 Copy synthesis prompt';
-    cp.onclick=()=>{ navigator.clipboard.writeText(buildSynthesisPrompt()); cp.textContent='✓ Copied'; };
-    chat.appendChild(cp);
-    const lbl=document.createElement('div'); lbl.style.cssText='font-size:.78rem;color:var(--text2);margin-top:1rem';
-    lbl.textContent='Paste the synthesis you got back here (so it saves with the session):';
-    chat.appendChild(lbl);
-    const ta=document.createElement('textarea'); ta.rows=5; ta.style.cssText='width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:.6rem;font-family:inherit;font-size:.85rem;margin-top:.4rem';
-    ta.oninput=()=>{ A._synthesis=ta.value; };
-    chat.appendChild(ta);
-    const done=document.createElement('button'); done.className='btn'; done.textContent='Done → save session';
-    done.onclick=finishUp; chat.appendChild(done);
-    scroll();
-  }
-}
+**CAN YOU ACTUALLY SCORE IT?**
+Turn their target into a concrete, countable gap ("you're around X%ile; your target needs roughly +N correct per section — that's about 4 questions"). Give an honest range and a short trajectory (mock 3 → mock 6 → CAT). Encouraging but never a promise.
 
-async function callGemini(key, model, prompt){
+**THE MAP** (long-term, simple)
+4–5 phases, one short headline each, fitted to their months-left (e.g. Foundation → Build → Sharpen → Mock-Grind → Peak).
+
+**THIS WEEK** (detailed)
+A day-by-day Week 1 (Mon–Sun). For each day give: the specific topic/micro-topic, a question count + difficulty, and a one-line "because" tied to what they told you. Start with their anchor for an early win; attack their freeze area the right way (untimed first if they panic). Mention daily DPPs + a Fix Mode session for mistakes. Include rest where their life needs it.
+
+**HOW THIS IS DIFFERENT**
+2–3 lines: how the plan ADAPTS daily to their mistakes (yesterday's wrong topic returns; difficulty rises only when they're ready) — the thing coaching's identical DPPs can never do.
+
+Tone: warm, specific, confident. Mirror their language (Hinglish if they used it). Short lines, clear sections. Make them feel: this was built for me, and if I follow it I can actually do this.`;
+
+// ════════════════════════════════════════════════════════════
+//  LLM PLUMBING — Gemini primary (retry on busy) → Groq fallback
+// ════════════════════════════════════════════════════════════
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+
+async function callGemini(key, model, system, msgs){
+  const contents = msgs.map(m=>({role: m.role==='assistant'?'model':'user', parts:[{text:m.text}]}));
+  const body = { system_instruction:{parts:[{text:system}]}, contents,
+    generationConfig:{temperature:0.9, maxOutputTokens:4096, thinkingConfig:{thinkingBudget:0}} };
   const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
-  const res=await fetch(url,{ method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ contents:[{ parts:[{ text:prompt }] }] }) });
-  if(!res.ok) throw new Error('api '+res.status);
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(res.status===503||res.status===429){ const e=new Error('busy'); e.retryable=true; throw e; }
+  if(!res.ok){ const e=new Error('gemini '+res.status); e.retryable=false; throw e; }
   const j=await res.json();
-  return j?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+  const t=j?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if(!t){ const e=new Error('empty'); e.retryable=true; throw e; }
+  return t.trim();
+}
+async function callGroq(key, model, system, msgs){
+  const messages=[{role:'system',content:system}, ...msgs.map(m=>({role:m.role==='assistant'?'assistant':'user',content:m.text}))];
+  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model, messages, temperature:0.9})});
+  if(!res.ok) throw new Error('groq '+res.status);
+  const j=await res.json();
+  return (j?.choices?.[0]?.message?.content||'').trim();
+}
+// Orchestrator: Gemini with up to 3 retries on busy, then Groq.
+async function llm(system, msgs){
+  const gkey=localStorage.getItem('gemini_key'), gmodel=localStorage.getItem('gemini_model')||'gemini-2.5-flash';
+  const qkey=localStorage.getItem('groq_key'), qmodel=localStorage.getItem('groq_model')||'llama-3.3-70b-versatile';
+  let lastErr=null;
+  if(gkey){
+    for(let i=0;i<3;i++){
+      try{ return await callGemini(gkey,gmodel,system,msgs); }
+      catch(e){ lastErr=e; if(!e.retryable) break; await wait(700*(i+1)); }
+    }
+  }
+  if(qkey){
+    try{ return await callGroq(qkey,qmodel,system,msgs); }catch(e){ lastErr=e; }
+  }
+  if(gkey){ try{ return await callGemini(gkey,gmodel,system,msgs); }catch(e){ lastErr=e; } }
+  throw lastErr || new Error('No API key set');
+}
+
+// ════════════════════════════════════════════════════════════
+//  CHAT UI + ENGINE
+// ════════════════════════════════════════════════════════════
+let history = [];          // {role:'user'|'assistant', text}
+let phase = 'interview';   // interview | done
+const chat=document.getElementById('chat'), answerEl=document.getElementById('answer'), sendBtn=document.getElementById('send');
+
+function botMsg(text){ const d=document.createElement('div'); d.className='msg bot'; d.textContent=text; chat.appendChild(d); scroll(); return d; }
+function userMsg(text){ const d=document.createElement('div'); d.className='msg user'; d.textContent=text; chat.appendChild(d); scroll(); }
+function sysNote(text){ const d=document.createElement('div'); d.className='sys-note'; d.textContent=text; chat.appendChild(d); scroll(); return d; }
+function scroll(){ chat.scrollTop=chat.scrollHeight; }
+function showTyping(){ const t=document.createElement('div'); t.className='typing'; t.id='typing'; t.innerHTML='<span></span><span></span><span></span>'; chat.appendChild(t); scroll(); }
+function hideTyping(){ const t=document.getElementById('typing'); if(t) t.remove(); }
+function setComposer(on){ document.getElementById('footer').style.display=on?'block':'none'; }
+function busy(b){ sendBtn.disabled=b; answerEl.disabled=b; }
+
+async function nextMentorTurn(){
+  showTyping(); busy(true);
+  let reply;
+  try{ reply = await llm(SYSTEM_PROMPT, history); }
+  catch(e){ hideTyping(); busy(false);
+    sysNote('⚠ '+(e.message||'connection issue')+' — tap send again to retry, or check ⚙ Settings for your key.');
+    return; }
+  hideTyping();
+
+  if(reply.includes('<<INTERVIEW_COMPLETE>>')){
+    history.push({role:'assistant', text:reply});
+    runReveal();
+    return;
+  }
+  history.push({role:'assistant', text:reply});
+  botMsg(reply);
+  busy(false); answerEl.focus();
+}
+
+function submitAnswer(){
+  if(phase!=='interview') return;
+  const val=answerEl.value.trim(); if(!val) return;
+  userMsg(val); history.push({role:'user', text:val});
+  answerEl.value=''; answerEl.style.height='auto';
+  nextMentorTurn();
+}
+answerEl.addEventListener('input',()=>{ answerEl.style.height='auto'; answerEl.style.height=Math.min(answerEl.scrollHeight,120)+'px'; });
+answerEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); submitAnswer(); }});
+
+// ── THE REVEAL: synthesis, then roadmap ──
+async function runReveal(){
+  phase='done'; setComposer(false);
+  showTyping(); botMsgDelayPrep();
+  await wait(700); hideTyping();
+  botMsg("Give me a few seconds — let me put together what I'm hearing about you…");
+
+  // SYNTHESIS
+  showTyping();
+  let synth;
+  try{ synth = await llm('You are the CATalyst Max mentor.', [...history, {role:'user', text:SYNTHESIS_PROMPT}]); }
+  catch(e){ synth=null; }
+  hideTyping();
+  if(synth){
+    const d=document.createElement('div'); d.className='msg bot reveal';
+    d.innerHTML='<div class="reveal-label">What I\'m hearing</div>'; const p=document.createElement('div'); p.textContent=synth; d.appendChild(p);
+    chat.appendChild(d); scroll();
+    window._synthesis=synth;
+  } else { sysNote('⚠ Could not generate the synthesis — check your key in ⚙ and Restart.'); }
+
+  // CTA → roadmap
+  const cta=document.createElement('div'); cta.className='cta';
+  const btn=document.createElement('button'); btn.textContent='Now show me my plan →';
+  btn.onclick=()=>{ cta.remove(); runRoadmap(); };
+  cta.appendChild(btn); chat.appendChild(cta); scroll();
+}
+function botMsgDelayPrep(){}
+
+async function runRoadmap(){
+  showTyping();
+  let road;
+  try{ road = await llm('You are the CATalyst Max mentor.', [...history, {role:'user', text:ROADMAP_PROMPT}]); }
+  catch(e){ road=null; }
+  hideTyping();
+  if(road){
+    const d=document.createElement('div'); d.className='msg bot reveal';
+    d.innerHTML='<div class="reveal-label">Your plan — a preview of CATalyst Max</div>';
+    const p=document.createElement('div'); p.innerHTML=mdLite(road); d.appendChild(p);
+    chat.appendChild(d); scroll();
+    window._roadmap=road;
+  } else { sysNote('⚠ Could not generate the roadmap — check your key and Restart.'); }
+  finishUp();
+}
+
+// tiny markdown: **bold** and line breaks
+function mdLite(t){
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+          .replace(/\n/g,'<br>');
 }
 
 function finishUp(){
   document.getElementById('end').style.display='block';
   document.getElementById('hsub').textContent='Done — save your notes';
-  document.getElementById('end').scrollIntoView({behavior:'smooth'});
+  setTimeout(()=>document.getElementById('end').scrollIntoView({behavior:'smooth'}), 400);
 }
 
-// ════════════════════════════════════════════════════════════
-//  SESSION EXPORT
-// ════════════════════════════════════════════════════════════
+// ── EXPORT ──
 function downloadSession(){
-  A._reaction = document.getElementById('reaction').value;
-  const lines=[`CATalyst Max — Interview session`, `When: ${new Date().toLocaleString()}`, ''];
-  lines.push('=== PROFILE ===');
-  Object.entries(A).forEach(([k,v])=>{ if(!k.startsWith('_')) lines.push(`${k}: ${v}`); });
-  lines.push('', '=== SYNTHESIS ===', A._synthesis||'(none generated)');
-  lines.push('', '=== THEIR REACTION (your notes) ===', A._reaction||'(none)');
+  const reaction=document.getElementById('reaction').value;
+  const lines=['CATalyst Max — Interview session', 'When: '+new Date().toLocaleString(), '', '=== TRANSCRIPT ==='];
+  history.forEach(m=>{ if(m.hidden||m.text.includes('<<INTERVIEW_COMPLETE>>')) return; lines.push((m.role==='assistant'?'MENTOR: ':'ASPIRANT: ')+m.text); });
+  lines.push('', '=== SYNTHESIS ===', window._synthesis||'(none)');
+  lines.push('', '=== SAMPLE ROADMAP ===', window._roadmap||'(none)');
+  lines.push('', '=== THEIR REACTION (your notes) ===', reaction||'(none)');
   const blob=new Blob([lines.join('\n')],{type:'text/plain'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download=`max-interview-${Date.now()}.txt`; a.click();
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='max-interview-'+Date.now()+'.txt'; a.click();
 }
 
-// ════════════════════════════════════════════════════════════
-//  SETTINGS + BOOT
-// ════════════════════════════════════════════════════════════
+// ── SETTINGS ──
 function toggleSettings(){
-  const s=document.getElementById('settings');
-  const open=s.style.display==='none';
+  const s=document.getElementById('settings'), open=s.style.display==='none';
   s.style.display=open?'block':'none';
   document.getElementById('chat').style.display=open?'none':'flex';
   document.getElementById('footer').style.display=open?'none':'block';
-  if(open){ document.getElementById('api-key').value=localStorage.getItem('gemini_key')||''; document.getElementById('api-model').value=localStorage.getItem('gemini_model')||'gemini-2.0-flash'; }
+  document.getElementById('end').style.display='none';
+  if(open){
+    document.getElementById('gemini-key').value=localStorage.getItem('gemini_key')||'';
+    document.getElementById('gemini-model').value=localStorage.getItem('gemini_model')||'gemini-2.5-flash';
+    document.getElementById('groq-key').value=localStorage.getItem('groq_key')||'';
+    document.getElementById('groq-model').value=localStorage.getItem('groq_model')||'llama-3.3-70b-versatile';
+  }
 }
 function saveSettings(){
-  localStorage.setItem('gemini_key', document.getElementById('api-key').value.trim());
-  localStorage.setItem('gemini_model', document.getElementById('api-model').value.trim()||'gemini-2.0-flash');
-  toggleSettings();
+  localStorage.setItem('gemini_key', document.getElementById('gemini-key').value.trim());
+  localStorage.setItem('gemini_model', document.getElementById('gemini-model').value.trim()||'gemini-2.5-flash');
+  localStorage.setItem('groq_key', document.getElementById('groq-key').value.trim());
+  localStorage.setItem('groq_model', document.getElementById('groq-model').value.trim()||'llama-3.3-70b-versatile');
+  document.getElementById('settings').style.display='none';
+  restart();
 }
+
+// ── BOOT ──
 function restart(){
-  for(const k in A) delete A[k];
-  stepIdx=0; chat.innerHTML='';
+  history=[]; phase='interview'; chat.innerHTML='';
   document.getElementById('end').style.display='none';
+  document.getElementById('chat').style.display='flex';
   document.getElementById('hsub').textContent="Counselling — let's understand you";
-  setComposer(true);
-  askStep();
+  setComposer(true); busy(false);
+  if(!localStorage.getItem('gemini_key') && !localStorage.getItem('groq_key')){
+    botMsg("👋 Before we start — tap the ⚙ in the top-right and paste your Gemini API key (free, from aistudio.google.com). Then we'll begin.");
+    setComposer(false);
+    return;
+  }
+  // seed a hidden kickoff so the mentor opens the conversation (API needs a user turn first)
+  history=[{role:'user', text:'Begin the interview now with your warm opening message that sets the contract and asks the first question.', hidden:true}];
+  nextMentorTurn();
 }
 
 restart();
