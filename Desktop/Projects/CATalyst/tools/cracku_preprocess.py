@@ -271,6 +271,68 @@ def main():
     for q in questions:
         q['solution_src'] = solutions.get(q['q_no'])
 
+    # ── extract question FIGURES (Geometry/DI/LR diagrams) ───────────────────
+    # Figures are embedded images. Each page also has the reused play-button
+    # template + video-solution thumbnails (which sit UNDER the play button).
+    # Real figure = embedded image that is NOT the reused template AND does NOT
+    # overlap a play-button placement. Crop it, name it by its question.
+    os.makedirs(os.path.join(outdir, 'figures'), exist_ok=True)
+    from collections import Counter, defaultdict
+    _xref_pages = Counter()
+    for _p in doc:
+        for _im in _p.get_images(full=True):
+            _xref_pages[_im[0]] += 1
+    template_xrefs = {x for x, c in _xref_pages.items() if c > 10}
+    def _ov(a, b): return not (a.x1 < b.x0 or a.x0 > b.x1 or a.y1 < b.y0 or a.y0 > b.y1)
+    page_qs = defaultdict(list)
+    for q in questions:
+        page_qs[q['page']].append(q)
+    fig_count = 0
+    for pi in range(n_pages):
+        qs_here = page_qs.get(pi + 1, [])
+        if not qs_here:
+            continue
+        page = doc[pi]
+        tmpl_rects = []
+        for im in page.get_images(full=True):
+            if im[0] in template_xrefs:
+                tmpl_rects += list(page.get_image_rects(im[0]))
+        figs = []
+        for im in page.get_images(full=True):
+            if im[0] in template_xrefs:
+                continue
+            for r in page.get_image_rects(im[0]):
+                if any(_ov(r, t) for t in tmpl_rects):
+                    continue
+                if r.width > 40 and r.height > 40:
+                    figs.append(r)
+        if not figs:
+            continue
+        figs.sort(key=lambda r: r.y0)
+        # y-position of each question marker on this page
+        qy = []
+        for q in qs_here:
+            rs = page.search_for('Question %d' % q['q_no'])
+            qy.append((rs[0].y0 if rs else 0, q))
+        qy.sort()
+        for r in figs:
+            chosen = None
+            for y, q in qy:                      # the question whose marker sits just above the figure
+                if y <= r.y0 + 6:
+                    chosen = q
+            if chosen is None and qy:
+                chosen = qy[0][1]
+            if chosen is None or chosen.get('has_image'):
+                continue
+            pad = 6
+            clip = fitz.Rect(max(0, r.x0 - pad), max(0, r.y0 - pad), r.x1 + pad, r.y1 + pad)
+            pix = page.get_pixmap(matrix=fitz.Matrix(3, 3), clip=clip)
+            name = 'q_%04d_img_1.png' % chosen['q_no']
+            pix.save(os.path.join(outdir, 'figures', name))
+            chosen['has_image'] = True
+            chosen['image_url'] = name
+            fig_count += 1
+
     # ── write outputs ────────────────────────────────────────────────────────
     set_by_id = {s['set_id']: s for s in sets}
     for q in questions:
@@ -281,6 +343,14 @@ def main():
             setblock = ("\n## SET CONTEXT (shared)\n"
                         f"set_id: {s['set_id']}\n"
                         + '\n'.join(s['instruction_lines']) + "\n")
+        imgblock = (
+            f"\n## THIS QUESTION HAS A FIGURE (auto-detected & cropped → figures/{q['image_url']})\n"
+            f"Set has_image = true and image_url = $$ {q['image_url']} $$ in the SQL. The figure is\n"
+            f"already extracted — you don't crop anything. Describe the figure in the question text only\n"
+            f"where the original does (e.g. 'in the following figure').\n"
+        ) if q.get('has_image') else (
+            "\n## FIGURE: none detected → has_image = false, image_url = NULL\n"
+        )
         sol_src = q.get('solution_src')
         solblock = (
             "\n## OFFICIAL WORKED SOLUTION (rewrite THIS — do not invent your own method)\n"
@@ -302,12 +372,13 @@ answer_type: {q['answer_type']}
 
 ## LOOK AT THIS IMAGE for correct math, symbols, tables, figures:
 pages/page_{q['page']:04d}.png
-{solblock}
+{imgblock}{solblock}
 ## YOUR JOB
 Produce the SQL row(s) per tools/EXTRACTION_GUIDE.md:
 - Read the IMAGE to get math right; wrap inline math in \\( ... \\), display in \\[ ... \\]
 - Keep all text verbatim; use /n/ for line breaks
 - Use the KNOWN ANSWER above (set correct_option for mcq / correct_value for tita)
+- has_image / image_url: use exactly what the FIGURE section above says (don't decide yourself)
 - Base your solution on the OFFICIAL WORKED SOLUTION above — reformat it, fixing the math
 - question_type = {'set_question' if q['set_id'] else 'single'}; set_id = {q['set_id'] or 'NULL'}
 - Classify topic/subtopic from the allowed taxonomy
@@ -345,6 +416,7 @@ Produce the SQL row(s) per tools/EXTRACTION_GUIDE.md:
     report = [
         f"PDF: {pdf_name}",
         f"Pages: {n_pages}  |  Questions parsed: {len(questions)}  |  Sets: {len(sets)}  |  Answers found: {len(answers)}",
+        f"Figures auto-extracted: {fig_count}  →  figures/  (upload these to Supabase cat-assets bucket)",
         f"Question number range: {min(qnos) if qnos else '-'}–{max(qnos) if qnos else '-'}",
         "",
         f"[!] Questions with NO answer found ({len(missing_ans)}): {missing_ans[:40]}",
