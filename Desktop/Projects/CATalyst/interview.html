@@ -237,16 +237,20 @@ Include "options" ONLY when the question has natural quick choices (situation, w
 
 HOW YOU TALK: reflect briefly, then ask. Never judge. Mirror Hinglish if they use it. Draw out one-word answers gently. Everything is skippable.
 
-AGENDA (cover all, adapting; never skip the practical ones):
-1. SITUATION — college year / working / dropper + key detail (placement clash, re-attempt, job).
-2. DAILY REALITY — what their day actually looks like; when they're free.
-3. CAPACITY — honest hours/day, days/week, months until CAT.
-4. RESOURCES — coached / recorded / self-study? what they use now (Rodha, PDFs, YouTube).
-5. BASELINE — mocks taken? the STORY of the last one. Which section is their anchor, which their freeze. Probe the freeze: don't-know-how-to-start / time / panic / silly mistakes.
-6. THE WHY — the real reason for CAT.
-7. OBSTACLES — what breaks their consistency.
-8. FEARS — what failure would feel like; what scares them most.
-9. SELF-BELIEF — do they believe they can crack it.
+AGENDA — be THOROUGH. You MUST get a topic-level read on ALL THREE sections and the real mock score. Never build a picture from one section.
+1. SITUATION — college / working / dropper + key detail (placement clash, re-attempt, job hours).
+2. CAPACITY — honest hours/day, days/week, months until CAT.
+3. RESOURCES — coached / recorded / self-study? what they use now (Rodha, PDFs, YouTube).
+4. MOCKS & SCORE — have they taken mocks? If yes, ASK THE ACTUAL SCORE — overall %ile and sectional %iles if they remember. Do NOT accept just "yes" and move on. If no mocks, note it.
+5. QUANT (topic level) — which areas are comfortable vs weak: Arithmetic / Algebra / Geometry / Number System / Modern Math? If they name one (e.g. "good at Arithmetic"), FOLLOW UP on the rest of Quant.
+6. VARC (topic level) — RC (comprehension/inference) AND VA (para-jumbles, summary, odd-one-out) — which is the problem? For RC probe the real failure: comprehension vs option-selection vs time.
+7. LRDI (topic level) — do NOT skip this. Are they stronger at LR (arrangements, puzzles, games) or DI (tables, charts, caselets)? What set types trip them up?
+8. THE WHY — the real reason for CAT.
+9. OBSTACLES — what breaks their consistency.
+10. FEARS — what failure would feel like; what scares them most.
+11. SELF-BELIEF — do they believe they can crack it.
+
+DEPTH RULE: You are building a real study plan — you NEED specifics. Spend a question or two on EACH section's sub-topics. If an answer is vague ("VARC is weak"), probe ("RC or VA? and is it comprehension or picking the option?"). Get the mock score in numbers if it exists. Do not rush to <<INTERVIEW_COMPLETE>> until Quant, VARC AND LRDI are each covered at topic level. ~15-18 exchanges is fine — depth matters more than speed here.
 
 OPENING (first message): ack=null, chapter='Your situation'. Put a warm 1-2 line welcome (contract: ~10 min, skip anything, nothing shared, one line of your own story) + the first question INTO the "q" field. Keep it short.
 
@@ -257,7 +261,7 @@ const SYNTHESIS_PROMPT=`The counselling conversation is below. Write a warm refl
 const ROADMAP_PROMPT=`You are an expert CAT mentor building a personalized plan for the aspirant in the conversation below. They could be ANYONE — a working pro with 1 hour, a fresher with no baseline, a 97%iler chasing 99.9, an anxious dropper, a coached student, a late starter. ADAPT EVERYTHING to THEIR actual profile. The plan must be the most practical, personal, realistic and positive plan they've ever seen. Reply ONLY with a JSON object in EXACTLY this shape:
 {
   "diagnosis":"<2-3 lines naming their REAL problem specifically, at their real level>",
-  "scope":{"current":"<their level, e.g. 90%ile / 'Fresh start'>","target":"<just the number, e.g. 99>","targetUnit":"<e.g. %ile>","gap":"<countable gap from THEIR baseline>","encouragement":"<one honest hopeful line, never a guarantee>","trajectory":[{"label":"Mock 3","value":"~X"},{"label":"Mock 6","value":"~Y"},{"label":"CAT","value":"<target>"}]},
+  "scope":{"current":"<SHORT level descriptor ONLY — e.g. '90%ile' or 'Fresh start'. NOT a sentence.>","target":"<just the number, e.g. 99>","targetUnit":"<e.g. %ile>","gap":"<a COUNTABLE gap from their mock score, e.g. '~+4 correct per section'. If no mock, give the honest realistic jump.>","encouragement":"<one honest hopeful line, never a guarantee>","trajectory":[{"label":"Mock 3","value":"~X"},{"label":"Mock 6","value":"~Y"},{"label":"CAT","value":"<target>"}]},
   "strategy":"<ONE punchy line — the overall game plan tailored to them>",
   "phases":[{"n":1,"name":"<short>","when":"<e.g. Wk 1-4>","goal":"<what this phase achieves>","sections":"<what EACH section does this phase>","outcome":"<expected %ile movement>"} ... fitted to their MONTHS LEFT],
   "week":[{"day":"Mon","theme":"<1-3 word focus>","total":"<~their available hours>","blocks":[
@@ -281,8 +285,10 @@ UNIVERSAL ADAPTIVE RULES — apply the ones that fit THIS person:
 11. PREREQUISITES & FREQUENCY → sequence topics by dependency; prioritize high-CAT-frequency topics they're weak in first.
 12. TONE → low confidence = warmer, smaller wins, reassurance; high confidence/high target = strategic, push harder, less hand-holding. Mirror their language (Hinglish if used).
 13. HONESTY → if their target is very hard in their time, say so kindly in the encouragement and give the best realistic path. Never oversell.
+14. COVER ALL THREE SECTIONS at TOPIC level — never build the whole plan around one section. Use the specifics they gave: if they're good at Arithmetic but weak in Algebra/Geometry, the Quant blocks target ALGEBRA/GEOMETRY (not "Quant basics"); if LRDI was discussed, schedule the weak set-types (e.g. specific puzzle/DI types). The phases must show the SYLLABUS-COMPLETION PATH — which topics/areas get covered in which phase, so they see how the whole syllabus gets done, not just "study VARC".
 
-DAY BLOCKS must MIX learn (what to watch/read) + practice (DPP) + review (Fix) + reading where relevant — filling their hours, never one tiny block. Start the week with their strongest area for momentum. Be specific, warm, realistic, motivating.`;
+FORMAT: every "sections", "goal", "outcome", "what", "why" field MUST be a plain STRING (never an object or array).
+The week must touch all three sections across the days (not 4 VARC days). DAY BLOCKS mix learn (what to watch/read) + practice (DPP) + review (Fix) + reading where relevant — filling their hours, never one tiny block. Start the week with their strongest area for momentum. Be specific (name actual topics), warm, realistic, motivating.`;
 
 // ════════════════════════════════════════════════════════════
 //  LLM via secure proxy
@@ -389,6 +395,7 @@ async function runRoadmap(){
   renderRoadmap(r);
 }
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function asText(v){ if(v==null)return''; if(typeof v==='string')return v; if(Array.isArray(v))return v.map(asText).join(' · '); if(typeof v==='object')return Object.entries(v).map(([k,val])=>k+': '+asText(val)).join(' · '); return String(v); }
 
 function renderRoadmap(r){
   const subj=s=>['Quant','VARC','LRDI','Fix','Mock','Rest'].includes(s)?s:'Quant';
@@ -397,13 +404,13 @@ function renderRoadmap(r){
   const R=2*Math.PI*64;
   const traj=(sc.trajectory||[]).map((t,i)=>`${i>0?'<span class="sep">→</span>':''}<div class="step"><b>${esc(t.value||'')}</b>${esc(t.label||'')}</div>`).join('');
 
-  const phases=(r.phases||[]).map(p=>`<details class="acc"><summary><span class="dot">${esc(String(p.n||''))}</span><span class="acc-t">${esc(p.name||'')}<span class="acc-when">${esc(p.when||'')}</span></span><span class="chev">›</span></summary><div class="acc-body"><div class="goal">🎯 ${esc(p.goal||'')}</div>${p.sections?'<div class="sections">'+esc(p.sections)+'</div>':''}${p.outcome?'<div class="outcome">📈 '+esc(p.outcome)+'</div>':''}</div></details>`).join('');
+  const phases=(r.phases||[]).map(p=>`<details class="acc"><summary><span class="dot">${esc(String(p.n||''))}</span><span class="acc-t">${esc(p.name||'')}<span class="acc-when">${esc(asText(p.when))}</span></span><span class="chev">›</span></summary><div class="acc-body"><div class="goal">🎯 ${esc(asText(p.goal))}</div>${p.sections?'<div class="sections">'+esc(asText(p.sections))+'</div>':''}${p.outcome?'<div class="outcome">📈 '+esc(asText(p.outcome))+'</div>':''}</div></details>`).join('');
 
   const days=(r.week||[]).map((d,di)=>{
     const s=subj(d.subject||(d.blocks&&d.blocks[0]&&d.blocks[0].subject)||'Quant');
     const blocks=(d.blocks||[]).map(b=>{
       const isCat=/catalyst/i.test(b.source||'');
-      return `<div class="block"><div class="bk-ic">${ICON[b.kind]||'•'}</div><div class="bk-body"><div class="bk-top"><span class="bk-what">${esc(b.what||'')}</span>${b.time?'<span class="bk-time">'+esc(b.time)+'</span>':''}</div>${b.source?'<span class="bk-src '+(isCat?'cat':'')+'">'+esc(b.source)+'</span>':''}<div class="bk-why">${esc(b.why||'')}</div></div></div>`;
+      return `<div class="block"><div class="bk-ic">${ICON[b.kind]||'•'}</div><div class="bk-body"><div class="bk-top"><span class="bk-what">${esc(asText(b.what))}</span>${b.time?'<span class="bk-time">'+esc(asText(b.time))+'</span>':''}</div>${b.source?'<span class="bk-src '+(isCat?'cat':'')+'">'+esc(asText(b.source))+'</span>':''}<div class="bk-why">${esc(asText(b.why))}</div></div></div>`;
     }).join('');
     return `<details class="acc" ${di===0?'open':''}><summary><div class="day-badge"><div class="dn">${esc(d.day||'')}</div><div class="db bar-${s}"></div></div><span class="acc-t">${esc(d.theme||'')}<span class="acc-when">${esc(d.total||'')}</span></span><span class="chev">›</span></summary><div class="acc-body">${blocks}</div></details>`;
   }).join('');
