@@ -5,61 +5,119 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>CATalyst — Your CAT Counselling</title>
 <meta name="description" content="A 10-minute conversation that figures out your CAT prep and builds you a real plan." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0f1117;--bg2:#1a1d27;--bg3:#252836;--border:rgba(255,255,255,.08);
-    --text:#e8eaf0;--text2:#8b90a0;--text3:#4a4f60;
-    --accent:#5b7af5;--accent2:#8b5cf6;--green:#10b981;--amber:#f59e0b;
-    --bot:#1e2230;--user:#2e4bff;
+    --bg:#0b0d13;--bg2:#151823;--bg3:#1f2330;--border:rgba(255,255,255,.07);
+    --text:#eef0f6;--text2:#9499a8;--text3:#565c6e;
+    --accent:#6b8aff;--accent2:#a06bff;--green:#22c79a;--amber:#f5a623;--red:#ff6b6b;--pink:#ff7eb6;
+    --q-glow:rgba(107,138,255,.5);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100dvh;max-width:640px;margin:0 auto}
-  header{padding:.85rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;flex-shrink:0}
-  .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1rem}
-  header h1{font-size:.92rem;font-weight:700}
+  body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(1200px 800px at 50% -10%, #16182a 0%, var(--bg) 55%);color:var(--text);display:flex;flex-direction:column;height:100dvh;max-width:680px;margin:0 auto}
+  .sora{font-family:'Sora','Inter',sans-serif}
+
+  header{padding:.9rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.65rem;flex-shrink:0;backdrop-filter:blur(8px)}
+  .logo{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.05rem;box-shadow:0 4px 14px rgba(107,138,255,.35)}
+  header h1{font-size:.95rem;font-weight:800;letter-spacing:-.01em}
   header .sub{font-size:.68rem;color:var(--text2)}
   header .right{margin-left:auto}
-  .icon-btn{background:var(--bg3);border:none;color:var(--text2);border-radius:7px;padding:.35rem .6rem;font-size:.72rem;cursor:pointer;font-family:inherit}
+  .icon-btn{background:var(--bg3);border:none;color:var(--text2);border-radius:8px;padding:.4rem .7rem;font-size:.72rem;cursor:pointer;font-family:inherit;font-weight:600}
   .icon-btn:hover{color:var(--text)}
 
-  #chat{flex:1;overflow-y:auto;padding:1.1rem;display:flex;flex-direction:column;gap:.7rem}
-  .msg{max-width:86%;padding:.7rem .9rem;border-radius:14px;font-size:.94rem;line-height:1.55;animation:rise .35s ease;white-space:pre-wrap;word-wrap:break-word}
-  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  .msg.bot{background:var(--bot);border-bottom-left-radius:4px;align-self:flex-start}
-  .msg.user{background:var(--user);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
-  .msg.reveal{background:linear-gradient(135deg,rgba(91,122,245,.14),rgba(139,92,246,.14));border:1px solid rgba(139,92,246,.3);max-width:98%;align-self:stretch;font-size:.95rem;line-height:1.7}
-  .reveal-label{font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);margin-bottom:.5rem}
-  .typing{align-self:flex-start;background:var(--bot);border-radius:14px;border-bottom-left-radius:4px;padding:.8rem 1rem;display:flex;gap:4px}
-  .typing span{width:7px;height:7px;border-radius:50%;background:var(--text3);animation:blink 1.2s infinite}
-  .typing span:nth-child(2){animation-delay:.2s} .typing span:nth-child(3){animation-delay:.4s}
-  @keyframes blink{0%,60%,100%{opacity:.3} 30%{opacity:1}}
-  .sys-note{align-self:center;font-size:.72rem;color:var(--text3);text-align:center;max-width:80%;padding:.3rem}
-
-  .cta{align-self:stretch;margin-top:.4rem}
-  .cta button{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;border-radius:11px;padding:.85rem;font-size:.92rem;font-weight:700;cursor:pointer;font-family:inherit}
+  #chat{flex:1;overflow-y:auto;padding:1.2rem;display:flex;flex-direction:column;gap:.55rem}
+  .msg{max-width:88%;padding:.7rem .95rem;font-size:.95rem;line-height:1.55;animation:rise .4s cubic-bezier(.2,.8,.2,1);word-wrap:break-word}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  /* acknowledgment — soft, secondary */
+  .msg.ack{align-self:flex-start;background:transparent;color:var(--text2);font-size:.88rem;padding:.2rem .3rem .1rem;max-width:90%}
+  /* the QUESTION — highlighted, what they read */
+  .msg.q{align-self:flex-start;background:linear-gradient(135deg,#202542,#1a1d2e);border:1px solid rgba(107,138,255,.32);border-left:3px solid var(--accent);border-radius:4px 16px 16px 16px;font-weight:600;font-size:1.02rem;color:#fff;box-shadow:0 6px 22px rgba(107,138,255,.13)}
+  .msg.user{align-self:flex-end;background:linear-gradient(135deg,var(--accent),#5a78f0);color:#fff;border-radius:16px 16px 4px 16px;font-weight:500}
+  .chips{display:flex;flex-wrap:wrap;gap:.45rem;align-self:flex-start;max-width:92%;margin-top:.15rem}
+  .chip{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:99px;padding:.5rem .95rem;font-size:.85rem;cursor:pointer;font-family:inherit;font-weight:500;transition:.13s}
+  .chip:hover{border-color:var(--accent);background:rgba(107,138,255,.14);transform:translateY(-1px)}
+  .chip.skip{color:var(--text3)}
+  .typing{align-self:flex-start;background:#1a1d2e;border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:.85rem 1rem;display:flex;gap:5px}
+  .typing span{width:7px;height:7px;border-radius:50%;background:var(--accent);opacity:.6;animation:blink 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+  .sys-note{align-self:center;font-size:.74rem;color:var(--text3);text-align:center;max-width:80%;padding:.4rem}
 
   footer{padding:.8rem 1rem;border-top:1px solid var(--border);flex-shrink:0}
   .composer{display:flex;gap:.5rem;align-items:flex-end}
-  textarea#answer{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:inherit;font-size:.94rem;padding:.65rem .8rem;resize:none;max-height:120px;line-height:1.4}
+  textarea#answer{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;color:var(--text);font-family:inherit;font-size:.95rem;padding:.7rem .85rem;resize:none;max-height:120px;line-height:1.4}
   textarea#answer:focus{outline:none;border-color:var(--accent)}
-  #send{background:var(--accent);border:none;color:#fff;border-radius:50%;width:42px;height:42px;font-size:1.1rem;cursor:pointer;flex-shrink:0}
-  #send:disabled{opacity:.4;cursor:not-allowed}
-  .hint{font-size:.66rem;color:var(--text3);margin-top:.4rem;text-align:center}
+  #send{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;border-radius:50%;width:44px;height:44px;font-size:1.15rem;cursor:pointer;flex-shrink:0;box-shadow:0 4px 14px rgba(107,138,255,.4)}
+  #send:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+  .hint{font-size:.66rem;color:var(--text3);margin-top:.45rem;text-align:center}
 
-  /* welcome overlay */
-  .welcome{position:fixed;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;max-width:640px;margin:0 auto}
-  .welcome .logo{width:56px;height:56px;border-radius:16px;font-size:1.7rem;margin-bottom:1.2rem}
-  .welcome h2{font-size:1.5rem;font-weight:800;margin-bottom:.7rem;line-height:1.3}
-  .welcome p{font-size:.95rem;color:var(--text2);line-height:1.6;max-width:420px;margin-bottom:.5rem}
-  .welcome .priv{font-size:.78rem;color:var(--text3);margin:1rem 0 1.6rem}
-  .welcome button{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;border-radius:12px;padding:.85rem 2rem;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit}
+  /* WELCOME */
+  .welcome{position:fixed;inset:0;background:radial-gradient(900px 600px at 50% 0%, #1b1e35 0%, var(--bg) 60%);z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;max-width:680px;margin:0 auto}
+  .welcome .logo{width:62px;height:62px;border-radius:18px;font-size:1.9rem;margin-bottom:1.3rem}
+  .welcome h2{font-size:1.7rem;font-weight:800;margin-bottom:.8rem;line-height:1.25;letter-spacing:-.02em}
+  .welcome h2 em{font-style:normal;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .welcome p{font-size:.98rem;color:var(--text2);line-height:1.65;max-width:430px;margin-bottom:.5rem}
+  .welcome .priv{font-size:.78rem;color:var(--text3);margin:1.1rem 0 1.7rem;display:flex;align-items:center;gap:.4rem}
+  .welcome button{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;border-radius:14px;padding:.95rem 2.2rem;font-size:1.02rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 8px 26px rgba(107,138,255,.4);transition:.15s}
+  .welcome button:hover{transform:translateY(-2px)}
+  .welcome .meta{font-size:.72rem;color:var(--text3);margin-top:1.1rem}
 
-  .panel{padding:1.4rem;overflow-y:auto}
-  .panel h2{font-size:1.05rem;margin-bottom:.5rem}
-  .panel p{font-size:.84rem;color:var(--text2);line-height:1.6;margin-bottom:.7rem}
-  .btn{background:var(--accent);border:none;color:#fff;border-radius:9px;padding:.6rem 1.2rem;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit;margin-top:.6rem;margin-right:.5rem}
-  .btn-ghost{background:var(--bg3);color:var(--text2)}
+  /* ── ROADMAP (visual artifact) ── */
+  .rm{align-self:stretch;max-width:100%;margin-top:.5rem;animation:rise .5s ease}
+  .rm-hero{background:linear-gradient(135deg,rgba(107,138,255,.16),rgba(160,107,255,.14));border:1px solid rgba(160,107,255,.3);border-radius:18px;padding:1.2rem;margin-bottom:1rem;text-align:center}
+  .rm-hero .label{font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2);margin-bottom:.7rem}
+  .rm-scope{display:flex;align-items:center;justify-content:center;gap:.7rem;margin-bottom:.6rem;flex-wrap:wrap}
+  .rm-scope .now{font-size:1.05rem;font-weight:700;color:var(--text2)}
+  .rm-scope .arrow{color:var(--accent)}
+  .rm-scope .tgt{font-size:1.6rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .rm-gap{font-size:.9rem;color:var(--text);font-weight:600;background:var(--bg2);border-radius:10px;padding:.55rem;margin:.5rem 0}
+  .rm-gap b{color:var(--green)}
+  .rm-enc{font-size:.82rem;color:var(--text2);line-height:1.5}
+  .rm-traj{display:flex;justify-content:center;gap:.4rem;margin-top:.85rem;flex-wrap:wrap}
+  .rm-traj .step{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:.4rem .6rem;font-size:.72rem}
+  .rm-traj .step b{display:block;color:var(--accent);font-size:.8rem}
+  .rm-traj .sep{color:var(--text3);align-self:center}
+
+  .rm-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.05rem 1.15rem;margin-bottom:.85rem}
+  .rm-card .ttl{font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.6rem;display:flex;align-items:center;gap:.45rem}
+  .rm-prob{font-size:.92rem;line-height:1.6;color:var(--text)}
+
+  .phase{display:flex;gap:.7rem;padding:.5rem 0;align-items:flex-start}
+  .phase:not(:last-child){border-bottom:1px solid rgba(255,255,255,.04)}
+  .phase .dot{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:.7rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.1rem}
+  .phase .body{flex:1}
+  .phase .pn{font-weight:700;font-size:.9rem}
+  .phase .pd{font-size:.78rem;color:var(--text2)}
+  .phase .pw{font-size:.7rem;color:var(--text3);font-weight:600;white-space:nowrap;margin-top:.15rem}
+
+  .day{display:flex;gap:.7rem;padding:.6rem 0;align-items:flex-start}
+  .day:not(:last-child){border-bottom:1px solid rgba(255,255,255,.04)}
+  .day .dbadge{width:42px;flex-shrink:0;text-align:center}
+  .day .dname{font-size:.7rem;font-weight:800;color:var(--text2)}
+  .day .dbar{height:4px;border-radius:3px;margin-top:.3rem}
+  .day .dbody{flex:1}
+  .day .dtop{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin-bottom:.15rem}
+  .day .dsub{font-size:.88rem;font-weight:700}
+  .day .dmeta{font-size:.68rem;color:var(--text);background:var(--bg3);border-radius:6px;padding:.1rem .45rem;font-weight:600}
+  .day .dwhy{font-size:.76rem;color:var(--text2);line-height:1.45}
+  .s-Quant{color:#6b8aff} .bar-Quant{background:#6b8aff}
+  .s-VARC{color:#a06bff} .bar-VARC{background:#a06bff}
+  .s-LRDI{color:#22c79a} .bar-LRDI{background:#22c79a}
+  .s-Fix{color:#ff6b6b} .bar-Fix{background:#ff6b6b}
+  .s-Mock{color:#f5a623} .bar-Mock{background:#f5a623}
+  .s-Rest{color:#565c6e} .bar-Rest{background:#565c6e}
+
+  .diff{display:flex;gap:.6rem;align-items:flex-start;padding:.4rem 0;font-size:.85rem;line-height:1.5}
+  .diff .ic{color:var(--green);flex-shrink:0;font-weight:800}
+
+  .rm-cta{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:16px;padding:1.2rem;text-align:center;margin-top:.4rem}
+  .rm-cta h3{font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:.3rem}
+  .rm-cta p{font-size:.82rem;color:rgba(255,255,255,.85);margin-bottom:.9rem;line-height:1.5}
+  .rm-cta a button{background:#fff;color:var(--accent);border:none;border-radius:12px;padding:.75rem 1.8rem;font-size:.95rem;font-weight:800;cursor:pointer;font-family:inherit}
+  .restart-row{text-align:center;margin:1rem 0 .5rem}
 </style>
 </head>
 <body>
@@ -67,16 +125,17 @@
 <!-- WELCOME -->
 <div class="welcome" id="welcome">
   <div class="logo">⚡</div>
-  <h2>Before CAT plans,<br>let's understand <em>you</em>.</h2>
-  <p>A ~10-minute conversation — not a form. Tell me about your prep honestly, and I'll show you what's actually going on and build you a real plan.</p>
-  <div class="priv">🔒 Nothing here is shared. It's only to build your plan. Skip anything you want.</div>
+  <h2 class="sora">Before CAT plans,<br>let's understand <em>you</em>.</h2>
+  <p>A 10-minute conversation — not a form. Tell me about your prep honestly, and I'll show you what's really going on, and build you a plan that fits your life.</p>
+  <div class="priv">🔒 Nothing here is shared — it's only to build your plan.</div>
   <button onclick="begin()">Start the conversation →</button>
+  <div class="meta">Free · ~10 min · no signup</div>
 </div>
 
 <header style="display:none" id="header">
   <div class="logo">⚡</div>
   <div>
-    <h1>CATalyst</h1>
+    <h1 class="sora">CATalyst</h1>
     <div class="sub" id="hsub">Your CAT counselling</div>
   </div>
   <div class="right"><button class="icon-btn" onclick="restart()">↻ Restart</button></div>
@@ -86,176 +145,204 @@
 
 <footer id="footer" style="display:none">
   <div class="composer">
-    <textarea id="answer" rows="1" placeholder="Type your answer…"></textarea>
-    <button id="send" onclick="submitAnswer()">↑</button>
+    <textarea id="answer" rows="1" placeholder="Type your answer… or tap an option above"></textarea>
+    <button id="send" onclick="submitText()">↑</button>
   </div>
-  <div class="hint">Be honest — it's just us, and nothing here is shared.</div>
+  <div class="hint">Be honest — it's just us. Type freely, or tap a quick option.</div>
 </footer>
-
-<!-- END -->
-<div class="panel" id="end" style="display:none">
-  <h2>That's your plan 🎯</h2>
-  <p>This is a preview of <b>CATalyst Max</b> — your real plan, built around you, with daily questions that adapt to your mistakes. Want the full thing?</p>
-  <a href="https://catalyst-app-six.vercel.app/" target="_blank"><button class="btn">Get CATalyst →</button></a>
-  <button class="btn btn-ghost" onclick="restart()">↻ Start over</button>
-</div>
 
 <script>
 // ════════════════════════════════════════════════════════════
-//  MASTER SYSTEM PROMPT — the product.
+//  PROMPTS
 // ════════════════════════════════════════════════════════════
-const SYSTEM_PROMPT = `You are the CATalyst mentor — a warm, sharp guide who self-studied for CAT and remembers exactly how lonely and confusing it was. You are having a ~10-minute counselling conversation with a CAT aspirant, BEFORE building their personal study plan.
+const CONVO_SYSTEM = `You are the CATalyst mentor — a warm, sharp guide who self-studied for CAT and remembers how lonely and confusing it was. You are having a ~10-minute counselling chat with a CAT aspirant before building their study plan. Make them feel understood while gathering what's needed for a real plan. This is an INTERVIEW with an agenda, not open chat.
 
-YOUR MISSION: make them feel deeply understood, while gathering everything needed to build a plan that fits their real life. This is an INTERVIEW with a clear agenda — not open chat, not a vent session. Every question should make them feel: "if I answer this honestly, I'll get a real solution for ME."
+OUTPUT FORMAT — respond ONLY with a JSON object, nothing else:
+{
+  "ack": "<1-2 SHORT warm sentences reflecting what they just said (max ~28 words). null for your very first message.>",
+  "q": "<ONE short, clear question — this is what they read and answer. One sentence.>",
+  "options": ["<2-4 short tappable answer choices>"],
+  "done": false
+}
+Include "options" ONLY when the question has natural quick choices (situation, which section, hours range, yes/no, months left). For open/emotional questions (the why, fears, the mock story) use an empty array [] so they type freely. Keep everything SHORT — never write paragraphs.
 
-HOW YOU TALK:
-- ONE message at a time. Short, warm, human — like a senior who has been there. Never a form, never clinical, never a generic chatbot.
-- Reflect before you move on: briefly acknowledge what they said so they feel heard ("a job + CAT — that's genuinely hard, okay."), THEN ask the next thing. Do not interrogate.
-- Never judge. Whatever they say is okay.
-- Mirror their language: if they write in Hinglish, reply in natural Hinglish. Match their vocabulary level.
-- One-word answer → gently draw them out. Emotional → hold space, be human first. Joking → smile, then return.
-- Everything is skippable. If they dodge something personal, let it go warmly.
-- Keep it moving — about 12–15 exchanges, then wrap. Do not drag.
+HOW YOU TALK: reflect briefly, then ask. Never judge. Mirror Hinglish if they use it. Draw out one-word answers gently. Everything is skippable.
 
-YOUR AGENDA (cover ALL of these naturally, adapting depth — never skip the practical ones for emotional talk):
-1. SITUATION — college year / working / dropper / between things + the key detail (placement clash, re-attempt, job hours).
-2. DAILY REALITY — what their day actually looks like; when they're realistically free and their energy then.
-3. CAPACITY — honest hours/day, days/week, and how many months until their CAT.
-4. RESOURCES — coached / recorded course / pure self-study? what are they using now (Rodha, PDFs, YouTube, a portal)?
-5. BASELINE — mocks taken? the STORY of their last mock (not just the score). Which of Quant/VARC/LRDI they feel okay about (anchor) and which scares them (freeze). Then probe the freeze: "don't know how to start" / "run out of time" / "panic & freeze" / "silly mistakes"?
-6. THE WHY — the real reason for CAT, not the resume answer.
-7. OBSTACLES — what actually breaks their consistency.
+AGENDA (cover all, adapting; never skip the practical ones):
+1. SITUATION — college year / working / dropper + the key detail (placement clash, re-attempt, job).
+2. DAILY REALITY — what their day actually looks like; when they're free.
+3. CAPACITY — honest hours/day, days/week, months until CAT.
+4. RESOURCES — coached / recorded / self-study? what they use now (Rodha, PDFs, YouTube).
+5. BASELINE — mocks taken? the STORY of the last one. Which section is their anchor, which is their freeze. Probe the freeze: don't-know-how-to-start / time / panic / silly mistakes.
+6. THE WHY — the real reason for CAT.
+7. OBSTACLES — what breaks their consistency.
 8. FEARS — what failure would feel like; what scares them most.
-9. SELF-BELIEF — do they genuinely believe they can crack it (gently).
+9. SELF-BELIEF — do they believe they can crack it.
 
-RULES OF DEPTH & TRUST:
-- Open with a warm message: ~10 min, no right answers, skip anything, nothing is shared, it's just the two of you — plus one short line of your own story (you self-studied, you know the 11pm loneliness) so they feel safe. Then ask the first question.
-- Escalate intimacy: safe/factual first (situation, hours), earn trust, the WHY and FEARS later.
-- Justify sensitive questions by THEIR benefit ("so your plan fits your life, not a generic one").
-- Never ask for guarded facts (income, names, family specifics). Ask about feelings and patterns. If they volunteer something heavy, respond as a human first.
+OPENING (first message): ack=null. Put a warm 1-2 line welcome that sets the contract (~10 min, skip anything, nothing shared, your own one-line story) INTO the "q" field followed by the first question. Keep it short.
 
-WHEN YOU HAVE COVERED THE AGENDA well enough to build a real plan, reply with EXACTLY this token and nothing else:
-<<INTERVIEW_COMPLETE>>`;
+WHEN AGENDA IS COVERED enough to build a plan, respond with: {"ack": null, "q": null, "options": [], "done": true}`;
 
-const SYNTHESIS_PROMPT = `The counselling conversation is below. Write ONE paragraph (130–180 words) reflecting back what you heard, so the aspirant feels deeply SEEN.
-- Name their specific situation (college/job/dropper, any placement clash).
-- Name their anchor (subject they're okay with) and their freeze (the one that scares them), in their words.
-- Name the REAL pattern behind their inconsistency.
-- Name their WHY, and let it carry weight.
-- Acknowledge their fear honestly, without drama.
-- End with 1–2 sentences on what the plan you're about to build will ASSUME about their life.
-Tone: warm, direct, human — a mentor who genuinely listened. Hinglish if they used it. No bullet points, no headings, no "Dear student". Start naturally. Do NOT give the plan yet. Output ONLY the paragraph.`;
+const SYNTHESIS_PROMPT = `The counselling conversation is below. Write ONE warm paragraph (110–150 words) reflecting back what you heard so the aspirant feels deeply SEEN. Name their situation, their anchor and their freeze (in their words), the REAL pattern behind their inconsistency, their WHY, and their fear — honestly, no drama. End with one line on what their plan will assume about their life. Mirror Hinglish if they used it. No headings, no bullets, no "Dear student". Output ONLY the paragraph.`;
 
-const ROADMAP_PROMPT = `Based on the conversation below, generate a SAMPLE personalized CAT roadmap that makes this aspirant believe they can actually hit their target. A preview of CATalyst Max — nothing like a generic ChatGPT plan. Built for THEM.
-
-Use EXACTLY these sections with these headers:
-
-**YOUR REAL PROBLEM**
-2–3 lines naming their actual issue in plain words (e.g. "your Quant isn't a concept problem — you freeze on how to START a question").
-
-**CAN YOU ACTUALLY SCORE IT?**
-Turn their target into a concrete, countable gap ("you're around X%ile; your target needs roughly +N correct per section — about 4 questions"). Honest range + short trajectory (mock 3 → mock 6 → CAT). Encouraging, never a promise.
-
-**THE MAP** (long-term, simple)
-4–5 phases, one short headline each, fitted to their months-left.
-
-**THIS WEEK** (detailed)
-A day-by-day Week 1 (Mon–Sun). Each day: specific topic/micro-topic, a question count + difficulty, and a one-line "because" tied to what they told you. Start with their anchor for an early win; attack their freeze the right way (untimed first if they panic). Mention daily DPPs + a Fix Mode session. Include rest where their life needs it.
-
-**HOW THIS IS DIFFERENT**
-2–3 lines: how it ADAPTS daily to their mistakes (yesterday's wrong topic returns; difficulty rises only when ready) — what coaching's identical DPPs never do.
-
-Tone: warm, specific, confident. Mirror their language. Short lines, clear sections. Make them feel: this was built for me, and if I follow it I can actually do this.`;
+const ROADMAP_PROMPT = `Based on the conversation below, build this aspirant's personalized CAT plan — a preview of CATalyst Max that makes them believe they can hit their target. Reply ONLY with a JSON object in EXACTLY this shape:
+{
+  "problem": "<2-3 lines naming their REAL issue in plain words (e.g. you don't have a concept gap, you freeze on how to START)>",
+  "scope": {
+    "current": "<their current level, e.g. ~91%ile or 'fresh start'>",
+    "target": "<their target, e.g. 99.8%ile>",
+    "gap": "<the countable gap, e.g. about +4 correct per section>",
+    "encouragement": "<one honest, hopeful line — never a guarantee>",
+    "trajectory": [{"label":"Mock 3","value":"~X%ile"},{"label":"Mock 6","value":"~Y%ile"},{"label":"CAT","value":"<target>"}]
+  },
+  "phases": [{"n":1,"name":"<short>","detail":"<short>","when":"<e.g. Wk 1-4>"} ... 4-5 phases fitted to their months left],
+  "week": [{"day":"Mon","subject":"Quant|VARC|LRDI|Fix|Mock|Rest","label":"<topic/micro-topic>","meta":"<e.g. 15 Qs · Easy-Med>","because":"<one line tied to what they told you>"} ... all 7 days Mon-Sun, include a Fix Mode day and rest where their life needs it],
+  "different": ["<3 short lines on how the plan ADAPTS daily — weave in CATalyst features naturally: daily DPPs from a real CAT-PYQ bank, Fix Mode that logs & re-drills every mistake, difficulty that rises only when you're ready, an error log that shows your patterns. Sound like the plan's natural mechanism, not an ad.>"]
+}
+Start Week 1 with their ANCHOR subject for an early win; attack their FREEZE area the right way (untimed first if they panic). Mirror their language. Be specific and warm.`;
 
 // ════════════════════════════════════════════════════════════
-//  LLM via secure proxy (keys live server-side)
+//  LLM via secure proxy
 // ════════════════════════════════════════════════════════════
-const wait = ms => new Promise(r=>setTimeout(r,ms));
-async function llm(system, msgs){
-  // server already retries Gemini 3x + Groq fallback; we add 2 client retries for transient blips
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function llm(system, msgs, json){
   let lastErr=null;
   for(let i=0;i<3;i++){
     try{
       const res=await fetch('/api/interview-chat',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({system, messages: msgs.map(m=>({role:m.role,text:m.text}))})});
+        body:JSON.stringify({system, json:!!json, messages: msgs.map(m=>({role:m.role,text:m.text}))})});
       if(res.status===503){ lastErr=new Error('busy'); await wait(900*(i+1)); continue; }
-      if(!res.ok){ let d={}; try{ d=await res.json(); }catch(e){} throw new Error(d.error||('server '+res.status)); }
-      const j=await res.json();
-      if(!j.text) throw new Error('empty');
-      return j.text;
-    }catch(e){ lastErr=e; if(String(e.message).indexOf('busy')<0) await wait(700*(i+1)); }
+      if(!res.ok){ let d={}; try{d=await res.json();}catch(e){} throw new Error(d.error||('server '+res.status)); }
+      const j=await res.json(); if(!j.text) throw new Error('empty'); return j.text;
+    }catch(e){ lastErr=e; if(String(e.message).indexOf('busy')<0) await wait(600*(i+1)); }
   }
   throw lastErr||new Error('connection');
 }
+function parseJSON(t){ try{ return JSON.parse(t); }catch(e){} const m=t.match(/\{[\s\S]*\}/); if(m){ try{ return JSON.parse(m[0]); }catch(e){} } return null; }
 
 // ════════════════════════════════════════════════════════════
-//  CHAT UI + ENGINE
+//  ENGINE
 // ════════════════════════════════════════════════════════════
-let history=[], phase='interview';
+let history=[], phase='interview', activeChips=null;
 const chat=document.getElementById('chat'), answerEl=document.getElementById('answer'), sendBtn=document.getElementById('send');
 
-function botMsg(t){ const d=document.createElement('div'); d.className='msg bot'; d.textContent=t; chat.appendChild(d); scroll(); return d; }
-function userMsg(t){ const d=document.createElement('div'); d.className='msg user'; d.textContent=t; chat.appendChild(d); scroll(); }
-function sysNote(t){ const d=document.createElement('div'); d.className='sys-note'; d.textContent=t; chat.appendChild(d); scroll(); }
+function el(cls,txt){ const d=document.createElement('div'); d.className=cls; if(txt!=null) d.textContent=txt; chat.appendChild(d); scroll(); return d; }
 function scroll(){ chat.scrollTop=chat.scrollHeight; }
 function showTyping(){ const t=document.createElement('div'); t.className='typing'; t.id='typing'; t.innerHTML='<span></span><span></span><span></span>'; chat.appendChild(t); scroll(); }
 function hideTyping(){ const t=document.getElementById('typing'); if(t) t.remove(); }
 function setComposer(on){ document.getElementById('footer').style.display=on?'block':'none'; }
 function busy(b){ sendBtn.disabled=b; answerEl.disabled=b; }
+function clearChips(){ if(activeChips){ activeChips.remove(); activeChips=null; } }
 
-async function nextMentorTurn(){
+async function nextTurn(){
   showTyping(); busy(true);
-  let reply;
-  try{ reply=await llm(SYSTEM_PROMPT, history); }
-  catch(e){ hideTyping(); busy(false); sysNote('⚠ Connection hiccup — tap ↑ to try again.'); return; }
+  let raw;
+  try{ raw=await llm(CONVO_SYSTEM, history, true); }
+  catch(e){ hideTyping(); busy(false); el('sys-note','⚠ Connection hiccup — tap ↑ to retry.'); return; }
   hideTyping();
-  if(reply.indexOf('<<INTERVIEW_COMPLETE>>')>=0){ history.push({role:'assistant',text:reply}); runReveal(); return; }
-  history.push({role:'assistant',text:reply}); botMsg(reply); busy(false); answerEl.focus();
+  const o=parseJSON(raw)||{};
+  if(o.done){ history.push({role:'assistant',text:'(interview complete)'}); runReveal(); return; }
+  // render acknowledgment (soft) + question (highlighted)
+  if(o.ack) el('msg ack', o.ack);
+  el('msg q', o.q||raw);
+  // store natural context for the model
+  history.push({role:'assistant', text:((o.ack?o.ack+' ':'')+(o.q||''))});
+  // option chips
+  if(Array.isArray(o.options) && o.options.length){
+    const wrap=document.createElement('div'); wrap.className='chips';
+    o.options.forEach(opt=>{ const c=document.createElement('button'); c.className='chip'; c.textContent=opt; c.onclick=()=>answer(opt); wrap.appendChild(c); });
+    const skip=document.createElement('button'); skip.className='chip skip'; skip.textContent='Skip'; skip.onclick=()=>answer("(skip)"); wrap.appendChild(skip);
+    chat.appendChild(wrap); activeChips=wrap; scroll();
+  }
+  busy(false); answerEl.focus();
 }
-function submitAnswer(){
+
+function answer(text){
   if(phase!=='interview') return;
+  clearChips();
+  el('msg user', text);
+  history.push({role:'user', text});
+  nextTurn();
+}
+function submitText(){
   const v=answerEl.value.trim(); if(!v) return;
-  userMsg(v); history.push({role:'user',text:v});
-  answerEl.value=''; answerEl.style.height='auto'; nextMentorTurn();
+  answerEl.value=''; answerEl.style.height='auto';
+  answer(v);
 }
 answerEl.addEventListener('input',()=>{ answerEl.style.height='auto'; answerEl.style.height=Math.min(answerEl.scrollHeight,120)+'px'; });
-answerEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); submitAnswer(); }});
+answerEl.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); submitText(); }});
 
+// ── REVEAL ──
 async function runReveal(){
-  phase='done'; setComposer(false);
-  showTyping(); await wait(700); hideTyping();
-  botMsg("Give me a few seconds — let me put together what I'm hearing about you…");
+  phase='done'; setComposer(false); clearChips();
+  showTyping(); await wait(650); hideTyping();
+  el('msg ack', "Give me a few seconds — let me put together what I'm hearing about you…");
   showTyping();
-  let synth=null; try{ synth=await llm('You are the CATalyst mentor.', [...history,{role:'user',text:SYNTHESIS_PROMPT}]); }catch(e){}
+  let synth=null; try{ synth=await llm('You are the CATalyst mentor.', [...history,{role:'user',text:SYNTHESIS_PROMPT}], false); }catch(e){}
   hideTyping();
-  if(synth){ const d=document.createElement('div'); d.className='msg bot reveal'; d.innerHTML='<div class="reveal-label">What I\'m hearing</div>'; const p=document.createElement('div'); p.textContent=synth; d.appendChild(p); chat.appendChild(d); scroll(); }
-  else { sysNote('⚠ Hiccup generating your reflection. Tap restart and try once more.'); }
-  const cta=document.createElement('div'); cta.className='cta';
-  const b=document.createElement('button'); b.textContent='Now show me my plan →';
-  b.onclick=()=>{ cta.remove(); runRoadmap(); }; cta.appendChild(b); chat.appendChild(cta); scroll();
+  if(synth){
+    const d=document.createElement('div'); d.className='msg q'; d.style.maxWidth='98%';
+    d.innerHTML='<div style="font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent2);margin-bottom:.5rem">What I\'m hearing about you</div>'+
+      '<div style="font-weight:500;color:var(--text);line-height:1.65">'+esc(synth)+'</div>';
+    chat.appendChild(d); scroll();
+  }
+  const cta=document.createElement('div'); cta.className='chips'; cta.style.alignSelf='stretch';
+  const b=document.createElement('button'); b.className='chip'; b.style.cssText='background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;font-weight:700;padding:.7rem 1.3rem;font-size:.92rem;width:100%';
+  b.textContent='Now show me my plan →'; b.onclick=()=>{ cta.remove(); runRoadmap(); };
+  cta.appendChild(b); chat.appendChild(cta); scroll();
 }
+
 async function runRoadmap(){
   showTyping();
-  let road=null; try{ road=await llm('You are the CATalyst mentor.', [...history,{role:'user',text:ROADMAP_PROMPT}]); }catch(e){}
+  let raw=null; try{ raw=await llm('You are the CATalyst mentor.', [...history,{role:'user',text:ROADMAP_PROMPT}], true); }catch(e){}
   hideTyping();
-  if(road){ const d=document.createElement('div'); d.className='msg bot reveal'; d.innerHTML='<div class="reveal-label">Your plan — a preview of CATalyst Max</div>'; const p=document.createElement('div'); p.innerHTML=mdLite(road); d.appendChild(p); chat.appendChild(d); scroll(); }
-  else { sysNote('⚠ Hiccup generating your plan. Tap restart and try once more.'); }
-  document.getElementById('end').style.display='block';
-  setTimeout(()=>document.getElementById('end').scrollIntoView({behavior:'smooth'}),400);
+  const r=parseJSON(raw||'');
+  if(!r){ el('sys-note','⚠ Hiccup building your plan — tap Restart and try once more.'); return; }
+  renderRoadmap(r);
 }
-function mdLite(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>'); }
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderRoadmap(r){
+  const subjClass=s=>['Quant','VARC','LRDI','Fix','Mock','Rest'].includes(s)?s:'Quant';
+  const wrap=document.createElement('div'); wrap.className='rm';
+  const sc=r.scope||{};
+  const traj=(sc.trajectory||[]).map((t,i)=>`${i>0?'<span class="sep">→</span>':''}<div class="step"><b>${esc(t.value||'')}</b>${esc(t.label||'')}</div>`).join('');
+  const phases=(r.phases||[]).map(p=>`<div class="phase"><div class="dot">${esc(String(p.n||''))}</div><div class="body"><div class="pn">${esc(p.name||'')}</div><div class="pd">${esc(p.detail||'')}</div></div><div class="pw">${esc(p.when||'')}</div></div>`).join('');
+  const week=(r.week||[]).map(d=>{ const s=subjClass(d.subject); return `<div class="day"><div class="dbadge"><div class="dname">${esc(d.day||'')}</div><div class="dbar bar-${s}"></div></div><div class="dbody"><div class="dtop"><span class="dsub s-${s}">${esc(d.subject||'')}${d.label?' · '+esc(d.label):''}</span>${d.meta?'<span class="dmeta">'+esc(d.meta)+'</span>':''}</div><div class="dwhy">${esc(d.because||'')}</div></div></div>`; }).join('');
+  const diff=(r.different||[]).map(x=>`<div class="diff"><span class="ic">✦</span><span>${esc(x)}</span></div>`).join('');
+
+  wrap.innerHTML=`
+    <div class="rm-hero">
+      <div class="label">Can you actually score it?</div>
+      <div class="rm-scope"><span class="now">${esc(sc.current||'')}</span><span class="arrow">→</span><span class="tgt">${esc(sc.target||'')}</span></div>
+      <div class="rm-gap">The gap: <b>${esc(sc.gap||'')}</b></div>
+      <div class="rm-enc">${esc(sc.encouragement||'')}</div>
+      ${traj?`<div class="rm-traj">${traj}</div>`:''}
+    </div>
+    <div class="rm-card"><div class="ttl">🎯 Your real problem</div><div class="rm-prob">${esc(r.problem||'')}</div></div>
+    <div class="rm-card"><div class="ttl">🗺 The map</div>${phases}</div>
+    <div class="rm-card"><div class="ttl">📅 This week — your daily plan</div>${week}</div>
+    <div class="rm-card"><div class="ttl">⚡ Why this isn't a generic plan</div>${diff}</div>
+    <div class="rm-cta">
+      <h3 class="sora">This is CATalyst Max.</h3>
+      <p>Your real plan, with daily questions that adapt to your mistakes — built around you, every week.</p>
+      <a href="https://catalyst-app-six.vercel.app/" target="_blank"><button>Get CATalyst →</button></a>
+    </div>
+    <div class="restart-row"><button class="icon-btn" onclick="restart()">↻ Start over</button></div>`;
+  chat.appendChild(wrap); scroll();
+}
 
 // ── BOOT ──
 function begin(){
   document.getElementById('welcome').style.display='none';
   document.getElementById('header').style.display='flex';
   setComposer(true);
-  history=[{role:'user',text:'Begin the interview now with your warm opening message that sets the contract and asks the first question.',hidden:true}];
-  nextMentorTurn();
+  history=[{role:'user',text:'Begin the interview now — give your warm opening (in the q field) and the first question.',hidden:true}];
+  nextTurn();
 }
 function restart(){
-  history=[]; phase='interview'; chat.innerHTML='';
-  document.getElementById('end').style.display='none';
+  history=[]; phase='interview'; activeChips=null; chat.innerHTML='';
   document.getElementById('hsub').textContent='Your CAT counselling';
   begin();
 }

@@ -10,13 +10,11 @@ const GEMINI_MODEL = 'gemini-2.5-flash';
 const GROQ_MODEL   = 'llama-3.3-70b-versatile';
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
-async function callGemini(key, system, messages) {
+async function callGemini(key, system, messages, json) {
   const contents = messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.text }] }));
-  const body = {
-    system_instruction: { parts: [{ text: system }] },
-    contents,
-    generationConfig: { temperature: 0.9, maxOutputTokens: 4096, thinkingConfig: { thinkingBudget: 0 } },
-  };
+  const genCfg = { temperature: 0.9, maxOutputTokens: 4096, thinkingConfig: { thinkingBudget: 0 } };
+  if (json) genCfg.responseMimeType = 'application/json';
+  const body = { system_instruction: { parts: [{ text: system }] }, contents, generationConfig: genCfg };
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
   const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   if (res.status === 503 || res.status === 429) { const e = new Error('busy'); e.retryable = true; throw e; }
@@ -28,14 +26,16 @@ async function callGemini(key, system, messages) {
   return t.trim();
 }
 
-async function callGroq(key, system, messages) {
+async function callGroq(key, system, messages, json) {
   const msgs = [{ role: 'system', content: system }].concat(
     messages.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.text }))
   );
+  const payload = { model: GROQ_MODEL, messages: msgs, temperature: 0.9 };
+  if (json) payload.response_format = { type: 'json_object' };
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-    body: JSON.stringify({ model: GROQ_MODEL, messages: msgs, temperature: 0.9 }),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('groq ' + res.status);
   const j = await res.json();
@@ -52,6 +52,7 @@ module.exports = async function handler(req, res) {
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
   const system = (body && body.system) || '';
+  const json = !!(body && body.json);
   let messages = (body && body.messages) || [];
   if (!system || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: 'system + messages required' });
@@ -67,16 +68,16 @@ module.exports = async function handler(req, res) {
 
   if (gkey) {
     for (let i = 0; i < 3; i++) {
-      try { return res.status(200).json({ text: await callGemini(gkey, system, messages) }); }
+      try { return res.status(200).json({ text: await callGemini(gkey, system, messages, json) }); }
       catch (e) { lastErr = e; if (!e.retryable) break; await wait(700 * (i + 1)); }
     }
   }
   if (qkey) {
-    try { return res.status(200).json({ text: await callGroq(qkey, system, messages) }); }
+    try { return res.status(200).json({ text: await callGroq(qkey, system, messages, json) }); }
     catch (e) { lastErr = e; }
   }
   if (gkey) {
-    try { return res.status(200).json({ text: await callGemini(gkey, system, messages) }); }
+    try { return res.status(200).json({ text: await callGemini(gkey, system, messages, json) }); }
     catch (e) { lastErr = e; }
   }
 
