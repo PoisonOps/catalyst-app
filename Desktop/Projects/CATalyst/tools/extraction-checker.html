@@ -89,6 +89,7 @@
   <button class="btn-go" onclick="run()">✓ Check &amp; Preview</button>
   <button class="btn-ghost" onclick="loadSample()">Load sample</button>
   <button class="btn-ghost" onclick="clearAll()">Clear</button>
+  <button class="btn-go" id="fix-btn" style="display:none;background:var(--amber)" onclick="copyFixPrompt()">📋 Copy fix-prompt for Gemini</button>
   <span class="hint">Tip: validate in small batches (one PDF chunk at a time).</span>
 </div>
 
@@ -431,6 +432,9 @@ function run(){
     summary.innerHTML=`✗ ${errors.length} error(s) must be fixed before loading.<div class="counts">${setRows.length} set(s) · ${qRows.length} question(s) · ${warns.length} warning(s).</div>`;
   }
 
+  // show the "copy fix-prompt" button only when there are errors to fix
+  document.getElementById('fix-btn').style.display = errors.length ? 'flex' : 'none';
+
   // global (non-row) issues
   const rowWheres=new Set([...setRows,...qRows].map(x=>x.row.__where));
   const globalIssues=ISSUES.filter(i=>!rowWheres.has(i.where));
@@ -499,6 +503,43 @@ function appendRowIssues(card,row){
 }
 function issueHTML(i){
   return `<div class="issue ${i.level}"><span class="tag">${i.level}</span><div><span class="loc">${i.where}</span> — ${i.msg}</div></div>`;
+}
+
+// strip the HTML tags from an issue message for a clean plain-text prompt
+function plain(msg){
+  return msg.replace(/<\/?(b|code)>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/\s+/g,' ').trim();
+}
+
+// Build a short, paste-ready prompt that tells Gemini exactly what to fix, by question.
+function copyFixPrompt(){
+  const errors = ISSUES.filter(i=>i.level==='error');
+  const warns  = ISSUES.filter(i=>i.level==='warn');
+  if(!errors.length && !warns.length){ return; }
+
+  // group issues by their location label (Q12, set 1, …)
+  const byWhere = {};
+  [...errors, ...warns].forEach(i=>{
+    (byWhere[i.where] = byWhere[i.where] || []).push(i);
+  });
+
+  const lines = [];
+  Object.keys(byWhere).forEach(where=>{
+    lines.push(`${where}:`);
+    byWhere[where].forEach(i=> lines.push(`  - ${plain(i.msg)}`));
+  });
+
+  const prompt =
+`The SQL you generated has issues. Fix ONLY these and resend the FULL corrected SQL (all questions), keeping everything else exactly the same:
+
+${lines.join('\n')}
+
+Reminders: wrap ALL math (including inside options) in \\( ... \\); use \\[ ... \\] for display math; never use plain ( ) or $ for math. Keep text verbatim, use /n/ for line breaks, and keep the answers and worked solutions unchanged. Resend the complete SQL.`;
+
+  navigator.clipboard.writeText(prompt).then(()=>{
+    const b=document.getElementById('fix-btn');
+    const old=b.textContent; b.textContent='✓ Copied — paste into Gemini';
+    setTimeout(()=>{ b.textContent=old; }, 2500);
+  });
 }
 function clearAll(){ document.getElementById('sql-input').value=''; run(); }
 function loadSample(){
