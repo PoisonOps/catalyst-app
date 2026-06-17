@@ -3,6 +3,7 @@
     { "path": "/api/send-push", "schedule": "30 13 * * *" }
   ],
   "rewrites": [
+    { "source": "/interview", "destination": "/interview.html" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
