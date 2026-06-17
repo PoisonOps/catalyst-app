@@ -245,25 +245,35 @@ WHEN AGENDA IS COVERED enough to build a plan: {"ack":null,"q":null,"options":[]
 
 const SYNTHESIS_PROMPT=`The counselling conversation is below. Write a warm reflection (105–140 words, 4-6 SHORT flowing sentences — NOT one giant run-on sentence) so the aspirant feels deeply SEEN. Name their situation, their anchor and their freeze (in their words), the REAL pattern behind their inconsistency, their WHY, and their fear — honestly, no drama. End with one line on what their plan will assume about their life. Vary sentence length; make it feel human and crafted. Mirror Hinglish if they used it. No headings, no bullets, no "Dear student". Output ONLY the paragraph.`;
 
-const ROADMAP_PROMPT=`Based on the conversation below, build this aspirant the most PRACTICAL, PERSONAL, REALISTIC and POSITIVE CAT plan they've ever seen — a preview of CATalyst Max. Reply ONLY with a JSON object in EXACTLY this shape:
+const ROADMAP_PROMPT=`You are an expert CAT mentor building a personalized plan for the aspirant in the conversation below. They could be ANYONE — a working pro with 1 hour, a fresher with no baseline, a 97%iler chasing 99.9, an anxious dropper, a coached student, a late starter. ADAPT EVERYTHING to THEIR actual profile. The plan must be the most practical, personal, realistic and positive plan they've ever seen. Reply ONLY with a JSON object in EXACTLY this shape:
 {
-  "diagnosis":"<2-3 lines naming their REAL problem specifically. RESPECT their actual level — if they're already strong somewhere (e.g. 90%ile+), say so; don't treat a strong scorer like a beginner.>",
-  "scope":{"current":"<e.g. 90%ile or 'Fresh start'>","target":"<just the number, e.g. 99>","targetUnit":"<e.g. %ile>","gap":"<countable gap, e.g. ~+4 correct per section>","encouragement":"<one honest hopeful line, never a guarantee>","trajectory":[{"label":"Mock 3","value":"~X"},{"label":"Mock 6","value":"~Y"},{"label":"CAT","value":"<target>"}]},
-  "strategy":"<ONE punchy line — the overall game plan, e.g. 'Protect your strong Quant & LRDI, pour your energy into VARC (your only real leak), and sharpen all three to 99-level.'>",
-  "phases":[{"n":1,"name":"<short>","when":"<e.g. Wk 1-4>","goal":"<what this phase achieves>","sections":"<what EACH section does this phase, e.g. 'VARC: daily reading + intent technique · Quant: maintain via mixed DPP · LRDI: 2 sets/wk'>","outcome":"<expected %ile movement, e.g. 'VARC 70→80, Quant held at 93+'>"} ... 4-5 phases fitted to their months left],
-  "week":[{"day":"Mon","theme":"<1-3 word focus>","total":"<~their available hours, e.g. ~4 hrs>","blocks":[
-     {"kind":"learn|read|practice|fix|mock|rest","subject":"VARC|Quant|LRDI|Fix|Mock|Rest","what":"<the concrete action>","time":"<e.g. 45m>","source":"<where: 'CATalyst DPP' / 'CATalyst Fix Mode' / 'CATalyst RC (real CAT passages)' for practice & review; 'YouTube: Rodha — <topic>' / 'Read: an editorial' / 'Your PDF: <topic>' for learning>","why":"<one short line>"}
+  "diagnosis":"<2-3 lines naming their REAL problem specifically, at their real level>",
+  "scope":{"current":"<their level, e.g. 90%ile / 'Fresh start'>","target":"<just the number, e.g. 99>","targetUnit":"<e.g. %ile>","gap":"<countable gap from THEIR baseline>","encouragement":"<one honest hopeful line, never a guarantee>","trajectory":[{"label":"Mock 3","value":"~X"},{"label":"Mock 6","value":"~Y"},{"label":"CAT","value":"<target>"}]},
+  "strategy":"<ONE punchy line — the overall game plan tailored to them>",
+  "phases":[{"n":1,"name":"<short>","when":"<e.g. Wk 1-4>","goal":"<what this phase achieves>","sections":"<what EACH section does this phase>","outcome":"<expected %ile movement>"} ... fitted to their MONTHS LEFT],
+  "week":[{"day":"Mon","theme":"<1-3 word focus>","total":"<~their available hours>","blocks":[
+     {"kind":"learn|read|practice|fix|mock|rest","subject":"VARC|Quant|LRDI|Fix|Mock|Rest","what":"<concrete action>","time":"<e.g. 45m>","source":"<'CATalyst DPP' / 'CATalyst Fix Mode' / 'CATalyst RC (real CAT passages)' for practice & review; 'YouTube: Rodha — <topic>' / 'Read: an editorial' / 'Your PDF: <topic>' for learning>","why":"<one short line>"}
   ]} ... ALL 7 days Mon-Sun],
-  "catalyst":["<3-4 specific lines on how CATalyst RUNS this exact plan: serves the daily DPPs from these topics, gives real CAT RC passages for your VARC blocks, runs your Fix Mode review, tracks your error patterns, and reshuffles next week from your mistakes. Specific to THEIR plan, not a generic ad.>"],
-  "consistency":"<ONE warm line addressing their consistency weakness — e.g. the bad-day rule: 'On a rough day, just do the one Fix block — keep the chain alive.'>"
+  "catalyst":["<3-4 lines on how CATalyst RUNS this exact plan: serves the daily DPPs from these topics, real CAT RC passages, runs Fix Mode review, tracks error patterns, reshuffles next week from mistakes. Specific to THEIR plan.>"],
+  "consistency":"<ONE warm line: their 'bad day' minimum rule so the chain never breaks>"
 }
 
-CRITICAL RULES:
-- Each day's blocks MUST FILL their stated available hours (e.g. 4-6 hrs = 3-4 real blocks), MIXING: LEARN (what to watch/read for concepts), PRACTICE (DPPs), REVIEW (Fix), and daily READING if VARC is weak. Never a single tiny block.
-- Tell them exactly WHAT to learn and FROM WHERE. Point to free resources (YouTube channels like Rodha/Bodhee, editorials, their PDFs) for LEARNING; CATalyst for DPPs/practice/Fix/RC.
-- Treat their REAL level. A 90%iler needs targeted sharpening + their specific leak fixed, NOT 'foundation basics'.
-- Attack their FREEZE with the RIGHT method (for VARC comprehension/intent: DAILY reading + author's-intent tagging, not just 'do RCs').
-- Start the week strong with their ANCHOR for momentum. Mirror their language. Be specific, warm, realistic, motivating.`;
+UNIVERSAL ADAPTIVE RULES — apply the ones that fit THIS person:
+1. TIME → scale each day to their hours: 1-2 hrs = 1-2 highest-ROI blocks only; 3-5 hrs = 3-4 blocks; 6+ hrs = 4-5 + heavier practice. Never overload a busy person or underload a free one. Each day's blocks must roughly fill their stated time.
+2. MONTHS LEFT → 6+ months = full Foundation→Build→Sharpen→Mock→Peak; 2-3 months = compressed crash mode (only high-frequency topics, earlier/more mocks); <1 month = mocks + revision + Fix only.
+3. LEVEL → beginner/low scorer = build concepts, easy→hard laddering; 90%ile+ = SKIP basics, do sharpening + selection strategy + temperament. NEVER give 'foundation basics' to a strong scorer, or advanced drills to a beginner.
+4. NO BASELINE (no mocks taken) → make Week 1 Day 1 a short DIAGNOSTIC mini-mock to set their level, then calibrate.
+5. FAILURE MODE → diagnose and prescribe: concept gap = learn first; application gap ('get it but fail questions') = drill STARTING questions not theory; speed = timed laddering; anxiety/freeze = untimed first then timed + temperament; silly mistakes = checking discipline.
+6. SECTION TIME → pour time into their weak + high-ROI section; maintain strong sections with lighter upkeep. Never split time equally.
+7. VARC → if VARC isn't already strong, put DAILY reading (editorials/long-form) + author's-intent technique in EVERY day. It's habit-based; nothing else fixes comprehension.
+8. RESOURCES → if COACHED, complement (don't duplicate their DPPs; add Fix Mode, VARC, the gaps coaching misses). If SELF-STUDY, give what to learn AND from where: free resources by topic (Rodha/Bodhee for concepts, editorials for reading, their PDFs) for LEARNING; CATalyst for DPPs/practice/Fix/RC.
+9. MOCKS → scale cadence: early 1 per 2 weeks → mid 1/week → final month 2-3/week. Every mock followed by an analysis + Fix block.
+10. LIFE → fit their rhythm: job = study windows + heavier weekends; family/health/placement = built-in light weeks. Always 1 rest or light day per week for sustainability.
+11. PREREQUISITES & FREQUENCY → sequence topics by dependency; prioritize high-CAT-frequency topics they're weak in first.
+12. TONE → low confidence = warmer, smaller wins, reassurance; high confidence/high target = strategic, push harder, less hand-holding. Mirror their language (Hinglish if used).
+13. HONESTY → if their target is very hard in their time, say so kindly in the encouragement and give the best realistic path. Never oversell.
+
+DAY BLOCKS must MIX learn (what to watch/read) + practice (DPP) + review (Fix) + reading where relevant — filling their hours, never one tiny block. Start the week with their strongest area for momentum. Be specific, warm, realistic, motivating.`;
 
 // ════════════════════════════════════════════════════════════
 //  LLM via secure proxy
