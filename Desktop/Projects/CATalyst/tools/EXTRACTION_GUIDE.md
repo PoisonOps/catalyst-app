@@ -81,6 +81,7 @@ Replaces the three older prompts (which had the wrong math format baked in).
 > ### Data types
 > - `global_q_no` = bare integer (no `$$`). `has_image` = bare `true`/`false`. `NULL` = bare `NULL` (no quotes).
 > - `id`, `set_id` = text, dollar-quoted: `$$23$$`.
+> - **`subtopic` on a QUESTION = Postgres array**: `ARRAY['Progressions']` (NOT `$$Progressions$$` — that errors in Supabase). On a SET, `subtopic` = plain text `$$Tables$$`.
 >
 > ### Taxonomy (use EXACTLY one — these are the only valid values)
 > **Quant** → topic ∈ {Algebra, Arithmetic, Geometry, Modern Math, Number System}
@@ -139,4 +140,7 @@ Replaces the three older prompts (which had the wrong math format baked in).
 
 **questions:** `global_q_no, subject, topic, subtopic, micro_topic, question_type, answer_type, difficulty, question, option_a, option_b, option_c, option_d, option_e, correct_option, correct_value, solution, set_id, pdf_name, source, has_image, image_url, solution_image_url`
 
-> Note: `subtopic` on **questions** is text (`$$Tables$$`). On **VARC RC sets** the live data uses a Postgres array (`ARRAY['Science']`) — the checker accepts both and validates the values either way.
+> **IMPORTANT — subtopic column types differ:**
+> - On **questions**, `subtopic` is a **Postgres ARRAY** → write `ARRAY['Progressions']` (NOT `$$Progressions$$`). For multiple: `ARRAY['Philosophy','History']`.
+> - On **sets**, `subtopic` is **plain text** → write `$$Tables$$`.
+> Writing a question's subtopic as plain `$$...$$` causes Supabase error `malformed array literal`.

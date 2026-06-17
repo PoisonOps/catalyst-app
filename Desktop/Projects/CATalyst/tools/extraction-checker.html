@@ -305,7 +305,7 @@ function validate(sql){
     const w=row.__where;
     const id=str(row,'id');
     if(id==null) add('error',w,'set is missing <b>id</b>.'); else setIds.add(String(id));
-    checkTaxonomy(w,row);
+    checkTaxonomy(w,row,'sets');
     ['instruction','passage'].forEach(f=>{ const v=str(row,f); if(v!=null) checkLatex(w,f,v); });
     // image rule
     checkImageRule(w,row);
@@ -326,7 +326,7 @@ function validate(sql){
     const g=row['global_q_no'];
     if(g){ if(g.type!=='int') add('warn',w,'<b>global_q_no</b> should be a bare integer (no <code>$$</code>).'); else { if(seenGlobal.has(g.value)) add('warn',w,`duplicate <b>global_q_no</b> <code>${g.value}</code>.`); seenGlobal.add(g.value); } }
     // taxonomy
-    checkTaxonomy(w,row);
+    checkTaxonomy(w,row,'questions');
     // difficulty
     const diff=str(row,'difficulty'); if(diff!=null&&!VALID_DIFF.includes(diff)) add('error',w,`invalid <b>difficulty</b> <code>${diff}</code> — must be Easy / Medium / Hard.`);
     // question_type
@@ -375,14 +375,21 @@ function validate(sql){
   return {setRows,qRows};
 }
 
-function checkTaxonomy(w,row){
+function checkTaxonomy(w,row,table){
   const subject=str(row,'subject'), topic=str(row,'topic');
   if(subject!=null&&!TAXONOMY[subject]) { add('error',w,`invalid <b>subject</b> <code>${subject}</code> — must be Quant / VARC / LRDI.`); return; }
   if(subject&&topic){
     if(!TAXONOMY[subject][topic]) add('error',w,`invalid <b>topic</b> <code>${topic}</code> for ${subject}. Allowed: ${Object.keys(TAXONOMY[subject]).join(', ')}.`);
     else {
-      // subtopic may be string or ARRAY[...]
       const stRaw=row['subtopic'];
+      // COLUMN TYPE ENFORCEMENT: questions.subtopic is a Postgres ARRAY; sets.subtopic is text.
+      if(table==='questions' && stRaw && stRaw.type==='str'){
+        add('error',w,`<b>subtopic</b> must be a Postgres array, not plain text — write <code>ARRAY['${stRaw.value}']</code> not <code>$$${stRaw.value}$$</code>.`);
+      }
+      if(table==='sets' && stRaw && stRaw.type==='array'){
+        add('error',w,`<b>subtopic</b> on a set must be plain text — write <code>$$X$$</code> not <code>ARRAY[...]</code>.`);
+      }
+      // VALUE validation (works for both forms)
       if(stRaw&&stRaw.type==='str'){
         const sub=stRaw.value;
         if(sub&&!TAXONOMY[subject][topic].includes(sub))
