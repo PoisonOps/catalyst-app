@@ -130,11 +130,41 @@
 
   .diff{display:flex;gap:.6rem;align-items:flex-start;padding:.42rem 0;font-size:.86rem;line-height:1.5}
   .diff .ic{color:var(--green);flex-shrink:0;font-weight:800}
-  .rm-cta{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:18px;padding:1.4rem;text-align:center;margin-top:.4rem;box-shadow:0 14px 40px rgba(107,138,255,.3)}
-  .rm-cta h3{font-size:1.15rem;font-weight:800;color:#fff;margin-bottom:.35rem}
-  .rm-cta p{font-size:.83rem;color:rgba(255,255,255,.88);margin-bottom:1rem;line-height:1.5}
-  .rm-cta a button{background:#fff;color:var(--accent);border:none;border-radius:13px;padding:.8rem 2rem;font-size:.98rem;font-weight:800;cursor:pointer;font-family:inherit}
+  .rm-cta{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:18px;padding:1.2rem;text-align:center;margin-top:.4rem;box-shadow:0 14px 40px rgba(107,138,255,.3)}
+  .rm-cta h3{font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:.3rem}
+  .rm-cta p{font-size:.8rem;color:rgba(255,255,255,.88);margin-bottom:.85rem;line-height:1.45}
+  .rm-cta a button{background:#fff;color:var(--accent);border:none;border-radius:13px;padding:.7rem 1.8rem;font-size:.95rem;font-weight:800;cursor:pointer;font-family:inherit}
   .restart-row{text-align:center;margin:1rem 0 .5rem}
+
+  /* strategy + accordions + blocks (10/10 roadmap) */
+  .rm-strategy{background:linear-gradient(135deg,rgba(34,199,154,.13),rgba(107,138,255,.1));border:1px solid rgba(34,199,154,.28);border-radius:15px;padding:.95rem 1.1rem;margin-bottom:.85rem;font-size:.92rem;line-height:1.55;color:var(--text)}
+  .rm-strategy b{color:var(--green)}
+  .acc{background:var(--bg2);border:1px solid var(--border);border-radius:13px;margin-bottom:.5rem;overflow:hidden}
+  .acc summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:.6rem;padding:.8rem .95rem}
+  .acc summary::-webkit-details-marker{display:none}
+  .acc .dot{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:.7rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .acc .acc-t{flex:1;font-size:.92rem;font-weight:700}
+  .acc .acc-when{font-size:.68rem;color:var(--text3);font-weight:600;margin-left:.45rem}
+  .acc .chev{color:var(--text3);transition:.2s;font-size:1.05rem}
+  .acc[open] .chev{transform:rotate(90deg)}
+  .acc-body{padding:0 .95rem .9rem;font-size:.86rem;line-height:1.55}
+  .acc-body .goal{color:var(--text);margin-bottom:.35rem}
+  .acc-body .sections{color:var(--text2);margin-bottom:.4rem;font-size:.82rem}
+  .acc-body .outcome{color:var(--green);font-weight:600;font-size:.8rem}
+  .day-badge{width:34px;flex-shrink:0;text-align:center}
+  .day-badge .dn{font-size:.7rem;font-weight:800;color:var(--text2)}
+  .day-badge .db{height:4px;border-radius:3px;margin-top:.3rem}
+  .block{display:flex;gap:.6rem;padding:.55rem 0;align-items:flex-start}
+  .block:not(:last-child){border-bottom:1px solid rgba(255,255,255,.04)}
+  .bk-ic{font-size:1rem;flex-shrink:0;margin-top:.1rem;width:1.2rem;text-align:center}
+  .bk-body{flex:1}
+  .bk-top{display:flex;align-items:baseline;gap:.5rem;justify-content:space-between}
+  .bk-what{font-size:.87rem;font-weight:600;color:var(--text);flex:1}
+  .bk-time{font-size:.66rem;color:var(--text2);background:var(--bg3);border-radius:6px;padding:.08rem .4rem;font-weight:700;white-space:nowrap}
+  .bk-src{display:inline-block;font-size:.66rem;font-weight:700;border-radius:6px;padding:.07rem .45rem;margin:.22rem 0;background:var(--bg3);color:var(--text2)}
+  .bk-src.cat{background:rgba(107,138,255,.2);color:#c8d2ff;border:1px solid rgba(107,138,255,.35)}
+  .bk-why{font-size:.75rem;color:var(--text3);line-height:1.4}
+  .rm-consist{background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.26);border-radius:13px;padding:.8rem 1rem;font-size:.85rem;color:#f5cd8a;line-height:1.5;margin-bottom:.85rem}
 </style>
 </head>
 <body>
@@ -213,17 +243,27 @@ OPENING (first message): ack=null, chapter='Your situation'. Put a warm 1-2 line
 
 WHEN AGENDA IS COVERED enough to build a plan: {"ack":null,"q":null,"options":[],"learned":[],"chapter":"Almost there","done":true}`;
 
-const SYNTHESIS_PROMPT=`The counselling conversation is below. Write ONE warm paragraph (105–145 words) reflecting back what you heard so the aspirant feels deeply SEEN. Name their situation, their anchor and their freeze (in their words), the REAL pattern behind their inconsistency, their WHY, and their fear — honestly, no drama. End with one line on what their plan will assume about their life. Mirror Hinglish if they used it. No headings, no bullets, no "Dear student". Output ONLY the paragraph.`;
+const SYNTHESIS_PROMPT=`The counselling conversation is below. Write a warm reflection (105–140 words, 4-6 SHORT flowing sentences — NOT one giant run-on sentence) so the aspirant feels deeply SEEN. Name their situation, their anchor and their freeze (in their words), the REAL pattern behind their inconsistency, their WHY, and their fear — honestly, no drama. End with one line on what their plan will assume about their life. Vary sentence length; make it feel human and crafted. Mirror Hinglish if they used it. No headings, no bullets, no "Dear student". Output ONLY the paragraph.`;
 
-const ROADMAP_PROMPT=`Based on the conversation below, build this aspirant's personalized CAT plan — a preview of CATalyst Max that makes them believe they can hit their target. Reply ONLY with a JSON object in EXACTLY this shape:
+const ROADMAP_PROMPT=`Based on the conversation below, build this aspirant the most PRACTICAL, PERSONAL, REALISTIC and POSITIVE CAT plan they've ever seen — a preview of CATalyst Max. Reply ONLY with a JSON object in EXACTLY this shape:
 {
-  "problem":"<2-3 lines naming their REAL issue in plain words>",
-  "scope":{"current":"<e.g. ~91%ile or 'Fresh start'>","target":"<e.g. 99.8>","targetUnit":"<e.g. %ile>","gap":"<countable gap, e.g. about +4 correct per section>","encouragement":"<one honest hopeful line, never a guarantee>","trajectory":[{"label":"Mock 3","value":"~X"},{"label":"Mock 6","value":"~Y"},{"label":"CAT","value":"<target>"}]},
-  "phases":[{"n":1,"name":"<short>","detail":"<short>","when":"<e.g. Wk 1-4>"}],
-  "week":[{"day":"Mon","subject":"Quant|VARC|LRDI|Fix|Mock|Rest","label":"<topic/micro-topic>","meta":"<e.g. 15 Qs · Easy-Med>","because":"<one line tied to what they told you>"}],
-  "different":["<3 short lines on how the plan ADAPTS daily — weave in CATalyst features naturally: daily DPPs from a real CAT-PYQ bank, Fix Mode that logs & re-drills every mistake, difficulty that rises only when you're ready, an error log that shows your patterns>"]
+  "diagnosis":"<2-3 lines naming their REAL problem specifically. RESPECT their actual level — if they're already strong somewhere (e.g. 90%ile+), say so; don't treat a strong scorer like a beginner.>",
+  "scope":{"current":"<e.g. 90%ile or 'Fresh start'>","target":"<just the number, e.g. 99>","targetUnit":"<e.g. %ile>","gap":"<countable gap, e.g. ~+4 correct per section>","encouragement":"<one honest hopeful line, never a guarantee>","trajectory":[{"label":"Mock 3","value":"~X"},{"label":"Mock 6","value":"~Y"},{"label":"CAT","value":"<target>"}]},
+  "strategy":"<ONE punchy line — the overall game plan, e.g. 'Protect your strong Quant & LRDI, pour your energy into VARC (your only real leak), and sharpen all three to 99-level.'>",
+  "phases":[{"n":1,"name":"<short>","when":"<e.g. Wk 1-4>","goal":"<what this phase achieves>","sections":"<what EACH section does this phase, e.g. 'VARC: daily reading + intent technique · Quant: maintain via mixed DPP · LRDI: 2 sets/wk'>","outcome":"<expected %ile movement, e.g. 'VARC 70→80, Quant held at 93+'>"} ... 4-5 phases fitted to their months left],
+  "week":[{"day":"Mon","theme":"<1-3 word focus>","total":"<~their available hours, e.g. ~4 hrs>","blocks":[
+     {"kind":"learn|read|practice|fix|mock|rest","subject":"VARC|Quant|LRDI|Fix|Mock|Rest","what":"<the concrete action>","time":"<e.g. 45m>","source":"<where: 'CATalyst DPP' / 'CATalyst Fix Mode' / 'CATalyst RC (real CAT passages)' for practice & review; 'YouTube: Rodha — <topic>' / 'Read: an editorial' / 'Your PDF: <topic>' for learning>","why":"<one short line>"}
+  ]} ... ALL 7 days Mon-Sun],
+  "catalyst":["<3-4 specific lines on how CATalyst RUNS this exact plan: serves the daily DPPs from these topics, gives real CAT RC passages for your VARC blocks, runs your Fix Mode review, tracks your error patterns, and reshuffles next week from your mistakes. Specific to THEIR plan, not a generic ad.>"],
+  "consistency":"<ONE warm line addressing their consistency weakness — e.g. the bad-day rule: 'On a rough day, just do the one Fix block — keep the chain alive.'>"
 }
-4-5 phases fitted to their months left. ALL 7 days Mon-Sun in week (include a Fix Mode day + rest where their life needs it). Start Week 1 with their ANCHOR subject for an early win; attack their FREEZE the right way (untimed first if they panic). "target" should be just the number (e.g. "99.8"), "targetUnit" the unit. Mirror their language. Be specific and warm.`;
+
+CRITICAL RULES:
+- Each day's blocks MUST FILL their stated available hours (e.g. 4-6 hrs = 3-4 real blocks), MIXING: LEARN (what to watch/read for concepts), PRACTICE (DPPs), REVIEW (Fix), and daily READING if VARC is weak. Never a single tiny block.
+- Tell them exactly WHAT to learn and FROM WHERE. Point to free resources (YouTube channels like Rodha/Bodhee, editorials, their PDFs) for LEARNING; CATalyst for DPPs/practice/Fix/RC.
+- Treat their REAL level. A 90%iler needs targeted sharpening + their specific leak fixed, NOT 'foundation basics'.
+- Attack their FREEZE with the RIGHT method (for VARC comprehension/intent: DAILY reading + author's-intent tagging, not just 'do RCs').
+- Start the week strong with their ANCHOR for momentum. Mirror their language. Be specific, warm, realistic, motivating.`;
 
 // ════════════════════════════════════════════════════════════
 //  LLM via secure proxy
@@ -333,31 +373,43 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 
 function renderRoadmap(r){
   const subj=s=>['Quant','VARC','LRDI','Fix','Mock','Rest'].includes(s)?s:'Quant';
+  const ICON={learn:'🎧',read:'📖',practice:'✍️',fix:'🔧',mock:'🧪',rest:'☕'};
   const sc=r.scope||{};
-  const traj=(sc.trajectory||[]).map((t,i)=>`${i>0?'<span class="sep">→</span>':''}<div class="step"><b>${esc(t.value||'')}</b>${esc(t.label||'')}</div>`).join('');
-  const phases=(r.phases||[]).map(p=>`<div class="phase"><div class="dot">${esc(String(p.n||''))}</div><div class="body"><div class="pn">${esc(p.name||'')}</div><div class="pd">${esc(p.detail||'')}</div></div><div class="pw">${esc(p.when||'')}</div></div>`).join('');
-  const week=(r.week||[]).map(d=>{const s=subj(d.subject);return `<div class="day"><div class="dbadge"><div class="dname">${esc(d.day||'')}</div><div class="dbar bar-${s}"></div></div><div class="dbody"><div class="dtop"><span class="dsub s-${s}">${esc(d.subject||'')}${d.label?' · '+esc(d.label):''}</span>${d.meta?'<span class="dmeta">'+esc(d.meta)+'</span>':''}</div><div class="dwhy">${esc(d.because||'')}</div></div></div>`;}).join('');
-  const diff=(r.different||[]).map(x=>`<div class="diff"><span class="ic">✦</span><span>${esc(x)}</span></div>`).join('');
   const R=2*Math.PI*64;
+  const traj=(sc.trajectory||[]).map((t,i)=>`${i>0?'<span class="sep">→</span>':''}<div class="step"><b>${esc(t.value||'')}</b>${esc(t.label||'')}</div>`).join('');
+
+  const phases=(r.phases||[]).map(p=>`<details class="acc"><summary><span class="dot">${esc(String(p.n||''))}</span><span class="acc-t">${esc(p.name||'')}<span class="acc-when">${esc(p.when||'')}</span></span><span class="chev">›</span></summary><div class="acc-body"><div class="goal">🎯 ${esc(p.goal||'')}</div>${p.sections?'<div class="sections">'+esc(p.sections)+'</div>':''}${p.outcome?'<div class="outcome">📈 '+esc(p.outcome)+'</div>':''}</div></details>`).join('');
+
+  const days=(r.week||[]).map((d,di)=>{
+    const s=subj(d.subject||(d.blocks&&d.blocks[0]&&d.blocks[0].subject)||'Quant');
+    const blocks=(d.blocks||[]).map(b=>{
+      const isCat=/catalyst/i.test(b.source||'');
+      return `<div class="block"><div class="bk-ic">${ICON[b.kind]||'•'}</div><div class="bk-body"><div class="bk-top"><span class="bk-what">${esc(b.what||'')}</span>${b.time?'<span class="bk-time">'+esc(b.time)+'</span>':''}</div>${b.source?'<span class="bk-src '+(isCat?'cat':'')+'">'+esc(b.source)+'</span>':''}<div class="bk-why">${esc(b.why||'')}</div></div></div>`;
+    }).join('');
+    return `<details class="acc" ${di===0?'open':''}><summary><div class="day-badge"><div class="dn">${esc(d.day||'')}</div><div class="db bar-${s}"></div></div><span class="acc-t">${esc(d.theme||'')}<span class="acc-when">${esc(d.total||'')}</span></span><span class="chev">›</span></summary><div class="acc-body">${blocks}</div></details>`;
+  }).join('');
+
+  const cat=(r.catalyst||[]).map(x=>`<div class="diff"><span class="ic">✦</span><span>${esc(x)}</span></div>`).join('');
 
   const sections=[
     `<div class="rm-hero">
-      <div class="gauge"><svg width="150" height="150"><circle cx="75" cy="75" r="64" stroke="rgba(255,255,255,.08)" stroke-width="9" fill="none"/><circle cx="75" cy="75" r="64" stroke="url(#g)" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="${R}" stroke-dashoffset="${R*0.18}"/><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6b8aff"/><stop offset="1" stop-color="#a06bff"/></linearGradient></defs></svg><div class="ctr"><div class="tgt">${esc(sc.target||'')}</div><div class="tlbl">${esc(sc.targetUnit||'target')}</div></div></div>
+      <div class="gauge"><svg width="150" height="150"><circle cx="75" cy="75" r="64" stroke="rgba(255,255,255,.08)" stroke-width="9" fill="none"/><circle cx="75" cy="75" r="64" stroke="url(#g)" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="${R}" stroke-dashoffset="${R*0.16}"/><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6b8aff"/><stop offset="1" stop-color="#a06bff"/></linearGradient></defs></svg><div class="ctr"><div class="tgt">${esc(sc.target||'')}</div><div class="tlbl">${esc(sc.targetUnit||'target')}</div></div></div>
       <div class="rm-from">From <b>${esc(sc.current||'where you are')}</b> — here's the path.</div>
       <div class="rm-gap">The gap: <b>${esc(sc.gap||'')}</b></div>
       <div class="rm-enc">${esc(sc.encouragement||'')}</div>
       ${traj?`<div class="rm-traj">${traj}</div>`:''}
     </div>`,
-    `<div class="rm-card"><div class="ttl">🎯 Your real problem</div><div class="rm-prob">${esc(r.problem||'')}</div></div>`,
-    `<div class="rm-card"><div class="ttl">🗺 The map</div>${phases}</div>`,
-    `<div class="rm-card"><div class="ttl">📅 This week — your daily plan</div>${week}</div>`,
-    `<div class="rm-card"><div class="ttl">⚡ Why this isn't a generic plan</div>${diff}</div>`,
-    `<div class="rm-cta"><h3 class="sora">This is CATalyst Max.</h3><p>Your real plan, with daily questions that adapt to your mistakes — rebuilt around you every week.</p><a href="https://catalyst-app-six.vercel.app/" target="_blank"><button>Get CATalyst →</button></a></div>
+    `<div class="rm-card"><div class="ttl">🎯 Your real problem</div><div class="rm-prob">${esc(r.diagnosis||r.problem||'')}</div></div>`,
+    r.strategy?`<div class="rm-strategy">⚡ <b>The game plan:</b> ${esc(r.strategy)}</div>`:'',
+    `<div class="rm-card"><div class="ttl">🗺 The map · tap any phase</div>${phases}</div>`,
+    `<div class="rm-card"><div class="ttl">📅 This week · tap a day for your full schedule</div>${days}</div>`,
+    `<div class="rm-card"><div class="ttl">⚡ How CATalyst runs this plan</div>${cat}</div>`,
+    r.consistency?`<div class="rm-consist">💪 ${esc(r.consistency)}</div>`:'',
+    `<div class="rm-cta"><h3 class="sora">CATalyst runs this for you.</h3><p>The daily DPPs, Fix Mode, real CAT questions — all the practice in this plan, adapting to your mistakes every week.</p><a href="https://catalyst-app-six.vercel.app/" target="_blank"><button>Get CATalyst →</button></a></div>
      <div class="restart-row"><button class="icon-btn" onclick="restart()">↻ Start over</button></div>`
-  ];
+  ].filter(Boolean);
   const wrap=document.createElement('div');wrap.className='reveal-wrap';chat.appendChild(wrap);
-  // staggered reveal
-  sections.forEach((html,i)=>{ const s=document.createElement('div'); s.className='stagger'; s.style.animationDelay=(i*180)+'ms'; s.innerHTML=html; wrap.appendChild(s); });
+  sections.forEach((html,i)=>{ const s=document.createElement('div'); s.className='stagger'; s.style.animationDelay=(i*160)+'ms'; s.innerHTML=html; wrap.appendChild(s); });
   scroll();
 }
 
