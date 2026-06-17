@@ -233,7 +233,7 @@ function parseDoc(pageLines, nPages, pdfName){
         if(curSet && curSet.q_count && curRem>0){ j=k; continue; } // repeated counted-set header → ignore
         if(indiv){ curSet=null; curRem=0; }
         else if(hasDir && cnt){ setCounter++; curSet={set_id:String(setCounter),page:pi+1,instr,q_count:cnt,q_nos:[],confident:true}; sets.push(curSet); curRem=cnt; }
-        else { setCounter++; curSet={set_id:String(setCounter),page:pi+1,instr:instr.length?instr:['(image-based set — no text directions)'],q_count:null,q_nos:[],confident:false}; sets.push(curSet); curRem=9999; }
+        else { setCounter++; const isTextPassage=instr.join(' ').length>=150; curSet={set_id:String(setCounter),page:pi+1,instr:instr.length?instr:['(image-based set — no text directions)'],q_count:null,q_nos:[],confident:isTextPassage}; sets.push(curSet); curRem=9999; }
         j=k; continue;
       }
       const mq = ln.match(Q_MARKER);

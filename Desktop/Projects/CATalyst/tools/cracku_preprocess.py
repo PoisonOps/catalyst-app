@@ -161,12 +161,15 @@ def main():
                                'instruction_lines': instr, 'q_count': cnt, 'q_nos': [], 'confident': True}
                     sets.append(cur_set); cur_set_remaining = cnt
                 else:
-                    # bare "Instructions" with a chart/passage image but NO stated count.
-                    # Group questions until the next instruction block; FLAG for visual review.
+                    # bare "Instructions" with NO stated count. If it carries a long
+                    # text passage (RC passage / LR scenario), grouping-by-block is
+                    # reliable → confident. If short/empty (a chart image set), flag it.
                     set_counter += 1
+                    instr_text = ' '.join(instr)
+                    is_text_passage = len(instr_text) >= 150
                     cur_set = {'set_id': str(set_counter), 'page': pi+1,
                                'instruction_lines': instr or ['(image-based set — no text directions)'],
-                               'q_count': None, 'q_nos': [], 'confident': False}
+                               'q_count': None, 'q_nos': [], 'confident': is_text_passage}
                     sets.append(cur_set); cur_set_remaining = 9999
                 j = k
                 continue
