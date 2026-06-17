@@ -111,9 +111,10 @@ Replaces the three older prompts (which had the wrong math format baked in).
 >
 > ### Images — use EXACTLY what the package tells you (do not invent or decide)
 > - The preprocessor **auto-detects and crops figures**. Each package's "FIGURE" section
->   tells you precisely: either `has_image = true` with a specific `image_url` (a slug-prefixed
->   name like `$$geometry_q_0005_img_1.png$$`, unique across PDFs), or `has_image = false`,
->   `image_url = NULL`. **Copy that exactly** — never guess `has_image`, never make up a filename.
+>   tells you precisely: either `has_image = true` with a specific `image_url` (a folder/file
+>   path like `$$180-geometry/q_0005_img_1.png$$`, one folder per PDF so it's unique), or
+>   `has_image = false`, `image_url = NULL`. **Copy that exactly** — never guess `has_image`,
+>   never make up a filename.
 > - Standalone question figure → `image_url` on the question. Set figure (LRDI charts) → the
 >   image lives on the SET (`set_<id>_img_1.png`); its questions have `image_url = NULL`.
 > - `solution_image_url`: usually `NULL` (we don't extract solution figures).
