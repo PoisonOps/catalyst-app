@@ -74,9 +74,21 @@ def clean_line(ln: str) -> str:
 def is_furniture(ln: str) -> bool:
     return any(p.match(ln) for p in FURNITURE)
 
+def make_slug(name, override):
+    if override:
+        return re.sub(r'[^a-z0-9]+', '-', override.lower()).strip('-')[:30] or 'pdf'
+    s = name.lower().replace('.pdf', '')
+    for w in ['top', 'cat', 'questions', 'question', 'with', 'video', 'solutions',
+              'solution', 'pdf', 'the', 'and', 'basics', 'basic']:
+        s = re.sub(r'\b' + w + r'\b', '', s)
+    s = re.sub(r'[0-9]+', '', s)
+    s = re.sub(r'[^a-z]+', '-', s).strip('-')
+    s = re.sub(r'-+', '-', s)
+    return s[:30] or 'pdf'
+
 def main():
     if len(sys.argv) < 3:
-        sys.exit("usage: python3 cracku_preprocess.py <pdf> <outdir>")
+        sys.exit("usage: python3 cracku_preprocess.py <pdf> <outdir> [slug]")
     pdf_path, outdir = sys.argv[1], sys.argv[2]
     if not os.path.exists(pdf_path):
         sys.exit(f"not found: {pdf_path}")
@@ -86,6 +98,8 @@ def main():
 
     doc = fitz.open(pdf_path)
     pdf_name = os.path.basename(pdf_path)
+    # per-PDF unique prefix so image filenames never collide across PDFs (global_q_no repeats!)
+    slug = make_slug(pdf_name, sys.argv[3] if len(sys.argv) > 3 else None)
     n_pages = len(doc)
 
     # ── pass 1: per-page text (cleaned) + render image ───────────────────────
@@ -327,7 +341,7 @@ def main():
             pad = 6
             clip = fitz.Rect(max(0, r.x0 - pad), max(0, r.y0 - pad), r.x1 + pad, r.y1 + pad)
             pix = page.get_pixmap(matrix=fitz.Matrix(3, 3), clip=clip)
-            name = 'q_%04d_img_1.png' % chosen['q_no']
+            name = '%s_q_%04d_img_1.png' % (slug, chosen['q_no'])   # slug prevents cross-PDF collisions
             pix.save(os.path.join(outdir, 'figures', name))
             chosen['has_image'] = True
             chosen['image_url'] = name
@@ -416,7 +430,10 @@ Produce the SQL row(s) per tools/EXTRACTION_GUIDE.md:
     report = [
         f"PDF: {pdf_name}",
         f"Pages: {n_pages}  |  Questions parsed: {len(questions)}  |  Sets: {len(sets)}  |  Answers found: {len(answers)}",
-        f"Figures auto-extracted: {fig_count}  →  figures/  (upload these to Supabase cat-assets bucket)",
+        f"Figures auto-extracted: {fig_count}  (named '{slug}_q_<N>_img_1.png' — unique across PDFs)",
+        (f"  → UPLOAD: drag every file in figures/ into Supabase Storage → 'cat-assets' bucket (root)."
+         f" The SQL's image_url matches the filename, so the app resolves it automatically."
+         if fig_count else "  (no figures in this PDF)"),
         f"Question number range: {min(qnos) if qnos else '-'}–{max(qnos) if qnos else '-'}",
         "",
         f"[!] Questions with NO answer found ({len(missing_ans)}): {missing_ans[:40]}",

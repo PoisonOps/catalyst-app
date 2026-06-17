@@ -109,11 +109,18 @@ Replaces the three older prompts (which had the wrong math format baked in).
 > ```
 > For DI/LR sets: each question's solution must include the full worked table/case — do not reuse a half-finished grid.
 >
-> ### Images
-> - If a question/set needs a figure/table/graph that can't be text: `has_image = true`, `image_url = $$set_<id>_img_1.png$$` (set) or `$$q_<global_q_no>_img_1.png$$` (standalone).
-> - Solution figure: `solution_image_url = $$set_<id>_q_<global_q_no>_sol_1.png$$`. Set questions have no question image of their own (the set holds it) → `image_url = NULL`.
-> - Otherwise all three image fields = `false` / `NULL`.
-> - After the SQL, list every image to crop: `Set <id> → set_<id>_img_1.png (describe what to crop)`.
+> ### Images — use EXACTLY what the package tells you (do not invent or decide)
+> - The preprocessor **auto-detects and crops figures**. Each package's "FIGURE" section
+>   tells you precisely: either `has_image = true` with a specific `image_url` (a slug-prefixed
+>   name like `$$geometry_q_0005_img_1.png$$`, unique across PDFs), or `has_image = false`,
+>   `image_url = NULL`. **Copy that exactly** — never guess `has_image`, never make up a filename.
+> - Standalone question figure → `image_url` on the question. Set figure (LRDI charts) → the
+>   image lives on the SET (`set_<id>_img_1.png`); its questions have `image_url = NULL`.
+> - `solution_image_url`: usually `NULL` (we don't extract solution figures).
+> - **Uploading:** drag everything in the preprocessor's `figures/` folder into Supabase Storage
+>   → `cat-assets` bucket (root). The app prefixes `image_url` with the cat-assets path, so the
+>   filename in the SQL must match the uploaded file exactly (it already does — both come from
+>   the package).
 >
 > ### Before the SQL
 > Output a confirmation table: `Q No | Type | Topic | Subtopic | Micro | Answer Type | Has Image`. Then the SQL, one question at a time.
